@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Periodic Table of HTTP Status Codes</title>
+    <title>HTTP Status Codes — Design Gallery</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -13,848 +13,557 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #0d1117;
             color: #e6edf3;
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        /* Top bar */
-        .top-bar {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px 20px;
-            flex-shrink: 0;
-            gap: 12px;
-            flex-wrap: wrap;
+        /* Atmospheric background gradients */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 15% 0%, rgba(88, 166, 255, 0.07) 0%, transparent 50%),
+                radial-gradient(ellipse at 85% 100%, rgba(188, 140, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(247, 120, 186, 0.02) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
         }
 
-        .title {
+        /* ── Header ──────────────────────────────── */
+        .header {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 64px 24px 44px;
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        .header h1 {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 1rem;
             font-weight: 800;
+            font-size: clamp(1.4rem, 4vw, 2.4rem);
             background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba, #ff7b72);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-right: 8px;
-        }
-        .site-footer {
-            position: fixed;
-            bottom: 12px;
-            right: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            color: #6e7681;
-        }
-        .site-footer a {
-            color: #6e7681;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: color 0.2s;
-        }
-        .site-footer a:hover { color: #8b949e; }
-        .site-footer svg { width: 16px; height: 16px; fill: currentColor; }
-
-        .search-box {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 8px 14px;
-            color: #e6edf3;
-            font-size: 13px;
-            font-family: 'Inter', sans-serif;
-            width: 200px;
-            outline: none;
-            transition: all 0.3s;
-        }
-
-        .search-box:focus {
-            border-color: rgba(88,166,255,0.5);
-            background: rgba(255,255,255,0.06);
-            box-shadow: 0 0 0 3px rgba(88,166,255,0.1);
-            width: 240px;
-        }
-
-        .search-box::placeholder { color: #484f58; }
-
-        .separator {
-            width: 1px;
-            height: 20px;
-            background: rgba(255,255,255,0.08);
-        }
-
-        /* Legend in top bar */
-        .legend {
-            display: flex;
-            gap: 4px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            color: #6e7681;
-            cursor: pointer;
-            padding: 7px 14px;
-            border-radius: 16px;
-            transition: all 0.2s ease;
-            border: 1px solid transparent;
-            user-select: none;
-            font-weight: 500;
-        }
-
-        .legend-item:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.06); }
-
-        .legend-item.active {
-            color: #e6edf3;
-            border-color: rgba(255,255,255,0.15);
-            background: rgba(255,255,255,0.06);
-        }
-
-        .legend-swatch {
-            width: 10px;
-            height: 10px;
-            border-radius: 3px;
-        }
-
-        /* Main layout: grid + detail panel */
-        .main {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-            padding: 0 20px 12px;
-            gap: 16px;
-        }
-
-        /* Grid side */
-        .grid-area {
-            flex: 1;
-            display: flex;
-            align-items: stretch;
-            overflow: hidden;
-        }
-
-        .periodic-grid {
-            display: grid;
-            gap: 3px;
-            width: 100%;
-            align-content: stretch;
-        }
-
-        /* Tile */
-        .tile {
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid rgba(255,255,255,0.04);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 3px 2px;
-            overflow: hidden;
-            position: relative;
-            gap: 1px;
-        }
-
-        .tile:hover {
-            transform: scale(1.12);
-            z-index: 10;
-            box-shadow: 0 8px 28px rgba(0,0,0,0.5);
-        }
-
-        .tile.active-tile {
-            transform: scale(1.12);
-            z-index: 10;
-        }
-
-        .tile.dimmed {
-            opacity: 0.06;
-            pointer-events: none;
-        }
-
-        .tile-icon {
-            line-height: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .tile-icon svg {
-            width: clamp(10px, 1.3vw, 16px);
-            height: clamp(10px, 1.3vw, 16px);
-            fill: currentColor;
-        }
-
-        .tile-code {
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 800;
-            line-height: 1;
-            font-size: clamp(11px, 1.6vw, 18px);
-        }
-
-        .tile-name {
-            font-size: clamp(6px, 0.6vw, 9px);
-            font-weight: 500;
-            opacity: 0.8;
-            text-align: center;
+            margin-bottom: 10px;
             line-height: 1.2;
-            max-width: 100%;
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            padding: 0 2px;
         }
 
-        /* Category Colors */
-        .cat-1xx { background: rgba(56,139,253,0.10); border-color: rgba(56,139,253,0.2); }
-        .cat-1xx .tile-code, .cat-1xx .tile-icon { color: #58a6ff; }
-        .cat-1xx .tile-symbol { color: #58a6ff; }
-        .cat-1xx:hover, .cat-1xx.active-tile { background: rgba(56,139,253,0.22); border-color: rgba(56,139,253,0.6); }
-
-        .cat-2xx { background: rgba(63,185,80,0.10); border-color: rgba(63,185,80,0.2); }
-        .cat-2xx .tile-code, .cat-2xx .tile-icon { color: #3fb950; }
-        .cat-2xx .tile-symbol { color: #3fb950; }
-        .cat-2xx:hover, .cat-2xx.active-tile { background: rgba(63,185,80,0.22); border-color: rgba(63,185,80,0.6); }
-
-        .cat-3xx { background: rgba(210,153,34,0.10); border-color: rgba(210,153,34,0.2); }
-        .cat-3xx .tile-code, .cat-3xx .tile-icon { color: #d29922; }
-        .cat-3xx .tile-symbol { color: #d29922; }
-        .cat-3xx:hover, .cat-3xx.active-tile { background: rgba(210,153,34,0.22); border-color: rgba(210,153,34,0.6); }
-
-        .cat-4xx { background: rgba(248,81,73,0.10); border-color: rgba(248,81,73,0.2); }
-        .cat-4xx .tile-code, .cat-4xx .tile-icon { color: #ff7b72; }
-        .cat-4xx .tile-symbol { color: #ff7b72; }
-        .cat-4xx:hover, .cat-4xx.active-tile { background: rgba(248,81,73,0.22); border-color: rgba(248,81,73,0.6); }
-
-        .cat-5xx { background: rgba(188,140,255,0.10); border-color: rgba(188,140,255,0.2); }
-        .cat-5xx .tile-code, .cat-5xx .tile-icon { color: #bc8cff; }
-        .cat-5xx .tile-symbol { color: #bc8cff; }
-        .cat-5xx:hover, .cat-5xx.active-tile { background: rgba(188,140,255,0.22); border-color: rgba(188,140,255,0.6); }
-
-        .tile.gap {
-            visibility: hidden;
-            pointer-events: none;
-        }
-
-        /* Group header cell */
-        .group-header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .header .subtitle {
             font-family: 'JetBrains Mono', monospace;
-            font-size: clamp(8px, 0.8vw, 11px);
-            font-weight: 700;
-            border-radius: 5px;
-            border: 1px solid transparent;
-            letter-spacing: 0.5px;
+            font-size: 0.8rem;
+            color: #6e7681;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 18px;
         }
 
-        .group-header.gh-1xx { color: #58a6ff; background: rgba(56,139,253,0.05); }
-        .group-header.gh-2xx { color: #3fb950; background: rgba(63,185,80,0.05); }
-        .group-header.gh-3xx { color: #d29922; background: rgba(210,153,34,0.05); }
-        .group-header.gh-4xx { color: #ff7b72; background: rgba(248,81,73,0.05); }
-        .group-header.gh-5xx { color: #bc8cff; background: rgba(188,140,255,0.05); }
-
-        .group-header.clickable {
-            cursor: pointer;
-            transition: all 0.2s ease;
+        .header p {
+            font-size: 0.95rem;
+            color: #8b949e;
+            line-height: 1.7;
+            max-width: 560px;
+            margin: 0 auto;
         }
 
-        .group-header.clickable:hover {
-            transform: scale(1.05);
-        }
-
-        .group-header.gh-1xx.clickable:hover { background: rgba(56,139,253,0.15); }
-        .group-header.gh-2xx.clickable:hover { background: rgba(63,185,80,0.15); }
-        .group-header.gh-3xx.clickable:hover { background: rgba(210,153,34,0.15); }
-        .group-header.gh-4xx.clickable:hover { background: rgba(248,81,73,0.15); }
-        .group-header.gh-5xx.clickable:hover { background: rgba(188,140,255,0.15); }
-
-        /* Row glow on header hover */
-        .tile.row-highlight.cat-1xx { background: rgba(56,139,253,0.22); border-color: rgba(56,139,253,0.45); }
-        .tile.row-highlight.cat-2xx { background: rgba(63,185,80,0.22); border-color: rgba(63,185,80,0.45); }
-        .tile.row-highlight.cat-3xx { background: rgba(210,153,34,0.22); border-color: rgba(210,153,34,0.45); }
-        .tile.row-highlight.cat-4xx { background: rgba(248,81,73,0.22); border-color: rgba(248,81,73,0.45); }
-        .tile.row-highlight.cat-5xx { background: rgba(188,140,255,0.22); border-color: rgba(188,140,255,0.45); }
-
-        .group-header.clickable.active-header {
-            border-color: currentColor;
-            opacity: 1;
-        }
-
-        .group-header.gh-1xx.active-header { background: rgba(56,139,253,0.18); border-color: rgba(56,139,253,0.4); }
-        .group-header.gh-2xx.active-header { background: rgba(63,185,80,0.18); border-color: rgba(63,185,80,0.4); }
-        .group-header.gh-3xx.active-header { background: rgba(210,153,34,0.18); border-color: rgba(210,153,34,0.4); }
-        .group-header.gh-4xx.active-header { background: rgba(248,81,73,0.18); border-color: rgba(248,81,73,0.4); }
-        .group-header.gh-5xx.active-header { background: rgba(188,140,255,0.18); border-color: rgba(188,140,255,0.4); }
-
-        /* Detail panel (right side) */
-        .detail-panel {
-            width: 320px;
-            flex-shrink: 0;
-            align-self: flex-start;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            border-radius: 16px;
-            padding: 36px 32px;
-            border: 1px solid rgba(255,255,255,0.06);
-            background: rgba(255,255,255,0.02);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .detail-panel::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            opacity: 0;
-            transition: opacity 0.4s ease;
-            pointer-events: none;
-            border-radius: 16px;
-        }
-
-        .detail-panel.has-content::before { opacity: 1; }
-
-        .detail-panel.dp-1xx::before { background: radial-gradient(ellipse at top right, rgba(56,139,253,0.10), transparent 60%), radial-gradient(ellipse at bottom left, rgba(56,139,253,0.05), transparent 60%); }
-        .detail-panel.dp-2xx::before { background: radial-gradient(ellipse at top right, rgba(63,185,80,0.10), transparent 60%), radial-gradient(ellipse at bottom left, rgba(63,185,80,0.05), transparent 60%); }
-        .detail-panel.dp-3xx::before { background: radial-gradient(ellipse at top right, rgba(210,153,34,0.10), transparent 60%), radial-gradient(ellipse at bottom left, rgba(210,153,34,0.05), transparent 60%); }
-        .detail-panel.dp-4xx::before { background: radial-gradient(ellipse at top right, rgba(248,81,73,0.10), transparent 60%), radial-gradient(ellipse at bottom left, rgba(248,81,73,0.05), transparent 60%); }
-        .detail-panel.dp-5xx::before { background: radial-gradient(ellipse at top right, rgba(188,140,255,0.10), transparent 60%), radial-gradient(ellipse at bottom left, rgba(188,140,255,0.05), transparent 60%); }
-
-        .detail-empty {
-            text-align: center;
-            color: #30363d;
-            font-size: 14px;
-            font-weight: 400;
-        }
-
-        .detail-empty-icon {
-            font-size: 48px;
-            margin-bottom: 12px;
-            opacity: 0.2;
-        }
-
-        .detail-content {
-            display: none;
+        /* ── Gallery Grid ────────────────────────── */
+        .gallery {
             position: relative;
             z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px 80px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
         }
 
-        .detail-panel.has-content .detail-content { display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .detail-panel.has-content .detail-empty { display: none; }
+        /* ── Card ────────────────────────────────── */
+        .card {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(.4,0,.2,1),
+                        border-color 0.3s ease,
+                        box-shadow 0.3s ease;
+            opacity: 0;
+            transform: translateY(24px);
+            animation: cardReveal 0.6s cubic-bezier(.4,0,.2,1) forwards;
+        }
 
-        /* Icon */
-        .detail-icon {
-            margin-bottom: 16px;
-            line-height: 0;
+        .card:hover {
+            transform: translateY(-6px);
+            border-color: #58a6ff;
+            box-shadow:
+                0 12px 40px rgba(88, 166, 255, 0.12),
+                0 0 0 1px rgba(88, 166, 255, 0.08);
+        }
+
+        .card:focus-visible {
+            outline: 2px solid #58a6ff;
+            outline-offset: 2px;
+        }
+
+        /* Featured card */
+        .card.featured {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            border-color: rgba(88, 166, 255, 0.2);
+        }
+
+        .card.featured:hover {
+            border-color: #58a6ff;
+            box-shadow:
+                0 16px 50px rgba(88, 166, 255, 0.15),
+                0 0 0 1px rgba(88, 166, 255, 0.1);
+        }
+
+        /* ── Card Thumbnail ──────────────────────── */
+        .card-thumb {
+            position: relative;
+            aspect-ratio: 16 / 10;
+            overflow: hidden;
+            background: #0d1117;
+        }
+
+        .card.featured .card-thumb {
+            aspect-ratio: auto;
+            min-height: 280px;
+        }
+
+        .card-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s cubic-bezier(.4,0,.2,1);
+        }
+
+        .card:hover .card-thumb img {
+            transform: scale(1.04);
+        }
+
+        /* ── Card Info ────────────────────────────── */
+        .card-info {
+            padding: 16px 20px 20px;
+        }
+
+        .card.featured .card-info {
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            justify-content: center;
+            padding: 36px 40px;
         }
 
-        .detail-icon svg {
-            width: 56px;
-            height: 56px;
-            fill: currentColor;
-        }
-
-        .detail-symbol {
+        .card-number {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 14px;
-            font-weight: 700;
-            opacity: 0.3;
-            margin-bottom: 6px;
+            font-size: 0.68rem;
+            color: #58a6ff;
             letter-spacing: 2px;
             text-transform: uppercase;
-        }
-
-        .detail-code {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 72px;
-            font-weight: 800;
-            line-height: 1;
             margin-bottom: 6px;
-            transition: color 0.2s;
         }
 
-        .detail-name {
-            font-size: 22px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            transition: color 0.2s;
-            line-height: 1.2;
-        }
-
-        .detail-cat-badge {
-            font-size: 12px;
-            font-weight: 600;
-            padding: 5px 14px;
-            border-radius: 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 24px;
-            transition: all 0.2s;
-            align-self: center;
-        }
-
-        .detail-desc {
-            font-size: 15px;
-            line-height: 1.75;
-            color: #9198a1;
-            margin-bottom: 24px;
-        }
-
-        .detail-rfc {
-            font-size: 13px;
-            color: #6e7681;
+        .card-title {
             font-family: 'JetBrains Mono', monospace;
-            padding-top: 16px;
-            border-top: 1px solid rgba(255,255,255,0.05);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #e6edf3;
+            margin-bottom: 6px;
+            line-height: 1.3;
         }
 
-        .detail-rfc::before {
-            content: '';
+        .card.featured .card-title {
+            font-size: 1.4rem;
+            margin-bottom: 14px;
+        }
+
+        .card-desc {
+            font-size: 0.82rem;
+            color: #8b949e;
+            line-height: 1.55;
+        }
+
+        .card.featured .card-desc {
+            font-size: 0.9rem;
+            line-height: 1.65;
+        }
+
+        /* ── Badge ────────────────────────────────── */
+        .badge {
             display: inline-block;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: currentColor;
-            opacity: 0.5;
-        }
-
-        /* Keyboard nav hint */
-        .nav-hint {
-            position: absolute;
-            bottom: 16px;
-            left: 24px;
-            right: 24px;
-            display: flex;
-            gap: 6px;
-            align-items: center;
-            z-index: 1;
-        }
-
-        .nav-key {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 3px;
-            padding: 1px 6px;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            color: #6e7681;
+            font-size: 0.62rem;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(88,166,255,0.12), rgba(188,140,255,0.12));
+            border: 1px solid rgba(88,166,255,0.3);
+            color: #58a6ff;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 14px;
+            width: fit-content;
         }
 
-        .nav-label {
-            font-size: 11px;
-            color: #6e7681;
+        /* ── Mini Periodic Table Preview ──────────── */
+        .mini-table {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 5px;
+            padding: 36px;
+            height: 100%;
+            align-content: center;
+        }
+
+        .mc {
+            aspect-ratio: 1;
+            border-radius: 3px;
+            background: #21262d;
+            transition: opacity 0.3s ease;
+        }
+
+        .card.featured:hover .mc:not(.empty) {
+            opacity: 1 !important;
+        }
+
+        .mc.c1 { background: #58a6ff; opacity: 0.65; }
+        .mc.c2 { background: #3fb950; opacity: 0.65; }
+        .mc.c3 { background: #d29922; opacity: 0.65; }
+        .mc.c4 { background: #f85149; opacity: 0.65; }
+        .mc.c5 { background: #bc8cff; opacity: 0.65; }
+
+        /* ── Entrance Animation ──────────────────── */
+        @keyframes cardReveal {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card:nth-child(1)  { animation-delay: 0.04s; }
+        .card:nth-child(2)  { animation-delay: 0.08s; }
+        .card:nth-child(3)  { animation-delay: 0.12s; }
+        .card:nth-child(4)  { animation-delay: 0.16s; }
+        .card:nth-child(5)  { animation-delay: 0.20s; }
+        .card:nth-child(6)  { animation-delay: 0.24s; }
+        .card:nth-child(7)  { animation-delay: 0.28s; }
+        .card:nth-child(8)  { animation-delay: 0.32s; }
+        .card:nth-child(9)  { animation-delay: 0.36s; }
+        .card:nth-child(10) { animation-delay: 0.40s; }
+        .card:nth-child(11) { animation-delay: 0.44s; }
+        .card:nth-child(12) { animation-delay: 0.48s; }
+        .card:nth-child(13) { animation-delay: 0.52s; }
+        .card:nth-child(14) { animation-delay: 0.56s; }
+        .card:nth-child(15) { animation-delay: 0.60s; }
+        .card:nth-child(16) { animation-delay: 0.64s; }
+        .card:nth-child(17) { animation-delay: 0.68s; }
+
+        /* ── Footer ──────────────────────────────── */
+        .footer {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 0 24px 48px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: #484f58;
+        }
+
+        .footer a {
+            color: #58a6ff;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .footer a:hover {
+            color: #79c0ff;
+            text-decoration: underline;
+        }
+
+        /* ── Responsive ──────────────────────────── */
+        @media (max-width: 768px) {
+            .header {
+                padding: 44px 16px 28px;
+            }
+            .gallery {
+                padding: 0 16px 60px;
+                gap: 16px;
+                grid-template-columns: 1fr;
+            }
+            .card.featured {
+                grid-template-columns: 1fr;
+            }
+            .card.featured .card-thumb {
+                min-height: 180px;
+            }
+            .card.featured .card-info {
+                padding: 24px;
+            }
+            .card.featured .card-title {
+                font-size: 1.15rem;
+            }
+            .mini-table {
+                padding: 24px;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1080px) {
+            .gallery {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
     </style>
 </head>
 <body>
 
-<div class="top-bar">
-    <div class="title">Periodic Table of HTTP Status Codes</div>
-    <input type="text" class="search-box" id="search" placeholder="Search codes..." autocomplete="off">
-    <div class="separator"></div>
-    <div class="legend" id="legend">
-        <div class="legend-item active" data-cat="all">
-            <div class="legend-swatch" style="background: linear-gradient(135deg, #58a6ff, #bc8cff);"></div>All
-        </div>
-        <div class="legend-item" data-cat="1xx">
-            <div class="legend-swatch" style="background: #58a6ff;"></div>1xx Info
-        </div>
-        <div class="legend-item" data-cat="2xx">
-            <div class="legend-swatch" style="background: #3fb950;"></div>2xx Success
-        </div>
-        <div class="legend-item" data-cat="3xx">
-            <div class="legend-swatch" style="background: #d29922;"></div>3xx Redirect
-        </div>
-        <div class="legend-item" data-cat="4xx">
-            <div class="legend-swatch" style="background: #ff7b72;"></div>4xx Client
-        </div>
-        <div class="legend-item" data-cat="5xx">
-            <div class="legend-swatch" style="background: #bc8cff;"></div>5xx Server
-        </div>
-    </div>
-</div>
+    <header class="header">
+        <h1>Periodic Table of HTTP Status Codes</h1>
+        <div class="subtitle">Design Gallery</div>
+        <p>17 creative approaches to visualizing every HTTP status code. Each design explores a different metaphor. Click any card to explore it live.</p>
+    </header>
 
-<div class="main">
-    <div class="grid-area">
-        <div class="periodic-grid" id="grid"></div>
-    </div>
+    <main class="gallery">
 
-    <div class="detail-panel" id="detail-panel">
-        <div class="detail-empty">
-            <div class="detail-empty-icon">&#9632;</div>
-            Hover over an element
-        </div>
-        <div class="detail-content">
-            <div class="detail-icon" id="d-icon"></div>
-            <div class="detail-symbol" id="d-symbol"></div>
-            <div class="detail-code" id="d-code"></div>
-            <div class="detail-name" id="d-name"></div>
-            <div class="detail-cat-badge" id="d-cat"></div>
-            <div class="detail-desc" id="d-desc"></div>
-            <div class="detail-rfc" id="d-rfc"></div>
-        </div>
-        <div class="nav-hint">
-            <span class="nav-key">&#8592;</span>
-            <span class="nav-key">&#8594;</span>
-            <span class="nav-label">navigate</span>
-        </div>
-    </div>
-</div>
+        <!-- ★ Featured: Original Periodic Table -->
+        <a href="periodic-table.html" class="card featured" target="_blank" rel="noopener">
+            <div class="card-thumb">
+                <div class="mini-table">
+                    <!-- Row 1: 1xx Information (blue) -->
+                    <div class="mc c1"></div><div class="mc c1"></div>
+                    <div class="mc"></div><div class="mc"></div><div class="mc"></div><div class="mc"></div>
+                    <div class="mc c1"></div><div class="mc c1"></div>
+                    <!-- Row 2: 2xx Success (green) -->
+                    <div class="mc c2"></div><div class="mc c2"></div><div class="mc c2"></div>
+                    <div class="mc"></div><div class="mc"></div>
+                    <div class="mc c2"></div><div class="mc c2"></div><div class="mc c2"></div>
+                    <!-- Row 3: 3xx Redirection (orange) -->
+                    <div class="mc c3"></div><div class="mc c3"></div><div class="mc c3"></div>
+                    <div class="mc c3"></div><div class="mc c3"></div><div class="mc c3"></div>
+                    <div class="mc"></div><div class="mc"></div>
+                    <!-- Row 4: 4xx Client Error (red) -->
+                    <div class="mc c4"></div><div class="mc c4"></div><div class="mc c4"></div>
+                    <div class="mc c4"></div><div class="mc c4"></div><div class="mc c4"></div>
+                    <div class="mc c4"></div><div class="mc c4"></div>
+                    <!-- Row 5: 4xx continued -->
+                    <div class="mc c4"></div><div class="mc c4"></div><div class="mc c4"></div>
+                    <div class="mc c4"></div><div class="mc c4"></div><div class="mc c4"></div>
+                    <div class="mc"></div><div class="mc"></div>
+                    <!-- Row 6: 5xx Server Error (purple) -->
+                    <div class="mc c5"></div><div class="mc c5"></div><div class="mc c5"></div>
+                    <div class="mc c5"></div>
+                    <div class="mc"></div><div class="mc"></div><div class="mc"></div><div class="mc"></div>
+                </div>
+            </div>
+            <div class="card-info">
+                <div class="badge">★ Current Design</div>
+                <div class="card-title">Periodic Table</div>
+                <p class="card-desc">The flagship design — a periodic table layout with color-coded categories, search, keyboard navigation, and detailed RFC references for all 63 HTTP status codes.</p>
+            </div>
+        </a>
 
-<script>
-const STATUS_CODES = [
-    { code: 100, name: "Continue", symbol: "Cn", cat: "1xx", desc: "The server has received the request headers and the client should proceed to send the request body.", rfc: "RFC 9110" },
-    { code: 101, name: "Switching Protocols", symbol: "Sw", cat: "1xx", desc: "The server is switching protocols as requested by the client via the Upgrade header. Commonly used when upgrading to WebSocket connections.", rfc: "RFC 9110" },
-    { code: 103, name: "Early Hints", symbol: "Eh", cat: "1xx", desc: "Used to return some response headers before the final HTTP message. Allows the browser to start preloading resources while the server prepares a full response.", rfc: "RFC 8297" },
-    { code: 200, name: "OK", symbol: "Ok", cat: "2xx", desc: "The request has succeeded. The meaning depends on the HTTP method: GET returns the resource, POST reports the action result.", rfc: "RFC 9110" },
-    { code: 201, name: "Created", symbol: "Cr", cat: "2xx", desc: "The request has been fulfilled and a new resource has been created. Typically sent after POST or PUT requests.", rfc: "RFC 9110" },
-    { code: 202, name: "Accepted", symbol: "Ac", cat: "2xx", desc: "The request has been accepted for processing, but the processing has not been completed. Used for asynchronous operations.", rfc: "RFC 9110" },
-    { code: 203, name: "Non-Authoritative", symbol: "Na", cat: "2xx", desc: "The returned metadata is not exactly the same as available from the origin server. A transforming proxy modified the response.", rfc: "RFC 9110" },
-    { code: 204, name: "No Content", symbol: "Nc", cat: "2xx", desc: "The server has successfully fulfilled the request and there is no additional content to send. Common for DELETE operations.", rfc: "RFC 9110" },
-    { code: 205, name: "Reset Content", symbol: "Rc", cat: "2xx", desc: "The server has fulfilled the request and the user agent should reset the document view. Think 'clear the form.'", rfc: "RFC 9110" },
-    { code: 206, name: "Partial Content", symbol: "Pc", cat: "2xx", desc: "The server is delivering only part of the resource due to a Range header. Used for resumable downloads and video streaming.", rfc: "RFC 9110" },
-    { code: 207, name: "Multi-Status", symbol: "Ms", cat: "2xx", desc: "A WebDAV response conveying information about multiple resources in situations where multiple status codes might be appropriate.", rfc: "RFC 4918" },
-    { code: 208, name: "Already Reported", symbol: "Ar", cat: "2xx", desc: "Used inside a WebDAV response to avoid enumerating internal members of multiple bindings to the same collection repeatedly.", rfc: "RFC 5842" },
-    { code: 226, name: "IM Used", symbol: "Im", cat: "2xx", desc: "The server has fulfilled a GET request and the response is a representation of instance-manipulations applied to the current instance.", rfc: "RFC 3229" },
-    { code: 300, name: "Multiple Choices", symbol: "Mc", cat: "3xx", desc: "The request has more than one possible response. The user or user agent should choose one of them.", rfc: "RFC 9110" },
-    { code: 301, name: "Moved Permanently", symbol: "Mp", cat: "3xx", desc: "The URL of the requested resource has been changed permanently. Search engines will update their links.", rfc: "RFC 9110" },
-    { code: 302, name: "Found", symbol: "Fd", cat: "3xx", desc: "The URI of the requested resource has been changed temporarily. The client should continue to use the original URI.", rfc: "RFC 9110" },
-    { code: 303, name: "See Other", symbol: "So", cat: "3xx", desc: "The server is redirecting to a different resource using GET. Typically used after POST to prevent form resubmission.", rfc: "RFC 9110" },
-    { code: 304, name: "Not Modified", symbol: "Nm", cat: "3xx", desc: "The resource has not been modified since the version specified by the request headers. Use the cached version.", rfc: "RFC 9110" },
-    { code: 305, name: "Use Proxy", symbol: "Up", cat: "3xx", desc: "The requested resource must be accessed through the proxy given by the Location field. Deprecated due to security concerns.", rfc: "Deprecated" },
-    { code: 307, name: "Temporary Redirect", symbol: "Tr", cat: "3xx", desc: "The server is redirecting to another URI. The client must use the same HTTP method. Unlike 302, the method cannot change.", rfc: "RFC 9110" },
-    { code: 308, name: "Permanent Redirect", symbol: "Pr", cat: "3xx", desc: "The resource has permanently moved and the client must use the same HTTP method. The permanent counterpart to 307.", rfc: "RFC 9110" },
-    { code: 400, name: "Bad Request", symbol: "Br", cat: "4xx", desc: "The server cannot process the request due to a client error — malformed syntax, invalid request framing, or deceptive routing.", rfc: "RFC 9110" },
-    { code: 401, name: "Unauthorized", symbol: "Un", cat: "4xx", desc: "The request requires authentication. Despite the name, it's really about authentication, not authorization.", rfc: "RFC 9110" },
-    { code: 402, name: "Payment Required", symbol: "Py", cat: "4xx", desc: "Reserved for future use. Originally for digital cash or micropayments. Some APIs use it for billing limits.", rfc: "RFC 9110" },
-    { code: 403, name: "Forbidden", symbol: "Fb", cat: "4xx", desc: "The client does not have access rights. Unlike 401, the client's identity is known but they lack permissions.", rfc: "RFC 9110" },
-    { code: 404, name: "Not Found", symbol: "Nf", cat: "4xx", desc: "The server cannot find the requested resource. The most famous HTTP error code.", rfc: "RFC 9110" },
-    { code: 405, name: "Method Not Allowed", symbol: "Ma", cat: "4xx", desc: "The request method is known but disabled for that resource. For example, DELETE on a read-only resource.", rfc: "RFC 9110" },
-    { code: 406, name: "Not Acceptable", symbol: "Nx", cat: "4xx", desc: "The server can't produce a response matching the acceptable values in the content negotiation headers.", rfc: "RFC 9110" },
-    { code: 407, name: "Proxy Auth Required", symbol: "Pa", cat: "4xx", desc: "Similar to 401, but authentication needs to be done by a proxy.", rfc: "RFC 9110" },
-    { code: 408, name: "Request Timeout", symbol: "Rt", cat: "4xx", desc: "The server would like to shut down this unused connection. Sent on an idle connection by some servers.", rfc: "RFC 9110" },
-    { code: 409, name: "Conflict", symbol: "Cf", cat: "4xx", desc: "The request conflicts with the current state of the server. Typically used for edit conflicts between simultaneous users.", rfc: "RFC 9110" },
-    { code: 410, name: "Gone", symbol: "Gn", cat: "4xx", desc: "The content has been permanently deleted with no forwarding address. Like 404 but the server knows it existed.", rfc: "RFC 9110" },
-    { code: 411, name: "Length Required", symbol: "Lr", cat: "4xx", desc: "The server rejected the request because the Content-Length header is not defined.", rfc: "RFC 9110" },
-    { code: 412, name: "Precondition Failed", symbol: "Pf", cat: "4xx", desc: "Preconditions in the request headers are not met. Used with conditional requests (If-Match, If-Unmodified-Since).", rfc: "RFC 9110" },
-    { code: 413, name: "Content Too Large", symbol: "Tl", cat: "4xx", desc: "Request entity is larger than limits defined by server.", rfc: "RFC 9110" },
-    { code: 414, name: "URI Too Long", symbol: "Ul", cat: "4xx", desc: "The URI is longer than the server will interpret. Can happen when POST converts to GET with long query strings.", rfc: "RFC 9110" },
-    { code: 415, name: "Unsupported Media", symbol: "Um", cat: "4xx", desc: "The media format is not supported. For example, submitting XML when the API only accepts JSON.", rfc: "RFC 9110" },
-    { code: 416, name: "Range Not Satisfiable", symbol: "Rn", cat: "4xx", desc: "The range specified by the Range header can't be fulfilled.", rfc: "RFC 9110" },
-    { code: 417, name: "Expectation Failed", symbol: "Ef", cat: "4xx", desc: "The Expect header expectation can't be met by the server.", rfc: "RFC 9110" },
-    { code: 418, name: "I'm a Teapot", symbol: "Tp", cat: "4xx", desc: "The server refuses to brew coffee with a teapot. An April Fools' joke from 1998 (RFC 2324) that became a beloved internet Easter egg.", rfc: "RFC 2324" },
-    { code: 421, name: "Misdirected", symbol: "Mr", cat: "4xx", desc: "The request was directed at a server that is not able to produce a response for the URI scheme and authority.", rfc: "RFC 9110" },
-    { code: 422, name: "Unprocessable", symbol: "Uc", cat: "4xx", desc: "Well-formed but semantically erroneous. The JSON parses fine, but the data doesn't make sense.", rfc: "RFC 9110" },
-    { code: 423, name: "Locked", symbol: "Lk", cat: "4xx", desc: "A WebDAV status code meaning the resource being accessed is locked.", rfc: "RFC 4918" },
-    { code: 424, name: "Failed Dependency", symbol: "Dp", cat: "4xx", desc: "The request failed due to failure of a previous request in a batch operation.", rfc: "RFC 4918" },
-    { code: 425, name: "Too Early", symbol: "Te", cat: "4xx", desc: "The server won't risk processing a request that might be replayed. Used with TLS 1.3 early data (0-RTT).", rfc: "RFC 8470" },
-    { code: 426, name: "Upgrade Required", symbol: "Ur", cat: "4xx", desc: "The server refuses to perform the request using the current protocol but might after a protocol upgrade.", rfc: "RFC 9110" },
-    { code: 428, name: "Precondition Req'd", symbol: "Pq", cat: "4xx", desc: "The server requires the request to be conditional. Prevents the 'lost update' problem.", rfc: "RFC 6585" },
-    { code: 429, name: "Too Many Requests", symbol: "Tm", cat: "4xx", desc: "Rate limited. Often includes a Retry-After header indicating when to try again.", rfc: "RFC 6585" },
-    { code: 431, name: "Headers Too Large", symbol: "Hl", cat: "4xx", desc: "The header fields are too large. Often caused by excessive cookies or auth tokens.", rfc: "RFC 6585" },
-    { code: 451, name: "Legal Reasons", symbol: "Lg", cat: "4xx", desc: "Unavailable for legal reasons, such as government censorship. Named after Fahrenheit 451.", rfc: "RFC 7725" },
-    { code: 500, name: "Internal Error", symbol: "Is", cat: "5xx", desc: "The server has encountered a situation it doesn't know how to handle. The catch-all for unhandled exceptions.", rfc: "RFC 9110" },
-    { code: 501, name: "Not Implemented", symbol: "Ni", cat: "5xx", desc: "The request method is not supported by the server. Only GET and HEAD are required to be supported.", rfc: "RFC 9110" },
-    { code: 502, name: "Bad Gateway", symbol: "Bg", cat: "5xx", desc: "The server, while acting as a gateway, received an invalid response from the upstream server.", rfc: "RFC 9110" },
-    { code: 503, name: "Service Unavailable", symbol: "Su", cat: "5xx", desc: "The server is not ready — down for maintenance or overloaded. Usually temporary.", rfc: "RFC 9110" },
-    { code: 504, name: "Gateway Timeout", symbol: "Gt", cat: "5xx", desc: "The gateway server didn't get a response in time from the upstream server.", rfc: "RFC 9110" },
-    { code: 505, name: "HTTP Ver. Unsupported", symbol: "Hv", cat: "5xx", desc: "The HTTP version used in the request is not supported by the server.", rfc: "RFC 9110" },
-    { code: 506, name: "Variant Negotiates", symbol: "Vn", cat: "5xx", desc: "Transparent content negotiation results in a circular reference. Internal configuration error.", rfc: "RFC 2295" },
-    { code: 507, name: "Insufficient Storage", symbol: "St", cat: "5xx", desc: "The server can't store the representation needed to complete the request. Out of disk space.", rfc: "RFC 4918" },
-    { code: 508, name: "Loop Detected", symbol: "Ld", cat: "5xx", desc: "The server detected an infinite loop while processing. Occurs with WebDAV 'Depth: infinity' operations.", rfc: "RFC 5842" },
-    { code: 510, name: "Not Extended", symbol: "Ne", cat: "5xx", desc: "Further extensions to the request are required for the server to fulfill it.", rfc: "RFC 2774" },
-    { code: 511, name: "Network Auth Req'd", symbol: "Nr", cat: "5xx", desc: "The client needs to authenticate to gain network access. Think captive portals at airports or hotels.", rfc: "RFC 6585" },
-];
+        <!-- 01 -->
+        <a href="mockups/01-subway-metro-map.html" class="card" target="_blank" rel="noopener">
+            <div class="card-thumb">
+                <img src="mockups/01-subway-metro-map.png" alt="Subway Metro Map design" loading="lazy">
+            </div>
+            <div class="card-info">
+                <div class="card-number">Design 01</div>
+                <div class="card-title">Subway Metro Map</div>
+                <p class="card-desc">Navigate status codes like colored transit lines on a metro map.</p>
+            </div>
+        </a>
 
-const CAT_COLORS = {
-    '1xx': '#58a6ff', '2xx': '#3fb950', '3xx': '#d29922', '4xx': '#ff7b72', '5xx': '#bc8cff'
-};
+        <!-- 02 -->
+        <a href="mockups/02-airport-departure-board.html" class="card" target="_blank" rel="noopener">
+            <div class="card-thumb">
+                <img src="mockups/02-airport-departure-board.png" alt="Airport Departure Board design" loading="lazy">
+            </div>
+            <div class="card-info">
+                <div class="card-number">Design 02</div>
+                <div class="card-title">Airport Departure Board</div>
+                <p class="card-desc">Real-time flight board aesthetic with flip-style status displays.</p>
+            </div>
+        </a>
 
-const CAT_LABELS = {
-    '1xx': 'Informational', '2xx': 'Success', '3xx': 'Redirection', '4xx': 'Client Error', '5xx': 'Server Error'
-};
+        <!-- 03 -->
+        <a href="mockups/03-vinyl-record-crate.html" class="card" target="_blank" rel="noopener">
+            <div class="card-thumb">
+                <img src="mockups/03-vinyl-record-crate.png" alt="Vinyl Record Crate design" loading="lazy">
+            </div>
+            <div class="card-info">
+                <div class="card-number">Design 03</div>
+                <div class="card-title">Vinyl Record Crate</div>
+                <p class="card-desc">Dig through status codes like flipping through a record collection.</p>
+            </div>
+        </a>
 
-// SVG icon paths (solid style, 24x24 viewBox)
-const SVG = (d) => `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="${d}"/></svg>`;
+        <!-- 04 -->
+        <a href="mockups/04-constellation-star-map.html" class="card" target="_blank" rel="noopener">
+            <div class="card-thumb">
+                <img src="mockups/04-constellation-star-map.png" alt="Constellation Star Map design" loading="lazy">
+            </div>
+            <div class="card-info">
+                <div class="card-number">Design 04</div>
+                <div class="card-title">Constellation Star Map</div>
+                <p class="card-desc">Status codes mapped as constellations across a celestial field.</p>
+            </div>
+        </a>
 
-const ICONS = {
-    // Shapes & symbols
-    info:        SVG('M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z'),
-    check:       SVG('M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z'),
-    redirect:    SVG('M14 4l2.29 2.29-2.88 2.88 1.42 1.42 2.88-2.88L20 10V4h-6zM4 20h6l-2.29-2.29 4.71-4.7-1.42-1.42-4.71 4.7L4 14v6z'),
-    warning:     SVG('M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z'),
-    server:      SVG('M20 13H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1zM7 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM20 3H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1zM7 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z'),
-    hourglass:   SVG('M6 2v6h.01L6 8.01 10 12l-4 4 .01.01H6V22h12v-5.99h-.01L18 16l-4-4 4-3.99-.01-.01H18V2H6zm10 14.5V20H8v-3.5l4-4 4 4zm-4-5l-4-4V4h8v3.5l-4 4z'),
-    swap:        SVG('M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z'),
-    bulb:        SVG('M9 21c0 .5.4 1 .9 1h4.2c.5 0 .9-.5.9-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 .9 1h6.2c.5 0 .9-.5.9-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7z'),
-    sparkle:     SVG('M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z'),
-    mail:        SVG('M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'),
-    empty:       SVG('M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z'),
-    slice:       SVG('M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z'),
-    layers:      SVG('M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z'),
-    copy:        SVG('M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z'),
-    search:      SVG('M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'),
-    save:        SVG('M17 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z'),
-    arrowRight:  SVG('M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z'),
-    home:        SVG('M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z'),
-    xCircle:     SVG('M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z'),
-    lock:        SVG('M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z'),
-    creditCard:  SVG('M20 4H4c-1.11 0-2 .89-2 2v12c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.11-.9-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z'),
-    ban:         SVG('M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z'),
-    questionMark:SVG('M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z'),
-    stop:        SVG('M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'),
-    clock:       SVG('M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z'),
-    swords:      SVG('M6.92 5H5l4 4-1.79 1.79L3 6.58V5l-1-1-.71.71 1 1v1.58l4.21 4.21L5.21 12.58 1 8.37V10l4.21 4.21-1 1L3.5 14.5l1.42 1.42.71-.71 1-1L11 18.58V20l1 1 .71-.71-1-1v-1.58L7.5 13.5l1.29-1.29L13.21 16.58V18l1 1 .71-.71-1-1v-1.58l-4.21-4.21 1.29-1.29L15.21 14.58V16l1 1 .71-.71-1-1v-1.58L12.5 10.5 17.08 5.92 19 5V3.5L17.5 5l-5.58 5.58L6.92 5zM20 3l.71.71-.71.71-.71-.71L20 3z'),
-    ghost:       SVG('M12 2c-4.97 0-9 4.03-9 9v11l3-3 3 3 3-3 3 3 3-3 3 3V11c0-4.97-4.03-9-9-9zM9 13.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm6 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'),
-    coffee:      SVG('M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 5h-2V5h2v3zM2 21h18v-2H2v2z'),
-    brain:       SVG('M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z'),
-    shield:      SVG('M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z'),
-    linkOff:     SVG('M17 7h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1 0 1.43-.98 2.63-2.31 2.98l1.46 1.46C20.88 15.61 22 13.95 22 12c0-2.76-2.24-5-5-5zm-1 4h-2.19l2 2H16v-2zM2 4.27l3.11 3.11C3.29 8.12 2 9.91 2 12c0 2.76 2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1 0-1.59 1.21-2.9 2.76-3.07L8.73 11H8v2h2.73l2 2H8v1.9h7.73l2 2 1.27-1.27L3.27 3 2 4.27z'),
-    traffic:     SVG('M20 10h-3V8.86c1.72-.45 3-2 3-3.86h-3V4c0-.55-.45-1-1-1H8c-.55 0-1 .45-1 1v1H4c0 1.86 1.28 3.41 3 3.86V10H4c0 1.86 1.28 3.41 3 3.86V15H4c0 1.86 1.28 3.41 3 3.86V20c0 .55.45 1 1 1h8c.55 0 1-.45 1-1v-1.14c1.72-.45 3-2 3-3.86h-3v-1.14c1.72-.45 3-2 3-3.86zm-8 7c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm0-5c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm0-5c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z'),
-    scale:       SVG('M12 3c-1.27 0-2.4.8-2.82 2H3v2h1.95L2 14c-.08 2 2 4 4 4s4.08-2 4-4L7.05 7H9.18c.42 1.2 1.55 2 2.82 2s2.4-.8 2.82-2h2.13L14 14c-.08 2 2 4 4 4s4.08-2 4-4l-2.95-7H21V5h-6.18C14.4 3.8 13.27 3 12 3zM6 14l2-5 2 5H6zm12 0l2-5 2 5h-4z'),
-    bolt:        SVG('M7 2v11h3v9l7-12h-4l4-8H7z'),
-    construct:   SVG('M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z'),
-    alert:       SVG('M12 2L1 21h22L12 2zm0 15.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1-4h-2v-5h2v5z'),
-    loop:        SVG('M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z'),
-    wifi:        SVG('M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z'),
-    plug:        SVG('M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3h-.5c-.28 0-.5.22-.5.5v1c0 .28.22.5.5.5h6V21h2v-5h6.5c.28 0 .5-.22.5-.5v-1c0-.28-.22-.5-.5-.5H19c-1.66 0-3-1.34-3-3z'),
-    expand:      SVG('M4 20h16v-2H4v2zM4 4v2h16V4H4zm8 14l4-4H9l3 4zm-4-8l4-4 4 4H8z'),
-    proxy:       SVG('M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93s3.05-7.44 7-7.93v15.86zm2 0V4.07c3.95.49 7 3.85 7 7.93s-3.05 7.44-7 7.93z'),
-    upload:      SVG('M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z'),
-    resize:      SVG('M19 12h-2v3h-3v2h5v-5zM7 9h3V7H5v5h2V9zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z'),
-    storage:     SVG('M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zM2 14h20v-4H2v4zm2-3h2v2H4v-2z'),
-};
+        <!-- 05 -->
+        <a href="mockups/05-bookshelf-library.html" class="card" target="_blank" rel="noopener">
+            <div class="card-thumb">
+                <img src="mockups/05-bookshelf-library.png" alt="Bookshelf Library design" loading="lazy">
+            </div>
+            <div class="card-info">
+                <div class="card-number">Design 05</div>
+                <div class="card-title">Bookshelf Library</div>
+                <p class="card-desc">Browse status codes organized as volumes on library shelves.</p>
+            </div>
+        </a>
 
-// Category fallback icons
-const CAT_ICON_MAP = {
-    '1xx': 'info',
-    '2xx': 'check',
-    '3xx': 'redirect',
-    '4xx': 'warning',
-    '5xx': 'server',
-};
+        <!-- 06 -->
+        <a href="mockups/06-vending-machine.html" class="card" target="_blank" rel="noopener">
+            <div class="card-thumb">
+                <img src="mockups/06-vending-machine.png" alt="Vending Machine design" loading="lazy">
+            </div>
+            <div class="card-info">
+                <div class="card-number">Design 06</div>
+                <div class="card-title">Vending Machine</div>
+                <p class="card-desc">Select your HTTP response from a retro vending machine grid.</p>
+            </div>
+        </a>
 
-// Per-code icon overrides
-const CODE_ICON_MAP = {
-    100: 'hourglass', 101: 'swap', 103: 'bulb',
-    200: 'check', 201: 'sparkle', 202: 'mail', 203: 'proxy',
-    204: 'empty', 205: 'loop', 206: 'slice', 207: 'layers', 208: 'copy', 226: 'brain',
-    300: 'layers', 301: 'home', 302: 'search', 303: 'arrowRight',
-    304: 'save', 305: 'proxy', 307: 'arrowRight', 308: 'home',
-    400: 'xCircle', 401: 'lock', 402: 'creditCard', 403: 'ban',
-    404: 'search', 405: 'ban', 406: 'xCircle', 407: 'shield',
-    408: 'clock', 409: 'swords', 410: 'ghost', 411: 'resize',
-    412: 'shield', 413: 'upload', 414: 'linkOff', 415: 'xCircle',
-    416: 'resize', 417: 'xCircle', 418: 'coffee', 421: 'linkOff',
-    422: 'questionMark', 423: 'lock', 424: 'linkOff', 425: 'clock',
-    426: 'plug', 428: 'shield', 429: 'traffic', 431: 'expand', 451: 'scale',
-    500: 'bolt', 501: 'questionMark', 502: 'construct', 503: 'alert',
-    504: 'clock', 505: 'xCircle', 506: 'loop', 507: 'storage',
-    508: 'loop', 510: 'plug', 511: 'wifi',
-};
+        <!-- 07 -->
+        <a href="mockups/07-mobile-swipe-cards.html" class="card" target="_blank" rel="noopener">
+            <div class="card-thumb">
+                <img src="mockups/07-mobile-swipe-cards.png" alt="Mobile Swipe Cards design" loading="lazy">
+            </div>
+            <div class="card-info">
+                <div class="card-number">Design 07</div>
+                <div class="card-title">Mobile Swipe Cards</div>
+                <p class="card-desc">Swipe through status codes with a mobile-first card interface.</p>
+            </div>
+        </a>
 
-function getIcon(code, cat) {
-    const key = CODE_ICON_MAP[code] || CAT_ICON_MAP[cat] || 'info';
-    return ICONS[key] || ICONS.info;
-}
+        <!-- 08 -->
+        <a href="mockups/08-instagram-stories.html" class="card" target="_blank" rel="noopener">
+            <div class="card-thumb">
+                <img src="mockups/08-instagram-stories.png" alt="Instagram Stories design" loading="lazy">
+            </div>
+            <div class="card-info">
+                <div class="card-number">Design 08</div>
+                <div class="card-title">Instagram Stories</div>
+                <p class="card-desc">Status codes presented as tappable social media stories.</p>
+            </div>
+        </a>
 
-const COLS = 16;
-let activeFilter = 'all';
-let searchQuery = '';
-let currentIndex = -1;
-let activeTileEl = null;
+        <!-- 09 -->
+        <a href="mockups/09-trading-cards.html" class="card" target="_blank" rel="noopener">
+            <div class="card-thumb">
+                <img src="mockups/09-trading-cards.png" alt="Trading Cards design" loading="lazy">
+            </div>
+            <div class="card-info">
+                <div class="card-number">Design 09</div>
+                <div class="card-title">Trading Cards</div>
+                <p class="card-desc">Collectible trading cards with stats, rarity, and artwork.</p>
+            </div>
+        </a>
 
-function codeMatches(sc) {
-    const f = activeFilter === 'all' || sc.cat === activeFilter;
-    const s = searchQuery === '' ||
-        sc.code.toString().includes(searchQuery) ||
-        sc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        sc.desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        sc.symbol.toLowerCase().includes(searchQuery.toLowerCase());
-    return f && s;
-}
+        <!-- 10 -->
+        <a href="mockups/10-city-skyline.html" class="card" target="_blank" rel="noopener">
+            <div class="card-thumb">
+                <img src="mockups/10-city-skyline.png" alt="City Skyline design" loading="lazy">
+            </div>
+            <div class="card-info">
+                <div class="card-number">Design 10</div>
+                <div class="card-title">City Skyline</div>
+                <p class="card-desc">HTTP responses as buildings forming an illuminated cityscape.</p>
+            </div>
+        </a>
 
-function buildRows() {
-    const groups = ['1xx','2xx','3xx','4xx','5xx'].map(cat => ({
-        cat, codes: STATUS_CODES.filter(s => s.cat === cat)
-    }));
-    const rows = [];
-    groups.forEach(g => {
-        const perRow = COLS - 1;
-        for (let i = 0; i < g.codes.length; i += perRow) {
-            const chunk = g.codes.slice(i, i + perRow);
-            rows.push({ cat: g.cat, first: i === 0, codes: chunk, pad: perRow - chunk.length });
-        }
-    });
-    return rows;
-}
+        <!-- 11 -->
+        <a href="mockups/11-treemap.html" class="card" target="_blank" rel="noopener">
+            <div class="card-thumb">
+                <img src="mockups/11-treemap.png" alt="Treemap design" loading="lazy">
+            </div>
+            <div class="card-info">
+                <div class="card-number">Design 11</div>
+                <div class="card-title">Treemap</div>
+                <p class="card-desc">Proportional treemap visualization grouped by category.</p>
+            </div>
+        </a>
 
-function showDetail(sc) {
-    const panel = document.getElementById('detail-panel');
-    const color = CAT_COLORS[sc.cat];
+        <!-- 12 -->
+        <a href="mockups/12-radial-sunburst.html" class="card" target="_blank" rel="noopener">
+            <div class="card-thumb">
+                <img src="mockups/12-radial-sunburst.png" alt="Radial Sunburst design" loading="lazy">
+            </div>
+            <div class="card-info">
+                <div class="card-number">Design 12</div>
+                <div class="card-title">Radial Sunburst</div>
+                <p class="card-desc">Circular sunburst chart radiating outward from category rings.</p>
+            </div>
+        </a>
 
-    panel.className = `detail-panel has-content dp-${sc.cat}`;
+        <!-- 13 -->
+        <a href="mockups/13-dense-cheat-sheet.html" class="card" target="_blank" rel="noopener">
+            <div class="card-thumb">
+                <img src="mockups/13-dense-cheat-sheet.png" alt="Dense Cheat Sheet design" loading="lazy">
+            </div>
+            <div class="card-info">
+                <div class="card-number">Design 13</div>
+                <div class="card-title">Dense Cheat Sheet</div>
+                <p class="card-desc">Everything on one page — compact quick-reference format.</p>
+            </div>
+        </a>
 
-    const dIcon = document.getElementById('d-icon');
-    dIcon.innerHTML = getIcon(sc.code, sc.cat);
-    dIcon.style.color = color;
-    document.getElementById('d-symbol').textContent = sc.symbol;
-    document.getElementById('d-symbol').style.color = color;
-    document.getElementById('d-code').textContent = sc.code;
-    document.getElementById('d-code').style.color = color;
-    document.getElementById('d-name').textContent = sc.name;
+        <!-- 14 -->
+        <a href="mockups/14-honeycomb-hex.html" class="card" target="_blank" rel="noopener">
+            <div class="card-thumb">
+                <img src="mockups/14-honeycomb-hex.png" alt="Honeycomb Hex design" loading="lazy">
+            </div>
+            <div class="card-info">
+                <div class="card-number">Design 14</div>
+                <div class="card-title">Honeycomb Hex</div>
+                <p class="card-desc">Hexagonal tessellation grid for organic spatial browsing.</p>
+            </div>
+        </a>
 
-    const badge = document.getElementById('d-cat');
-    badge.textContent = `${sc.cat} · ${CAT_LABELS[sc.cat]}`;
-    badge.style.color = color;
-    badge.style.background = color + '18';
+        <!-- 15 -->
+        <a href="mockups/15-ipad-portrait-accordion.html" class="card" target="_blank" rel="noopener">
+            <div class="card-thumb">
+                <img src="mockups/15-ipad-portrait-accordion.png" alt="iPad Portrait Accordion design" loading="lazy">
+            </div>
+            <div class="card-info">
+                <div class="card-number">Design 15</div>
+                <div class="card-title">iPad Portrait Accordion</div>
+                <p class="card-desc">Touch-friendly accordion layout optimized for portrait tablets.</p>
+            </div>
+        </a>
 
-    document.getElementById('d-desc').textContent = sc.desc;
-    document.getElementById('d-rfc').textContent = sc.rfc;
+        <!-- 16 -->
+        <a href="mockups/16-compact-color-matrix.html" class="card" target="_blank" rel="noopener">
+            <div class="card-thumb">
+                <img src="mockups/16-compact-color-matrix.png" alt="Compact Color Matrix design" loading="lazy">
+            </div>
+            <div class="card-info">
+                <div class="card-number">Design 16</div>
+                <div class="card-title">Compact Color Matrix</div>
+                <p class="card-desc">Dense, scannable color-coded matrix for at-a-glance reference.</p>
+            </div>
+        </a>
 
-    // highlight active tile
-    if (activeTileEl) activeTileEl.classList.remove('active-tile');
-    const tiles = document.querySelectorAll('.tile[data-code]');
-    tiles.forEach(t => {
-        if (t.dataset.code == sc.code) {
-            t.classList.add('active-tile');
-            activeTileEl = t;
-        }
-    });
+    </main>
 
-    currentIndex = STATUS_CODES.indexOf(sc);
-}
-
-function clearDetail() {
-    const panel = document.getElementById('detail-panel');
-    panel.className = 'detail-panel';
-    if (activeTileEl) activeTileEl.classList.remove('active-tile');
-    activeTileEl = null;
-    currentIndex = -1;
-}
-
-function renderGrid() {
-    const grid = document.getElementById('grid');
-    grid.innerHTML = '';
-    const rows = buildRows();
-    grid.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
-    grid.style.gridTemplateRows = `repeat(${rows.length}, 1fr)`;
-
-    rows.forEach(row => {
-        const hdr = document.createElement('div');
-        hdr.className = `group-header gh-${row.cat}${row.first ? ' clickable' : ''}`;
-        if (row.first) {
-            hdr.textContent = row.cat;
-            if (activeFilter === row.cat) hdr.classList.add('active-header');
-            hdr.addEventListener('click', () => toggleFilter(row.cat));
-            hdr.addEventListener('mouseenter', () => {
-                grid.querySelectorAll(`.tile.cat-${row.cat}`).forEach(t => {
-                    if (!t.classList.contains('dimmed')) t.classList.add('row-highlight');
-                });
-            });
-            hdr.addEventListener('mouseleave', () => {
-                grid.querySelectorAll('.tile.row-highlight').forEach(t => t.classList.remove('row-highlight'));
-            });
-        }
-        grid.appendChild(hdr);
-
-        row.codes.forEach(sc => {
-            const t = document.createElement('div');
-            t.className = `tile cat-${sc.cat}`;
-            t.dataset.code = sc.code;
-            if (!codeMatches(sc)) t.classList.add('dimmed');
-
-            const icon = getIcon(sc.code, sc.cat);
-            t.innerHTML = `<div class="tile-icon">${icon}</div><div class="tile-code">${sc.code}</div><div class="tile-name">${sc.name}</div>`;
-
-            t.addEventListener('mouseenter', () => showDetail(sc));
-            t.addEventListener('click', () => showDetail(sc));
-            grid.appendChild(t);
-        });
-
-        for (let i = 0; i < row.pad; i++) {
-            const gap = document.createElement('div');
-            gap.className = 'tile gap';
-            grid.appendChild(gap);
-        }
-    });
-}
-
-// Keyboard navigation
-document.addEventListener('keydown', (e) => {
-    if (e.target === document.getElementById('search')) return;
-
-    const visible = STATUS_CODES.filter(codeMatches);
-    if (visible.length === 0) return;
-
-    if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        let idx = currentIndex === -1 ? 0 : visible.indexOf(STATUS_CODES[currentIndex]);
-        idx = (idx + 1) % visible.length;
-        showDetail(visible[idx]);
-    } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        let idx = currentIndex === -1 ? 0 : visible.indexOf(STATUS_CODES[currentIndex]);
-        idx = (idx - 1 + visible.length) % visible.length;
-        showDetail(visible[idx]);
-    }
-});
-
-// Shared filter toggle — clicking same filter again resets to 'all'
-function toggleFilter(cat) {
-    activeFilter = (activeFilter === cat) ? 'all' : cat;
-    syncLegend();
-    clearDetail();
-    renderGrid();
-}
-
-function syncLegend() {
-    document.querySelectorAll('.legend-item').forEach(i => {
-        i.classList.toggle('active', i.dataset.cat === activeFilter);
-    });
-}
-
-// Legend filter
-document.querySelectorAll('.legend-item').forEach(item => {
-    item.addEventListener('click', () => toggleFilter(item.dataset.cat));
-});
-
-// Search
-document.getElementById('search').addEventListener('input', (e) => {
-    searchQuery = e.target.value.trim();
-    renderGrid();
-});
-
-renderGrid();
-</script>
-
-<div class="site-footer">
-    <span>v0.1.0</span>
-    <a href="https://github.com/schmoli/periodic-table-of-status-codes" target="_blank" rel="noopener">
-        <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-    </a>
-</div>
+    <footer class="footer">
+        <p>v0.1.0 · <a href="https://github.com/schmoli/periodic-table-of-status-codes" target="_blank" rel="noopener">GitHub</a></p>
+    </footer>
 
 </body>
 </html>

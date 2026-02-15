@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Design gallery landing page showcasing all 17 designs as a thumbnail grid
 - 16 creative mockup designs exploring alternative presentations for HTTP status codes
   - Desktop: subway metro map, airport departure board, vinyl record crate, constellation star map, bookshelf library, vending machine, city skyline, treemap, radial sunburst
   - Mobile: swipe cards (Tinder-style), Instagram stories
@@ -16,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Original periodic table moved from `index.html` to `periodic-table.html`
 - Moved version badge from top bar to fixed bottom-right footer
 - Added GitHub repo link with icon to footer
 
