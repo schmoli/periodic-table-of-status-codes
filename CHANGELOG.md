@@ -14,6 +14,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - Improved contrast for version badge, tile name labels, and RFC text in detail panel
+- Increased font sizes across small text: tile names, RFC, footer, and nav hints
+- Tile names now wrap to 2 lines instead of truncating to unreadable single line
+- Nav hint arrows and label contrast fixed (were invisible at #30363d)
 
 ## [0.1.0] - 2026-02-14
 
