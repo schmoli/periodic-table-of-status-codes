@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Moved version badge from top bar to fixed bottom-right footer
+- Added GitHub repo link with icon to footer
+
 ### Fixed
 
 - Improved contrast for version badge, tile name labels, and RFC text in detail panel
