@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Gallery cards now navigate in same tab so browser back button works
 - Improved contrast for version badge, tile name labels, and RFC text in detail panel
 - Increased font sizes across small text: tile names, RFC, footer, and nav hints
 - Tile names now wrap to 2 lines instead of truncating to unreadable single line
