@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTTP Vend-O-Matic | Status Code Dispenser</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+    --machine-silver: #b8bcc0;
+    --machine-dark: #6b7075;
+    --machine-frame: #4a4e52;
+    --glass-tint: rgba(180, 220, 255, 0.06);
+    --glass-reflection: rgba(255, 255, 255, 0.08);
+    --led-green: #00ff66;
+    --led-dim: #003318;
+    --glow-inner: rgba(180, 220, 255, 0.12);
+    --cat-1xx: #58a6ff;
+    --cat-2xx: #3fb950;
+    --cat-3xx: #d29922;
+    --cat-4xx: #ff7b72;
+    --cat-5xx: #bc8cff;
+}
+
+body {
+    background: #1a1a2e;
+    background-image:
+        radial-gradient(ellipse at 50% 80%, rgba(100, 100, 160, 0.15) 0%, transparent 60%),
+        repeating-linear-gradient(0deg, transparent, transparent 49px, rgba(255,255,255,0.015) 49px, rgba(255,255,255,0.015) 50px);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 30px 20px;
+    overflow-x: hidden;
+}
+
+/* === MAIN MACHINE CONTAINER === */
+.vending-machine {
+    width: 1100px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    position: relative;
+}
+
+/* === TOP SIGN === */
+.machine-header {
+    background: linear-gradient(180deg, #2a2a3e, #1e1e30);
+    border: 3px solid #444;
+    border-bottom: none;
+    border-radius: 20px 20px 0 0;
+    padding: 18px 30px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.machine-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg,
+        transparent 0%, rgba(255,100,100,0.08) 15%,
+        rgba(255,200,50,0.08) 30%, rgba(50,255,100,0.08) 50%,
+        rgba(50,150,255,0.08) 70%, rgba(200,100,255,0.08) 85%,
+        transparent 100%);
+    animation: headerGlow 4s ease-in-out infinite alternate;
+}
+
+@keyframes headerGlow {
+    0% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.machine-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 22px;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(0, 255, 102, 0.6), 0 0 40px rgba(0, 255, 102, 0.3);
+    position: relative;
+    letter-spacing: 2px;
+}
+
+.machine-subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 6px;
+    position: relative;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+/* === MAIN BODY === */
+.machine-body {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    background: linear-gradient(180deg, #3a3d42 0%, #2d3035 50%, #25282c 100%);
+    border-left: 3px solid #444;
+    border-right: 3px solid #444;
+    min-height: 640px;
+    position: relative;
+}
+
+/* === GLASS PRODUCT AREA === */
+.glass-area {
+    position: relative;
+    padding: 14px;
+    overflow: hidden;
+}
+
+/* Glass overlay */
+.glass-area::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(135deg, rgba(255,255,255,0.07) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.03) 100%),
+        linear-gradient(180deg, var(--glass-tint), transparent 30%);
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Glass reflection stripe */
+.glass-area::after {
+    content: '';
+    position: absolute;
+    top: -20%;
+    left: -10%;
+    width: 30%;
+    height: 150%;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.04) 45%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 55%, transparent 60%);
+    transform: rotate(15deg);
+    pointer-events: none;
+    z-index: 11;
+}
+
+/* Inner glow */
+.glass-inner {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.05);
+    height: 100%;
+    padding: 8px;
+    position: relative;
+    box-shadow: inset 0 0 60px rgba(150, 200, 255, 0.04);
+}
+
+/* === PRODUCT SHELVES === */
+.shelf-section {
+    margin-bottom: 4px;
+}
+
+.shelf-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 6px;
+    margin-bottom: 3px;
+}
+
+.shelf-letter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.7);
+    width: 22px;
+    text-align: center;
+}
+
+.shelf-cat-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.06);
+}
+
+.products-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 4px 4px 6px 28px;
+    position: relative;
+    min-height: 72px;
+}
+
+/* Shelf bar */
+.products-row::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 10px;
+    right: 10px;
+    height: 3px;
+    background: linear-gradient(180deg, #555, #3a3a3a);
+    border-radius: 0 0 2px 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+/* === PRODUCT ITEMS (Cans/Bottles) === */
+.product {
+    width: 62px;
+    height: 64px;
+    border-radius: 5px;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%);
+    border: 1px solid rgba(255,255,255,0.08);
+    z-index: 5;
+}
+
+.product::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 5px;
+    opacity: 0.15;
+    transition: opacity 0.2s;
+}
+
+.product:hover {
+    transform: scale(1.08);
+    z-index: 20;
+    border-color: rgba(255,255,255,0.25);
+}
+
+.product:hover::before {
+    opacity: 0.35;
+}
+
+.product.cat-1xx::before { background: var(--cat-1xx); }
+.product.cat-2xx::before { background: var(--cat-2xx); }
+.product.cat-3xx::before { background: var(--cat-3xx); }
+.product.cat-4xx::before { background: var(--cat-4xx); }
+.product.cat-5xx::before { background: var(--cat-5xx); }
+
+.product-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.product.cat-1xx .product-code { color: var(--cat-1xx); }
+.product.cat-2xx .product-code { color: var(--cat-2xx); }
+.product.cat-3xx .product-code { color: var(--cat-3xx); }
+.product.cat-4xx .product-code { color: var(--cat-4xx); }
+.product.cat-5xx .product-code { color: var(--cat-5xx); }
+
+.product-symbol {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 2px;
+}
+
+.product-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 6.5px;
+    color: rgba(255,255,255,0.35);
+    text-align: center;
+    line-height: 1.2;
+    margin-top: 2px;
+    max-width: 56px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.product-vend-id {
+    position: absolute;
+    top: 2px;
+    right: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 6px;
+    color: rgba(255,255,255,0.2);
+}
+
+/* Sold out / deprecated */
+.product.sold-out {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.product.sold-out::after {
+    content: 'SOLD OUT';
+    position: absolute;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 5px;
+    color: #ff4444;
+    background: rgba(0,0,0,0.7);
+    padding: 2px 4px;
+    border-radius: 2px;
+    bottom: 4px;
+    letter-spacing: 0.5px;
+}
+
+/* Selected product */
+.product.dispensing {
+    animation: dispense 0.8s ease-in forwards;
+}
+
+@keyframes dispense {
+    0% { transform: translateY(0); opacity: 1; }
+    30% { transform: translateY(4px); }
+    50% { transform: translateY(-2px); }
+    70% { transform: translateY(200px) rotate(5deg); opacity: 0.6; }
+    100% { transform: translateY(400px) rotate(10deg); opacity: 0; }
+}
+
+.product.selected {
+    border-color: rgba(255,255,255,0.5);
+    box-shadow: 0 0 12px rgba(255,255,255,0.15);
+}
+
+/* === CONTROL PANEL (Right side) === */
+.control-panel {
+    background: linear-gradient(180deg, #2a2d31 0%, #222528 100%);
+    border-left: 2px solid #444;
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* LED Display */
+.led-display {
+    background: #0a0f0a;
+    border: 2px solid #333;
+    border-radius: 6px;
+    padding: 12px 10px;
+    min-height: 90px;
+    position: relative;
+    box-shadow: inset 0 0 20px rgba(0, 255, 60, 0.05);
+}
+
+.led-display::before {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 255, 60, 0.1);
+    pointer-events: none;
+}
+
+.led-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--led-green);
+    text-shadow: 0 0 8px rgba(0, 255, 60, 0.5);
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.led-text .led-code {
+    font-size: 20px;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.led-text .led-name {
+    font-size: 9px;
+    opacity: 0.8;
+    display: block;
+}
+
+.led-text.idle {
+    animation: blink 2s step-end infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* Keypad */
+.keypad-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-align: center;
+}
+
+.keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.key {
+    background: linear-gradient(180deg, #555 0%, #3a3a3a 100%);
+    border: 1px solid #666;
+    border-radius: 4px;
+    color: #ddd;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 0;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.1s;
+    user-select: none;
+}
+
+.key:hover {
+    background: linear-gradient(180deg, #666 0%, #4a4a4a 100%);
+}
+
+.key:active {
+    background: linear-gradient(180deg, #3a3a3a 0%, #555 100%);
+    transform: scale(0.95);
+}
+
+.key.key-action {
+    font-size: 9px;
+    letter-spacing: 1px;
+}
+
+.key.key-vend {
+    background: linear-gradient(180deg, #2a6b2a 0%, #1a4a1a 100%);
+    border-color: #3a8a3a;
+    color: var(--led-green);
+    grid-column: span 2;
+}
+
+.key.key-vend:hover {
+    background: linear-gradient(180deg, #3a8a3a 0%, #2a6b2a 100%);
+}
+
+.key.key-clear {
+    background: linear-gradient(180deg, #6b2a2a 0%, #4a1a1a 100%);
+    border-color: #8a3a3a;
+    color: #ff7b72;
+}
+
+/* Coin/Bill Slots */
+.payment-section {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.coin-slot {
+    width: 50px;
+    height: 6px;
+    background: #111;
+    border: 1px solid #555;
+    border-radius: 3px;
+    margin: 0 auto;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
+}
+
+.coin-slot-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7px;
+    color: rgba(255,255,255,0.25);
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 3px;
+}
+
+.bill-slot {
+    width: 70px;
+    height: 4px;
+    background: #111;
+    border: 1px solid #555;
+    border-radius: 2px;
+    margin: 0 auto;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
+}
+
+.coin-return {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #444 0%, #2a2a2a 100%);
+    border: 2px solid #555;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+}
+
+.coin-return-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 5px;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+    line-height: 1.3;
+}
+
+/* === BOTTOM SECTION === */
+.machine-bottom {
+    background: linear-gradient(180deg, #2d3035, #25282c);
+    border: 3px solid #444;
+    border-top: 2px solid #3a3a3a;
+    border-radius: 0 0 16px 16px;
+    padding: 16px 20px 20px;
+}
+
+/* Retrieval Slot */
+.retrieval-slot {
+    background: #0a0a0a;
+    border-radius: 8px;
+    border: 2px solid #333;
+    min-height: 80px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 4px 15px rgba(0,0,0,0.6);
+}
+
+/* Flap */
+.retrieval-flap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(180deg, #444, #333);
+    border-bottom: 1px solid #555;
+    border-radius: 6px 6px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.retrieval-flap span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7px;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.retrieval-content {
+    padding: 28px 20px 14px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    opacity: 0;
+    transition: opacity 0.4s ease 0.6s;
+}
+
+.retrieval-content.visible {
+    opacity: 1;
+}
+
+.dispensed-item {
+    width: 90px;
+    height: 90px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+    animation: landBounce 0.4s ease-out;
+}
+
+@keyframes landBounce {
+    0% { transform: translateY(-20px); opacity: 0; }
+    60% { transform: translateY(3px); }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+.dispensed-item .d-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.dispensed-item .d-symbol {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    opacity: 0.5;
+    color: rgba(255,255,255,0.5);
+}
+
+.dispensed-item.cat-1xx { border-color: var(--cat-1xx); }
+.dispensed-item.cat-1xx .d-code { color: var(--cat-1xx); }
+.dispensed-item.cat-2xx { border-color: var(--cat-2xx); }
+.dispensed-item.cat-2xx .d-code { color: var(--cat-2xx); }
+.dispensed-item.cat-3xx { border-color: var(--cat-3xx); }
+.dispensed-item.cat-3xx .d-code { color: var(--cat-3xx); }
+.dispensed-item.cat-4xx { border-color: var(--cat-4xx); }
+.dispensed-item.cat-4xx .d-code { color: var(--cat-4xx); }
+.dispensed-item.cat-5xx { border-color: var(--cat-5xx); }
+.dispensed-item.cat-5xx .d-code { color: var(--cat-5xx); }
+
+.dispensed-details {
+    flex: 1;
+}
+
+.dispensed-details .dd-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #eee;
+    margin-bottom: 4px;
+}
+
+.dispensed-details .dd-desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.5;
+    margin-bottom: 6px;
+}
+
+.dispensed-details .dd-rfc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    padding: 3px 8px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.dispensed-details .dd-cat {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-left: 6px;
+}
+
+.dd-cat.cat-1xx { color: var(--cat-1xx); background: rgba(88,166,255,0.1); }
+.dd-cat.cat-2xx { color: var(--cat-2xx); background: rgba(63,185,80,0.1); }
+.dd-cat.cat-3xx { color: var(--cat-3xx); background: rgba(210,153,34,0.1); }
+.dd-cat.cat-4xx { color: var(--cat-4xx); background: rgba(255,123,114,0.1); }
+.dd-cat.cat-5xx { color: var(--cat-5xx); background: rgba(188,140,255,0.1); }
+
+.empty-slot-msg {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,255,255,0.15);
+    text-align: center;
+    width: 100%;
+    padding: 26px 20px 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* Machine feet */
+.machine-feet {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 60px;
+}
+
+.foot {
+    width: 40px;
+    height: 8px;
+    background: #333;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+/* === CATEGORY LEGEND === */
+.legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+.legend-dot.cat-1xx { background: var(--cat-1xx); }
+.legend-dot.cat-2xx { background: var(--cat-2xx); }
+.legend-dot.cat-3xx { background: var(--cat-3xx); }
+.legend-dot.cat-4xx { background: var(--cat-4xx); }
+.legend-dot.cat-5xx { background: var(--cat-5xx); }
+
+.legend-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+}
+
+/* Machines glow effect */
+.machine-glow {
+    position: absolute;
+    inset: -30px;
+    border-radius: 30px;
+    background: radial-gradient(ellipse at 40% 40%, rgba(150, 200, 255, 0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Outer wrapper */
+.machine-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Screws on retrieval slot */
+.screw {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #666, #444);
+    border: 1px solid #555;
+    position: absolute;
+    z-index: 20;
+}
+
+.screw::after {
+    content: '+';
+    font-size: 7px;
+    color: #888;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    line-height: 1;
+}
+
+.screw.tl { top: 6px; left: 6px; }
+.screw.tr { top: 6px; right: 6px; }
+.screw.bl { bottom: 6px; left: 6px; }
+.screw.br { bottom: 6px; right: 6px; }
+
+/* Keypad input display */
+.keypad-input {
+    background: #0a0f0a;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 8px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--led-green);
+    text-shadow: 0 0 8px rgba(0, 255, 60, 0.4);
+    letter-spacing: 4px;
+    min-height: 42px;
+    box-shadow: inset 0 0 10px rgba(0,255,60,0.03);
+}
+
+.keypad-input .cursor {
+    animation: cursorBlink 1s step-end infinite;
+    color: var(--led-green);
+    opacity: 0.6;
+}
+
+@keyframes cursorBlink {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0; }
+}
+
+/* Price tag */
+.price-tag {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    color: var(--led-green);
+    text-align: center;
+    padding: 6px;
+    background: rgba(0,255,60,0.05);
+    border: 1px solid rgba(0,255,60,0.15);
+    border-radius: 4px;
+    text-shadow: 0 0 6px rgba(0,255,60,0.3);
+}
+
+/* Feedback message */
+.feedback-msg {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: #ff4444;
+    text-align: center;
+    min-height: 14px;
+    text-shadow: 0 0 6px rgba(255,60,60,0.3);
+}
+
+/* Brand plate at bottom */
+.brand-plate {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px 0;
+}
+
+.brand-name {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 6px;
+    color: rgba(255,255,255,0.15);
+    letter-spacing: 1px;
+}
+
+.brand-model {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7px;
+    color: rgba(255,255,255,0.1);
+}
+</style>
+</head>
+<body>
+
+<div class="machine-wrapper">
+    <div class="machine-glow"></div>
+    <div class="vending-machine">
+        <!-- Header -->
+        <div class="machine-header">
+            <div class="machine-title">HTTP VEND-O-MATIC</div>
+            <div class="machine-subtitle">Status Code Dispenser</div>
+        </div>
+
+        <!-- Body -->
+        <div class="machine-body">
+            <!-- Glass Product Area -->
+            <div class="glass-area">
+                <div class="glass-inner" id="productArea">
+                    <!-- Products populated by JS -->
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <!-- LED Display -->
+                <div class="led-display">
+                    <div class="led-text idle" id="ledDisplay">
+                        INSERT CODE<br>TO DISPENSE
+                    </div>
+                </div>
+
+                <!-- Keypad Input -->
+                <div class="keypad-input" id="keypadInput"><span class="cursor">_</span></div>
+
+                <!-- Keypad -->
+                <div class="keypad-label">Enter Code</div>
+                <div class="keypad">
+                    <div class="key" data-key="1">1</div>
+                    <div class="key" data-key="2">2</div>
+                    <div class="key" data-key="3">3</div>
+                    <div class="key" data-key="4">4</div>
+                    <div class="key" data-key="5">5</div>
+                    <div class="key" data-key="6">6</div>
+                    <div class="key" data-key="7">7</div>
+                    <div class="key" data-key="8">8</div>
+                    <div class="key" data-key="9">9</div>
+                    <div class="key key-clear key-action" data-key="clear">CLR</div>
+                    <div class="key" data-key="0">0</div>
+                    <div class="key key-vend key-action" data-key="vend">VEND</div>
+                </div>
+
+                <div class="feedback-msg" id="feedbackMsg"></div>
+
+                <!-- Price -->
+                <div class="price-tag">FREE / OPEN SOURCE</div>
+
+                <!-- Payment -->
+                <div class="payment-section">
+                    <div>
+                        <div class="coin-slot-label">Coins</div>
+                        <div class="coin-slot"></div>
+                    </div>
+                    <div>
+                        <div class="coin-slot-label">Bills</div>
+                        <div class="bill-slot"></div>
+                    </div>
+                    <div class="coin-return">
+                        <div class="coin-return-label">COIN<br>RETURN</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom -->
+        <div class="machine-bottom" id="machineBottom">
+            <div class="retrieval-slot">
+                <div class="retrieval-flap"><span>Retrieval Slot</span></div>
+                <div id="retrievalContent">
+                    <div class="empty-slot-msg">Select a status code to dispense</div>
+                </div>
+                <div class="screw tl"></div>
+                <div class="screw tr"></div>
+                <div class="screw bl"></div>
+                <div class="screw br"></div>
+            </div>
+            <div class="brand-plate">
+                <div class="brand-name">RFC INDUSTRIES</div>
+                <div class="brand-model">Model HTTP/1.1 | Serial: 200-OK</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="machine-feet">
+        <div class="foot"></div>
+        <div class="foot"></div>
+    </div>
+
+    <div class="legend" id="legend"></div>
+</div>
+
+<script>
+const STATUS_CODES = [
+    { code: 100, name: "Continue", symbol: "Cn", cat: "1xx", desc: "The server has received the request headers and the client should proceed to send the request body.", rfc: "RFC 9110" },
+    { code: 101, name: "Switching Protocols", symbol: "Sw", cat: "1xx", desc: "The server is switching protocols as requested by the client via the Upgrade header.", rfc: "RFC 9110" },
+    { code: 103, name: "Early Hints", symbol: "Eh", cat: "1xx", desc: "Used to return some response headers before the final HTTP message.", rfc: "RFC 8297" },
+    { code: 200, name: "OK", symbol: "Ok", cat: "2xx", desc: "The request has succeeded.", rfc: "RFC 9110" },
+    { code: 201, name: "Created", symbol: "Cr", cat: "2xx", desc: "The request has been fulfilled and a new resource has been created.", rfc: "RFC 9110" },
+    { code: 202, name: "Accepted", symbol: "Ac", cat: "2xx", desc: "The request has been accepted for processing, but processing has not been completed.", rfc: "RFC 9110" },
+    { code: 203, name: "Non-Authoritative", symbol: "Na", cat: "2xx", desc: "The returned metadata is not exactly the same as available from the origin server.", rfc: "RFC 9110" },
+    { code: 204, name: "No Content", symbol: "Nc", cat: "2xx", desc: "The server has successfully fulfilled the request and there is no additional content.", rfc: "RFC 9110" },
+    { code: 205, name: "Reset Content", symbol: "Rc", cat: "2xx", desc: "The server has fulfilled the request and the user agent should reset the document view.", rfc: "RFC 9110" },
+    { code: 206, name: "Partial Content", symbol: "Pc", cat: "2xx", desc: "The server is delivering only part of the resource due to a Range header.", rfc: "RFC 9110" },
+    { code: 207, name: "Multi-Status", symbol: "Ms", cat: "2xx", desc: "A WebDAV response conveying information about multiple resources.", rfc: "RFC 4918" },
+    { code: 208, name: "Already Reported", symbol: "Ar", cat: "2xx", desc: "Used inside a WebDAV response to avoid enumerating internal members repeatedly.", rfc: "RFC 5842" },
+    { code: 226, name: "IM Used", symbol: "Im", cat: "2xx", desc: "The server has fulfilled a GET request with instance-manipulations applied.", rfc: "RFC 3229" },
+    { code: 300, name: "Multiple Choices", symbol: "Mc", cat: "3xx", desc: "The request has more than one possible response.", rfc: "RFC 9110" },
+    { code: 301, name: "Moved Permanently", symbol: "Mp", cat: "3xx", desc: "The URL of the requested resource has been changed permanently.", rfc: "RFC 9110" },
+    { code: 302, name: "Found", symbol: "Fd", cat: "3xx", desc: "The URI of the requested resource has been changed temporarily.", rfc: "RFC 9110" },
+    { code: 303, name: "See Other", symbol: "So", cat: "3xx", desc: "The server is redirecting to a different resource using GET.", rfc: "RFC 9110" },
+    { code: 304, name: "Not Modified", symbol: "Nm", cat: "3xx", desc: "The resource has not been modified since the version specified.", rfc: "RFC 9110" },
+    { code: 305, name: "Use Proxy", symbol: "Up", cat: "3xx", desc: "The requested resource must be accessed through a proxy. Deprecated.", rfc: "Deprecated" },
+    { code: 307, name: "Temporary Redirect", symbol: "Tr", cat: "3xx", desc: "The server is redirecting to another URI with same method.", rfc: "RFC 9110" },
+    { code: 308, name: "Permanent Redirect", symbol: "Pr", cat: "3xx", desc: "The resource has permanently moved, same method required.", rfc: "RFC 9110" },
+    { code: 400, name: "Bad Request", symbol: "Br", cat: "4xx", desc: "The server cannot process the request due to a client error.", rfc: "RFC 9110" },
+    { code: 401, name: "Unauthorized", symbol: "Un", cat: "4xx", desc: "The request requires authentication.", rfc: "RFC 9110" },
+    { code: 402, name: "Payment Required", symbol: "Py", cat: "4xx", desc: "Reserved for future use. Some APIs use it for billing limits.", rfc: "RFC 9110" },
+    { code: 403, name: "Forbidden", symbol: "Fb", cat: "4xx", desc: "The client does not have access rights.", rfc: "RFC 9110" },
+    { code: 404, name: "Not Found", symbol: "Nf", cat: "4xx", desc: "The server cannot find the requested resource.", rfc: "RFC 9110" },
+    { code: 405, name: "Method Not Allowed", symbol: "Ma", cat: "4xx", desc: "The request method is not supported for that resource.", rfc: "RFC 9110" },
+    { code: 406, name: "Not Acceptable", symbol: "Nx", cat: "4xx", desc: "The server can't produce a matching response.", rfc: "RFC 9110" },
+    { code: 407, name: "Proxy Auth Required", symbol: "Pa", cat: "4xx", desc: "Authentication needs to be done by a proxy.", rfc: "RFC 9110" },
+    { code: 408, name: "Request Timeout", symbol: "Rt", cat: "4xx", desc: "The server would like to shut down this unused connection.", rfc: "RFC 9110" },
+    { code: 409, name: "Conflict", symbol: "Cf", cat: "4xx", desc: "The request conflicts with the current state of the server.", rfc: "RFC 9110" },
+    { code: 410, name: "Gone", symbol: "Gn", cat: "4xx", desc: "The content has been permanently deleted.", rfc: "RFC 9110" },
+    { code: 411, name: "Length Required", symbol: "Lr", cat: "4xx", desc: "Content-Length header is not defined.", rfc: "RFC 9110" },
+    { code: 412, name: "Precondition Failed", symbol: "Pf", cat: "4xx", desc: "Preconditions in request headers are not met.", rfc: "RFC 9110" },
+    { code: 413, name: "Content Too Large", symbol: "Tl", cat: "4xx", desc: "Request entity is larger than server limits.", rfc: "RFC 9110" },
+    { code: 414, name: "URI Too Long", symbol: "Ul", cat: "4xx", desc: "The URI is longer than the server will interpret.", rfc: "RFC 9110" },
+    { code: 415, name: "Unsupported Media", symbol: "Um", cat: "4xx", desc: "The media format is not supported.", rfc: "RFC 9110" },
+    { code: 416, name: "Range Not Satisfiable", symbol: "Rn", cat: "4xx", desc: "The range specified can't be fulfilled.", rfc: "RFC 9110" },
+    { code: 417, name: "Expectation Failed", symbol: "Ef", cat: "4xx", desc: "The Expect header expectation can't be met.", rfc: "RFC 9110" },
+    { code: 418, name: "I'm a Teapot", symbol: "Tp", cat: "4xx", desc: "An April Fools' joke from 1998 that became beloved.", rfc: "RFC 2324" },
+    { code: 421, name: "Misdirected", symbol: "Mr", cat: "4xx", desc: "The request was directed at a wrong server.", rfc: "RFC 9110" },
+    { code: 422, name: "Unprocessable", symbol: "Uc", cat: "4xx", desc: "Well-formed but semantically erroneous.", rfc: "RFC 9110" },
+    { code: 423, name: "Locked", symbol: "Lk", cat: "4xx", desc: "The resource is locked (WebDAV).", rfc: "RFC 4918" },
+    { code: 424, name: "Failed Dependency", symbol: "Dp", cat: "4xx", desc: "Failed due to failure of a previous request.", rfc: "RFC 4918" },
+    { code: 425, name: "Too Early", symbol: "Te", cat: "4xx", desc: "Server won't risk processing a replay.", rfc: "RFC 8470" },
+    { code: 426, name: "Upgrade Required", symbol: "Ur", cat: "4xx", desc: "Server refuses current protocol.", rfc: "RFC 9110" },
+    { code: 428, name: "Precondition Req'd", symbol: "Pq", cat: "4xx", desc: "The server requires conditional requests.", rfc: "RFC 6585" },
+    { code: 429, name: "Too Many Requests", symbol: "Tm", cat: "4xx", desc: "Rate limited.", rfc: "RFC 6585" },
+    { code: 431, name: "Headers Too Large", symbol: "Hl", cat: "4xx", desc: "Header fields are too large.", rfc: "RFC 6585" },
+    { code: 451, name: "Legal Reasons", symbol: "Lg", cat: "4xx", desc: "Unavailable for legal reasons.", rfc: "RFC 7725" },
+    { code: 500, name: "Internal Error", symbol: "Is", cat: "5xx", desc: "Unhandled server exception.", rfc: "RFC 9110" },
+    { code: 501, name: "Not Implemented", symbol: "Ni", cat: "5xx", desc: "The request method is not supported.", rfc: "RFC 9110" },
+    { code: 502, name: "Bad Gateway", symbol: "Bg", cat: "5xx", desc: "Invalid response from upstream server.", rfc: "RFC 9110" },
+    { code: 503, name: "Service Unavailable", symbol: "Su", cat: "5xx", desc: "Server not ready - maintenance or overloaded.", rfc: "RFC 9110" },
+    { code: 504, name: "Gateway Timeout", symbol: "Gt", cat: "5xx", desc: "Gateway didn't get a response in time.", rfc: "RFC 9110" },
+    { code: 505, name: "HTTP Ver. Unsupported", symbol: "Hv", cat: "5xx", desc: "HTTP version not supported.", rfc: "RFC 9110" },
+    { code: 506, name: "Variant Negotiates", symbol: "Vn", cat: "5xx", desc: "Internal configuration error.", rfc: "RFC 2295" },
+    { code: 507, name: "Insufficient Storage", symbol: "St", cat: "5xx", desc: "Server can't store the representation.", rfc: "RFC 4918" },
+    { code: 508, name: "Loop Detected", symbol: "Ld", cat: "5xx", desc: "Infinite loop detected (WebDAV).", rfc: "RFC 5842" },
+    { code: 510, name: "Not Extended", symbol: "Ne", cat: "5xx", desc: "Further extensions required.", rfc: "RFC 2774" },
+    { code: 511, name: "Network Auth Req'd", symbol: "Nr", cat: "5xx", desc: "Client needs to authenticate for network access.", rfc: "RFC 6585" },
+];
+
+const CAT_COLORS = { '1xx': '#58a6ff', '2xx': '#3fb950', '3xx': '#d29922', '4xx': '#ff7b72', '5xx': '#bc8cff' };
+const CAT_LABELS = { '1xx': 'Informational', '2xx': 'Success', '3xx': 'Redirection', '4xx': 'Client Error', '5xx': 'Server Error' };
+const SHELF_LETTERS = { '1xx': 'A', '2xx': 'B', '3xx': 'C', '4xx': 'D', '5xx': 'E' };
+const DEPRECATED_CODES = [305];
+
+// Group by category
+const categories = {};
+STATUS_CODES.forEach(function(sc) {
+    if (!categories[sc.cat]) categories[sc.cat] = [];
+    categories[sc.cat].push(sc);
+});
+
+// Render products
+function renderProducts() {
+    var area = document.getElementById('productArea');
+
+    Object.keys(categories).forEach(function(cat) {
+        var section = document.createElement('div');
+        section.className = 'shelf-section';
+
+        var label = document.createElement('div');
+        label.className = 'shelf-label';
+
+        var letterSpan = document.createElement('span');
+        letterSpan.className = 'shelf-letter';
+        letterSpan.textContent = SHELF_LETTERS[cat];
+
+        var catSpan = document.createElement('span');
+        catSpan.className = 'shelf-cat-name';
+        catSpan.style.color = CAT_COLORS[cat];
+        catSpan.style.border = '1px solid ' + CAT_COLORS[cat] + '33';
+        catSpan.textContent = CAT_LABELS[cat];
+
+        label.appendChild(letterSpan);
+        label.appendChild(catSpan);
+        section.appendChild(label);
+
+        var row = document.createElement('div');
+        row.className = 'products-row';
+
+        categories[cat].forEach(function(sc, i) {
+            var product = document.createElement('div');
+            var isDeprecated = DEPRECATED_CODES.indexOf(sc.code) !== -1;
+            product.className = 'product cat-' + sc.cat + (isDeprecated ? ' sold-out' : '');
+            product.setAttribute('data-code', sc.code);
+
+            var vendId = SHELF_LETTERS[cat] + (i + 1);
+
+            var vidSpan = document.createElement('span');
+            vidSpan.className = 'product-vend-id';
+            vidSpan.textContent = vendId;
+
+            var codeSpan = document.createElement('span');
+            codeSpan.className = 'product-code';
+            codeSpan.textContent = sc.code;
+
+            var symSpan = document.createElement('span');
+            symSpan.className = 'product-symbol';
+            symSpan.textContent = sc.symbol;
+
+            var nameSpan = document.createElement('span');
+            nameSpan.className = 'product-name';
+            nameSpan.textContent = sc.name;
+
+            product.appendChild(vidSpan);
+            product.appendChild(codeSpan);
+            product.appendChild(symSpan);
+            product.appendChild(nameSpan);
+
+            if (!isDeprecated) {
+                product.addEventListener('click', function() {
+                    dispenseProduct(sc, product);
+                });
+            }
+
+            row.appendChild(product);
+        });
+
+        section.appendChild(row);
+        area.appendChild(section);
+    });
+}
+
+// Keypad state
+var keypadValue = '';
+var keypadInput = document.getElementById('keypadInput');
+var ledDisplay = document.getElementById('ledDisplay');
+var feedbackMsg = document.getElementById('feedbackMsg');
+
+function updateKeypadDisplay() {
+    if (keypadValue === '') {
+        keypadInput.innerHTML = '<span class="cursor">_</span>';
+    } else {
+        keypadInput.textContent = keypadValue;
+    }
+}
+
+function updateLED(code) {
+    if (!code) {
+        ledDisplay.innerHTML = 'INSERT CODE<br>TO DISPENSE';
+        ledDisplay.className = 'led-text idle';
+        return;
+    }
+    var sc = STATUS_CODES.find(function(s) { return s.code === parseInt(code); });
+    if (sc) {
+        var codePart = document.createElement('span');
+        codePart.className = 'led-code';
+        codePart.textContent = sc.code;
+        var namePart = document.createElement('span');
+        namePart.className = 'led-name';
+        namePart.textContent = sc.name;
+        ledDisplay.innerHTML = '';
+        ledDisplay.appendChild(codePart);
+        ledDisplay.appendChild(namePart);
+        ledDisplay.className = 'led-text';
+    }
+}
+
+function showFeedback(msg) {
+    feedbackMsg.textContent = msg;
+    setTimeout(function() { feedbackMsg.textContent = ''; }, 2500);
+}
+
+// Keypad click handlers
+document.querySelectorAll('.key').forEach(function(key) {
+    key.addEventListener('click', function() {
+        var val = key.getAttribute('data-key');
+        if (val === 'clear') {
+            keypadValue = '';
+            updateKeypadDisplay();
+            updateLED(null);
+            feedbackMsg.textContent = '';
+        } else if (val === 'vend') {
+            vendFromKeypad();
+        } else {
+            if (keypadValue.length < 3) {
+                keypadValue += val;
+                updateKeypadDisplay();
+                if (keypadValue.length === 3) {
+                    updateLED(keypadValue);
+                }
+            }
+        }
+    });
+});
+
+// Keyboard support
+document.addEventListener('keydown', function(e) {
+    if (e.key >= '0' && e.key <= '9') {
+        if (keypadValue.length < 3) {
+            keypadValue += e.key;
+            updateKeypadDisplay();
+            if (keypadValue.length === 3) {
+                updateLED(keypadValue);
+            }
+        }
+    } else if (e.key === 'Enter') {
+        vendFromKeypad();
+    } else if (e.key === 'Escape' || e.key === 'Backspace') {
+        keypadValue = '';
+        updateKeypadDisplay();
+        updateLED(null);
+        feedbackMsg.textContent = '';
+    }
+});
+
+function vendFromKeypad() {
+    if (keypadValue.length !== 3) {
+        showFeedback('ENTER 3-DIGIT CODE');
+        return;
+    }
+    var code = parseInt(keypadValue);
+    var sc = STATUS_CODES.find(function(s) { return s.code === code; });
+    if (!sc) {
+        showFeedback('CODE NOT FOUND');
+        keypadValue = '';
+        updateKeypadDisplay();
+        updateLED(null);
+        return;
+    }
+    if (DEPRECATED_CODES.indexOf(code) !== -1) {
+        showFeedback('SOLD OUT');
+        keypadValue = '';
+        updateKeypadDisplay();
+        updateLED(null);
+        return;
+    }
+    var productEl = document.querySelector('.product[data-code="' + code + '"]');
+    if (productEl) {
+        dispenseProduct(sc, productEl);
+    }
+    keypadValue = '';
+    updateKeypadDisplay();
+}
+
+// Dispense product
+function dispenseProduct(sc, productEl) {
+    // Remove previous selections
+    document.querySelectorAll('.product.selected').forEach(function(p) { p.classList.remove('selected'); });
+    document.querySelectorAll('.product.dispensing').forEach(function(p) {
+        p.classList.remove('dispensing');
+        p.style.opacity = '';
+        p.style.transform = '';
+    });
+
+    // Update LED
+    var codePart = document.createElement('span');
+    codePart.className = 'led-code';
+    codePart.textContent = sc.code;
+    var namePart = document.createElement('span');
+    namePart.className = 'led-name';
+    namePart.textContent = 'DISPENSING...';
+    ledDisplay.innerHTML = '';
+    ledDisplay.appendChild(codePart);
+    ledDisplay.appendChild(namePart);
+    ledDisplay.className = 'led-text';
+
+    // Animate product
+    productEl.classList.add('dispensing');
+
+    // Show in retrieval slot after animation
+    setTimeout(function() {
+        productEl.classList.remove('dispensing');
+        productEl.classList.add('selected');
+        productEl.style.opacity = '';
+        productEl.style.transform = '';
+
+        // Update LED
+        var codePart2 = document.createElement('span');
+        codePart2.className = 'led-code';
+        codePart2.textContent = sc.code;
+        var namePart2 = document.createElement('span');
+        namePart2.className = 'led-name';
+        namePart2.textContent = sc.name;
+        ledDisplay.innerHTML = '';
+        ledDisplay.appendChild(codePart2);
+        ledDisplay.appendChild(namePart2);
+
+        // Show in retrieval slot
+        showInRetrieval(sc);
+    }, 800);
+}
+
+function showInRetrieval(sc) {
+    var container = document.getElementById('retrievalContent');
+    container.innerHTML = '';
+
+    var content = document.createElement('div');
+    content.className = 'retrieval-content visible';
+
+    var item = document.createElement('div');
+    item.className = 'dispensed-item cat-' + sc.cat;
+    var dCode = document.createElement('span');
+    dCode.className = 'd-code';
+    dCode.textContent = sc.code;
+    var dSymbol = document.createElement('span');
+    dSymbol.className = 'd-symbol';
+    dSymbol.textContent = sc.symbol;
+    item.appendChild(dCode);
+    item.appendChild(dSymbol);
+
+    var details = document.createElement('div');
+    details.className = 'dispensed-details';
+
+    var ddName = document.createElement('div');
+    ddName.className = 'dd-name';
+    ddName.textContent = sc.name;
+
+    var ddDesc = document.createElement('div');
+    ddDesc.className = 'dd-desc';
+    ddDesc.textContent = sc.desc;
+
+    var ddRfc = document.createElement('span');
+    ddRfc.className = 'dd-rfc';
+    ddRfc.textContent = sc.rfc;
+
+    var ddCat = document.createElement('span');
+    ddCat.className = 'dd-cat cat-' + sc.cat;
+    ddCat.textContent = CAT_LABELS[sc.cat];
+
+    details.appendChild(ddName);
+    details.appendChild(ddDesc);
+    details.appendChild(ddRfc);
+    details.appendChild(ddCat);
+
+    content.appendChild(item);
+    content.appendChild(details);
+    container.appendChild(content);
+}
+
+// Render legend
+function renderLegend() {
+    var legend = document.getElementById('legend');
+    Object.keys(CAT_LABELS).forEach(function(cat) {
+        var item = document.createElement('div');
+        item.className = 'legend-item';
+
+        var dot = document.createElement('div');
+        dot.className = 'legend-dot cat-' + cat;
+
+        var text = document.createElement('span');
+        text.className = 'legend-text';
+        text.textContent = cat + ' ' + CAT_LABELS[cat];
+
+        item.appendChild(dot);
+        item.appendChild(text);
+        legend.appendChild(item);
+    });
+}
+
+// Init
+renderProducts();
+renderLegend();
+</script>
+</body>
+</html>

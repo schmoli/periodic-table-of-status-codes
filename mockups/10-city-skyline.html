@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTTP City - Status Code Skyline</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    background: #0a0e1a;
+}
+
+.sky {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, #05080f 0%, #0a0e1a 30%, #0f1628 60%, #141e35 100%);
+    z-index: 0;
+    overflow: hidden;
+}
+
+.star {
+    position: absolute;
+    border-radius: 50%;
+    background: #fff;
+    animation: twinkle var(--dur) ease-in-out infinite alternate;
+}
+
+@keyframes twinkle {
+    0% { opacity: var(--min-o); }
+    100% { opacity: var(--max-o); }
+}
+
+.moon {
+    position: fixed;
+    top: 40px;
+    right: 120px;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffeebb, #f0d070);
+    box-shadow: 0 0 40px 15px rgba(255, 238, 180, 0.15), 0 0 80px 30px rgba(255, 238, 180, 0.07);
+    z-index: 1;
+}
+
+.moon::after {
+    content: '';
+    position: absolute;
+    top: 8px; left: 18px;
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, rgba(200, 160, 60, 0.15), transparent);
+}
+
+.cloud {
+    position: fixed;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.015);
+    filter: blur(20px);
+    z-index: 1;
+}
+
+.header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    text-align: center;
+    padding: 18px 40px;
+    pointer-events: none;
+}
+
+.header h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: transparent;
+    background: linear-gradient(90deg, #58a6ff, #3fb950, #d29922, #ff7b72, #bc8cff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    text-shadow: none;
+    position: relative;
+}
+
+.header h1::after {
+    content: 'HTTP CITY';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    color: transparent;
+    text-shadow: 0 0 30px rgba(88, 166, 255, 0.4), 0 0 60px rgba(88, 166, 255, 0.15);
+    z-index: -1;
+}
+
+.header .subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
+.city-scroll {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    z-index: 10;
+}
+
+.city-scroll::-webkit-scrollbar { height: 6px; }
+.city-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+.city-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+
+.city-container {
+    display: flex;
+    align-items: flex-end;
+    height: 100vh;
+    padding: 0 80px;
+    min-width: max-content;
+    position: relative;
+}
+
+.ground {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(180deg, #1a1a2e 0%, #12121f 50%, #0d0d18 100%);
+    z-index: 5;
+}
+
+.ground::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.road {
+    position: absolute;
+    bottom: 28px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: repeating-linear-gradient(90deg, rgba(255, 200, 50, 0.3) 0px, rgba(255, 200, 50, 0.3) 30px, transparent 30px, transparent 60px);
+}
+
+.sidewalk {
+    position: absolute;
+    bottom: 42px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.fog {
+    position: absolute;
+    bottom: 50px;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(180deg, transparent, rgba(15, 22, 40, 0.7));
+    z-index: 6;
+    pointer-events: none;
+}
+
+.district {
+    display: flex;
+    align-items: flex-end;
+    padding: 0 10px;
+    position: relative;
+    margin-bottom: 60px;
+}
+
+.district-gap {
+    width: 40px;
+    position: relative;
+    margin-bottom: 60px;
+    flex-shrink: 0;
+}
+
+.district-sign {
+    position: absolute;
+    bottom: -44px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 2px;
+    z-index: 20;
+}
+
+.streetlight {
+    position: absolute;
+    bottom: -42px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 3px;
+    height: 50px;
+    background: linear-gradient(180deg, #333, #222);
+    border-radius: 1px;
+}
+
+.streetlight::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 12px;
+    height: 6px;
+    background: rgba(255, 220, 100, 0.8);
+    border-radius: 50%;
+    box-shadow: 0 0 15px 5px rgba(255, 220, 100, 0.15), 0 5px 25px 10px rgba(255, 220, 100, 0.06);
+}
+
+.streetlight::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px;
+    height: 4px;
+    background: #333;
+    border-radius: 2px;
+}
+
+.building {
+    position: relative;
+    cursor: pointer;
+    margin: 0 3px;
+    transition: filter 0.3s ease;
+    flex-shrink: 0;
+}
+
+.building:hover {
+    filter: brightness(1.15);
+    z-index: 50;
+}
+
+.building-body {
+    position: relative;
+    width: 70px;
+    border-radius: 3px 3px 0 0;
+    transition: box-shadow 0.4s ease;
+    overflow: hidden;
+}
+
+.building:hover .building-body {
+    box-shadow: 0 0 30px rgba(var(--cat-r), var(--cat-g), var(--cat-b), 0.25);
+}
+
+.building-body.roof-flat { border-radius: 2px 2px 0 0; }
+.building-body.roof-pointed {
+    border-radius: 2px 2px 0 0;
+    clip-path: polygon(0% 8%, 50% 0%, 100% 8%, 100% 100%, 0% 100%);
+}
+.building-body.roof-stepped {
+    border-radius: 0;
+    clip-path: polygon(10% 4%, 10% 0%, 90% 0%, 90% 4%, 100% 4%, 100% 100%, 0% 100%, 0% 4%);
+}
+.building-body.roof-antenna { border-radius: 2px 2px 0 0; }
+.building-body.roof-antenna::before {
+    content: '';
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 18px;
+    background: linear-gradient(180deg, var(--cat-color), rgba(var(--cat-r), var(--cat-g), var(--cat-b), 0.5));
+}
+.building-body.roof-antenna::after {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--cat-color);
+    box-shadow: 0 0 6px var(--cat-color);
+    animation: blink 2s ease-in-out infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.windows {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    padding: 8px 6px;
+    position: absolute;
+    top: 30px;
+    left: 0;
+    right: 0;
+    bottom: 4px;
+    overflow: hidden;
+}
+
+.window {
+    width: 100%;
+    aspect-ratio: 1.2;
+    border-radius: 1px;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.window.lit {
+    background: rgba(var(--cat-r), var(--cat-g), var(--cat-b), 0.15);
+}
+
+.window.dark {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.building:hover .window.lit {
+    background: rgba(var(--cat-r), var(--cat-g), var(--cat-b), 0.6);
+    box-shadow: 0 0 4px rgba(var(--cat-r), var(--cat-g), var(--cat-b), 0.3);
+}
+
+.building:hover .window.dark {
+    background: rgba(var(--cat-r), var(--cat-g), var(--cat-b), 0.25);
+}
+
+.building-sign {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--cat-color);
+    text-shadow: 0 0 8px rgba(var(--cat-r), var(--cat-g), var(--cat-b), 0.5);
+    z-index: 2;
+    white-space: nowrap;
+    letter-spacing: 1px;
+}
+
+.building-name {
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Inter', sans-serif;
+    font-size: 7px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.25);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    z-index: 2;
+    transition: color 0.3s ease;
+}
+
+.building:hover .building-name {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.tooltip {
+    position: fixed;
+    z-index: 1000;
+    background: rgba(10, 14, 26, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 16px 20px;
+    max-width: 320px;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(5px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.tooltip.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.tooltip-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.tooltip-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 8px;
+}
+
+.tooltip-desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+
+.tooltip-meta {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.tooltip-cat, .tooltip-rfc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.detail-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(5, 8, 15, 0.85);
+    z-index: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(8px);
+}
+
+.detail-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.detail-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    z-index: 510;
+    background: rgba(15, 20, 35, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 40px 48px;
+    max-width: 480px;
+    width: 90%;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    box-shadow: 0 20px 80px rgba(0, 0, 0, 0.6);
+}
+
+.detail-panel.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.detail-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.detail-close:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.detail-symbol {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 600;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.detail-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.detail-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 16px;
+}
+
+.detail-desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.7;
+    margin-bottom: 20px;
+}
+
+.detail-tags {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.detail-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.detail-building-preview {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.detail-mini-building {
+    width: 80px;
+    border-radius: 4px 4px 0 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.detail-mini-windows {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
+    padding: 6px 5px;
+}
+
+.detail-mini-window {
+    aspect-ratio: 1.2;
+    border-radius: 1px;
+}
+
+.scroll-hint {
+    position: fixed;
+    bottom: 12px;
+    right: 20px;
+    z-index: 100;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.2);
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.scroll-hint .arrow {
+    animation: scrollArrow 1.5s ease-in-out infinite;
+    display: inline-block;
+}
+
+@keyframes scrollArrow {
+    0%, 100% { transform: translateX(0); opacity: 0.5; }
+    50% { transform: translateX(5px); opacity: 1; }
+}
+
+.nav-dots {
+    position: fixed;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 16px;
+    z-index: 100;
+}
+
+.nav-dot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 4px 0;
+    border: none;
+    background: none;
+}
+
+.nav-dot-circle {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.nav-dot:hover .nav-dot-circle {
+    transform: scale(1.3);
+}
+
+.nav-dot-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 0.5px;
+    transition: color 0.3s ease;
+}
+
+.nav-dot:hover .nav-dot-label {
+    color: rgba(255, 255, 255, 0.6);
+}
+</style>
+</head>
+<body>
+
+<div class="sky" id="sky"></div>
+<div class="moon"></div>
+
+<div class="cloud" style="width: 300px; height: 40px; top: 120px; left: 15%;"></div>
+<div class="cloud" style="width: 200px; height: 30px; top: 80px; left: 55%;"></div>
+<div class="cloud" style="width: 250px; height: 35px; top: 160px; left: 75%;"></div>
+
+<div class="header">
+    <h1>HTTP CITY</h1>
+    <div class="subtitle">A skyline of status codes</div>
+</div>
+
+<div class="tooltip" id="tooltip">
+    <div class="tooltip-code" id="tooltip-code"></div>
+    <div class="tooltip-name" id="tooltip-name"></div>
+    <div class="tooltip-desc" id="tooltip-desc"></div>
+    <div class="tooltip-meta">
+        <span class="tooltip-cat" id="tooltip-cat"></span>
+        <span class="tooltip-rfc" id="tooltip-rfc"></span>
+    </div>
+</div>
+
+<div class="detail-overlay" id="detailOverlay"></div>
+<div class="detail-panel" id="detailPanel">
+    <button class="detail-close" id="detailClose">&times;</button>
+    <div class="detail-building-preview" id="detailPreview"></div>
+    <div class="detail-symbol" id="detailSymbol"></div>
+    <div class="detail-code" id="detailCode"></div>
+    <div class="detail-name" id="detailName"></div>
+    <div class="detail-desc" id="detailDesc"></div>
+    <div class="detail-tags" id="detailTags"></div>
+</div>
+
+<div class="city-scroll" id="cityScroll">
+    <div class="city-container" id="cityContainer"></div>
+</div>
+
+<div class="nav-dots" id="navDots"></div>
+<div class="scroll-hint">SCROLL <span class="arrow">&rarr;</span></div>
+
+<script>
+const STATUS_CODES = [
+    { code: 100, name: "Continue", symbol: "Cn", cat: "1xx", desc: "The server has received the request headers and the client should proceed to send the request body.", rfc: "RFC 9110" },
+    { code: 101, name: "Switching Protocols", symbol: "Sw", cat: "1xx", desc: "The server is switching protocols as requested by the client via the Upgrade header.", rfc: "RFC 9110" },
+    { code: 103, name: "Early Hints", symbol: "Eh", cat: "1xx", desc: "Used to return some response headers before the final HTTP message.", rfc: "RFC 8297" },
+    { code: 200, name: "OK", symbol: "Ok", cat: "2xx", desc: "The request has succeeded.", rfc: "RFC 9110" },
+    { code: 201, name: "Created", symbol: "Cr", cat: "2xx", desc: "The request has been fulfilled and a new resource has been created.", rfc: "RFC 9110" },
+    { code: 202, name: "Accepted", symbol: "Ac", cat: "2xx", desc: "The request has been accepted for processing, but processing has not been completed.", rfc: "RFC 9110" },
+    { code: 203, name: "Non-Authoritative", symbol: "Na", cat: "2xx", desc: "The returned metadata is not exactly the same as available from the origin server.", rfc: "RFC 9110" },
+    { code: 204, name: "No Content", symbol: "Nc", cat: "2xx", desc: "The server has successfully fulfilled the request and there is no additional content.", rfc: "RFC 9110" },
+    { code: 205, name: "Reset Content", symbol: "Rc", cat: "2xx", desc: "The server has fulfilled the request and the user agent should reset the document view.", rfc: "RFC 9110" },
+    { code: 206, name: "Partial Content", symbol: "Pc", cat: "2xx", desc: "The server is delivering only part of the resource due to a Range header.", rfc: "RFC 9110" },
+    { code: 207, name: "Multi-Status", symbol: "Ms", cat: "2xx", desc: "A WebDAV response conveying information about multiple resources.", rfc: "RFC 4918" },
+    { code: 208, name: "Already Reported", symbol: "Ar", cat: "2xx", desc: "Used inside a WebDAV response to avoid enumerating internal members repeatedly.", rfc: "RFC 5842" },
+    { code: 226, name: "IM Used", symbol: "Im", cat: "2xx", desc: "The server has fulfilled a GET request with instance-manipulations applied.", rfc: "RFC 3229" },
+    { code: 300, name: "Multiple Choices", symbol: "Mc", cat: "3xx", desc: "The request has more than one possible response.", rfc: "RFC 9110" },
+    { code: 301, name: "Moved Permanently", symbol: "Mp", cat: "3xx", desc: "The URL of the requested resource has been changed permanently.", rfc: "RFC 9110" },
+    { code: 302, name: "Found", symbol: "Fd", cat: "3xx", desc: "The URI of the requested resource has been changed temporarily.", rfc: "RFC 9110" },
+    { code: 303, name: "See Other", symbol: "So", cat: "3xx", desc: "The server is redirecting to a different resource using GET.", rfc: "RFC 9110" },
+    { code: 304, name: "Not Modified", symbol: "Nm", cat: "3xx", desc: "The resource has not been modified since the version specified.", rfc: "RFC 9110" },
+    { code: 305, name: "Use Proxy", symbol: "Up", cat: "3xx", desc: "Deprecated.", rfc: "Deprecated" },
+    { code: 307, name: "Temporary Redirect", symbol: "Tr", cat: "3xx", desc: "Redirecting with same method.", rfc: "RFC 9110" },
+    { code: 308, name: "Permanent Redirect", symbol: "Pr", cat: "3xx", desc: "Permanently moved, same method.", rfc: "RFC 9110" },
+    { code: 400, name: "Bad Request", symbol: "Br", cat: "4xx", desc: "Client error.", rfc: "RFC 9110" },
+    { code: 401, name: "Unauthorized", symbol: "Un", cat: "4xx", desc: "Authentication required.", rfc: "RFC 9110" },
+    { code: 402, name: "Payment Required", symbol: "Py", cat: "4xx", desc: "Reserved for future use.", rfc: "RFC 9110" },
+    { code: 403, name: "Forbidden", symbol: "Fb", cat: "4xx", desc: "No access rights.", rfc: "RFC 9110" },
+    { code: 404, name: "Not Found", symbol: "Nf", cat: "4xx", desc: "Resource not found.", rfc: "RFC 9110" },
+    { code: 405, name: "Method Not Allowed", symbol: "Ma", cat: "4xx", desc: "Method not supported.", rfc: "RFC 9110" },
+    { code: 406, name: "Not Acceptable", symbol: "Nx", cat: "4xx", desc: "Can't produce matching response.", rfc: "RFC 9110" },
+    { code: 407, name: "Proxy Auth Required", symbol: "Pa", cat: "4xx", desc: "Proxy authentication needed.", rfc: "RFC 9110" },
+    { code: 408, name: "Request Timeout", symbol: "Rt", cat: "4xx", desc: "Connection timed out.", rfc: "RFC 9110" },
+    { code: 409, name: "Conflict", symbol: "Cf", cat: "4xx", desc: "Conflicts with server state.", rfc: "RFC 9110" },
+    { code: 410, name: "Gone", symbol: "Gn", cat: "4xx", desc: "Permanently deleted.", rfc: "RFC 9110" },
+    { code: 411, name: "Length Required", symbol: "Lr", cat: "4xx", desc: "Content-Length required.", rfc: "RFC 9110" },
+    { code: 412, name: "Precondition Failed", symbol: "Pf", cat: "4xx", desc: "Preconditions not met.", rfc: "RFC 9110" },
+    { code: 413, name: "Content Too Large", symbol: "Tl", cat: "4xx", desc: "Entity too large.", rfc: "RFC 9110" },
+    { code: 414, name: "URI Too Long", symbol: "Ul", cat: "4xx", desc: "URI too long.", rfc: "RFC 9110" },
+    { code: 415, name: "Unsupported Media", symbol: "Um", cat: "4xx", desc: "Media not supported.", rfc: "RFC 9110" },
+    { code: 416, name: "Range Not Satisfiable", symbol: "Rn", cat: "4xx", desc: "Range can't be fulfilled.", rfc: "RFC 9110" },
+    { code: 417, name: "Expectation Failed", symbol: "Ef", cat: "4xx", desc: "Expect can't be met.", rfc: "RFC 9110" },
+    { code: 418, name: "I'm a Teapot", symbol: "Tp", cat: "4xx", desc: "April Fools' Easter egg.", rfc: "RFC 2324" },
+    { code: 421, name: "Misdirected", symbol: "Mr", cat: "4xx", desc: "Wrong server.", rfc: "RFC 9110" },
+    { code: 422, name: "Unprocessable", symbol: "Uc", cat: "4xx", desc: "Semantically erroneous.", rfc: "RFC 9110" },
+    { code: 423, name: "Locked", symbol: "Lk", cat: "4xx", desc: "Resource locked.", rfc: "RFC 4918" },
+    { code: 424, name: "Failed Dependency", symbol: "Dp", cat: "4xx", desc: "Previous request failed.", rfc: "RFC 4918" },
+    { code: 425, name: "Too Early", symbol: "Te", cat: "4xx", desc: "Won't risk replay.", rfc: "RFC 8470" },
+    { code: 426, name: "Upgrade Required", symbol: "Ur", cat: "4xx", desc: "Protocol upgrade needed.", rfc: "RFC 9110" },
+    { code: 428, name: "Precondition Req'd", symbol: "Pq", cat: "4xx", desc: "Conditional requests required.", rfc: "RFC 6585" },
+    { code: 429, name: "Too Many Requests", symbol: "Tm", cat: "4xx", desc: "Rate limited.", rfc: "RFC 6585" },
+    { code: 431, name: "Headers Too Large", symbol: "Hl", cat: "4xx", desc: "Headers too large.", rfc: "RFC 6585" },
+    { code: 451, name: "Legal Reasons", symbol: "Lg", cat: "4xx", desc: "Legal restrictions.", rfc: "RFC 7725" },
+    { code: 500, name: "Internal Error", symbol: "Is", cat: "5xx", desc: "Unhandled exception.", rfc: "RFC 9110" },
+    { code: 501, name: "Not Implemented", symbol: "Ni", cat: "5xx", desc: "Method not supported.", rfc: "RFC 9110" },
+    { code: 502, name: "Bad Gateway", symbol: "Bg", cat: "5xx", desc: "Invalid upstream response.", rfc: "RFC 9110" },
+    { code: 503, name: "Service Unavailable", symbol: "Su", cat: "5xx", desc: "Server not ready.", rfc: "RFC 9110" },
+    { code: 504, name: "Gateway Timeout", symbol: "Gt", cat: "5xx", desc: "Gateway timed out.", rfc: "RFC 9110" },
+    { code: 505, name: "HTTP Ver. Unsupported", symbol: "Hv", cat: "5xx", desc: "HTTP version unsupported.", rfc: "RFC 9110" },
+    { code: 506, name: "Variant Negotiates", symbol: "Vn", cat: "5xx", desc: "Config error.", rfc: "RFC 2295" },
+    { code: 507, name: "Insufficient Storage", symbol: "St", cat: "5xx", desc: "Can't store.", rfc: "RFC 4918" },
+    { code: 508, name: "Loop Detected", symbol: "Ld", cat: "5xx", desc: "Infinite loop.", rfc: "RFC 5842" },
+    { code: 510, name: "Not Extended", symbol: "Ne", cat: "5xx", desc: "Extensions required.", rfc: "RFC 2774" },
+    { code: 511, name: "Network Auth Req'd", symbol: "Nr", cat: "5xx", desc: "Network auth needed.", rfc: "RFC 6585" },
+];
+
+const CAT_COLORS = { '1xx': '#58a6ff', '2xx': '#3fb950', '3xx': '#d29922', '4xx': '#ff7b72', '5xx': '#bc8cff' };
+const CAT_LABELS = { '1xx': 'Informational', '2xx': 'Success', '3xx': 'Redirection', '4xx': 'Client Error', '5xx': 'Server Error' };
+const DISTRICT_NAMES = {
+    '1xx': 'Information District',
+    '2xx': 'Success Heights',
+    '3xx': 'Redirect Row',
+    '4xx': 'Error Alley',
+    '5xx': 'Server District'
+};
+
+const POPULARITY = {
+    200: 1.0, 404: 0.95, 301: 0.85, 500: 0.9, 302: 0.8, 201: 0.8,
+    304: 0.75, 403: 0.8, 401: 0.85, 503: 0.75, 502: 0.7, 400: 0.85,
+    204: 0.65, 307: 0.6, 429: 0.7, 206: 0.55, 408: 0.6, 409: 0.55,
+    418: 0.7, 405: 0.6, 422: 0.6, 101: 0.55, 100: 0.45, 103: 0.4,
+    308: 0.55, 504: 0.65, 505: 0.45, 501: 0.5,
+};
+
+function hexToRgb(hex) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return { r, g, b };
+}
+
+function getHeight(code) {
+    const pop = POPULARITY[code] || 0.35;
+    const minH = 120;
+    const maxH = 450;
+    return Math.round(minH + pop * (maxH - minH));
+}
+
+function getRoofType(index) {
+    const types = ['roof-flat', 'roof-pointed', 'roof-stepped', 'roof-antenna', 'roof-flat', 'roof-antenna'];
+    return types[index % types.length];
+}
+
+// Generate stars
+function generateStars() {
+    const sky = document.getElementById('sky');
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < 200; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        const size = Math.random() * 2 + 0.5;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 60 + '%';
+        star.style.setProperty('--dur', (2 + Math.random() * 4) + 's');
+        star.style.setProperty('--min-o', (0.1 + Math.random() * 0.3).toFixed(2));
+        star.style.setProperty('--max-o', (0.5 + Math.random() * 0.5).toFixed(2));
+        star.style.animationDelay = (Math.random() * 5) + 's';
+        frag.appendChild(star);
+    }
+    sky.appendChild(frag);
+}
+
+function createWindows(container, height, rgb) {
+    const windowRows = Math.floor((height - 40) / 18);
+    const totalWindows = windowRows * 4;
+    const frag = document.createDocumentFragment();
+    for (let w = 0; w < totalWindows; w++) {
+        const win = document.createElement('div');
+        const isLit = Math.random() > 0.45;
+        win.className = 'window ' + (isLit ? 'lit' : 'dark');
+        win.style.setProperty('--cat-r', rgb.r);
+        win.style.setProperty('--cat-g', rgb.g);
+        win.style.setProperty('--cat-b', rgb.b);
+        frag.appendChild(win);
+    }
+    container.appendChild(frag);
+}
+
+function buildCity() {
+    const container = document.getElementById('cityContainer');
+    const categories = ['1xx', '2xx', '3xx', '4xx', '5xx'];
+
+    const ground = document.createElement('div');
+    ground.className = 'ground';
+    const sidewalk = document.createElement('div');
+    sidewalk.className = 'sidewalk';
+    const road = document.createElement('div');
+    road.className = 'road';
+    ground.appendChild(sidewalk);
+    ground.appendChild(road);
+    container.appendChild(ground);
+
+    const fog = document.createElement('div');
+    fog.className = 'fog';
+    container.appendChild(fog);
+
+    categories.forEach(function(cat, catIndex) {
+        const codes = STATUS_CODES.filter(function(s) { return s.cat === cat; });
+        const color = CAT_COLORS[cat];
+        const rgb = hexToRgb(color);
+
+        const district = document.createElement('div');
+        district.className = 'district';
+        district.id = 'district-' + cat;
+
+        const sign = document.createElement('div');
+        sign.className = 'district-sign';
+        sign.textContent = DISTRICT_NAMES[cat];
+        sign.style.color = color;
+        sign.style.background = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.08)';
+        sign.style.border = '1px solid rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.2)';
+        district.appendChild(sign);
+
+        codes.forEach(function(sc, i) {
+            var height = getHeight(sc.code);
+            var roofType = getRoofType(i + catIndex * 3);
+
+            var building = document.createElement('div');
+            building.className = 'building';
+            building.dataset.code = sc.code;
+
+            var body = document.createElement('div');
+            body.className = 'building-body ' + roofType;
+            body.style.height = height + 'px';
+            body.style.background = 'linear-gradient(180deg, rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.18) 0%, rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.08) 40%, rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.04) 100%)';
+            body.style.borderTop = '2px solid rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.3)';
+            body.style.borderLeft = '1px solid rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.1)';
+            body.style.borderRight = '1px solid rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.05)';
+            body.style.setProperty('--cat-color', color);
+            body.style.setProperty('--cat-r', rgb.r);
+            body.style.setProperty('--cat-g', rgb.g);
+            body.style.setProperty('--cat-b', rgb.b);
+
+            var signEl = document.createElement('div');
+            signEl.className = 'building-sign';
+            signEl.textContent = sc.code;
+            signEl.style.setProperty('--cat-color', color);
+            signEl.style.setProperty('--cat-r', rgb.r);
+            signEl.style.setProperty('--cat-g', rgb.g);
+            signEl.style.setProperty('--cat-b', rgb.b);
+            body.appendChild(signEl);
+
+            var windowsContainer = document.createElement('div');
+            windowsContainer.className = 'windows';
+            createWindows(windowsContainer, height, rgb);
+            body.appendChild(windowsContainer);
+
+            var nameEl = document.createElement('div');
+            nameEl.className = 'building-name';
+            nameEl.textContent = sc.name;
+            body.appendChild(nameEl);
+
+            building.appendChild(body);
+            building.style.setProperty('--cat-r', rgb.r);
+            building.style.setProperty('--cat-g', rgb.g);
+            building.style.setProperty('--cat-b', rgb.b);
+
+            building.addEventListener('mouseenter', function(e) { showTooltip(e, sc); });
+            building.addEventListener('mousemove', moveTooltip);
+            building.addEventListener('mouseleave', hideTooltip);
+            building.addEventListener('click', function() { showDetail(sc); });
+
+            district.appendChild(building);
+        });
+
+        container.appendChild(district);
+
+        if (catIndex < categories.length - 1) {
+            var gap = document.createElement('div');
+            gap.className = 'district-gap';
+            var light = document.createElement('div');
+            light.className = 'streetlight';
+            gap.appendChild(light);
+            container.appendChild(gap);
+        }
+    });
+}
+
+// Tooltip
+var tooltip = document.getElementById('tooltip');
+
+function showTooltip(e, sc) {
+    var color = CAT_COLORS[sc.cat];
+    var rgb = hexToRgb(color);
+    document.getElementById('tooltip-code').textContent = sc.code;
+    document.getElementById('tooltip-code').style.color = color;
+    document.getElementById('tooltip-name').textContent = sc.name;
+    document.getElementById('tooltip-desc').textContent = sc.desc;
+    document.getElementById('tooltip-cat').textContent = sc.cat + ' ' + CAT_LABELS[sc.cat];
+    document.getElementById('tooltip-rfc').textContent = sc.rfc;
+    tooltip.style.borderColor = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.25)';
+    tooltip.classList.add('visible');
+    moveTooltip(e);
+}
+
+function moveTooltip(e) {
+    var x = e.clientX + 16;
+    var y = e.clientY - 10;
+    if (x + 330 > window.innerWidth) x = e.clientX - 340;
+    if (y + 180 > window.innerHeight) y = e.clientY - 180;
+    if (y < 10) y = 10;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+}
+
+function hideTooltip() {
+    tooltip.classList.remove('visible');
+}
+
+// Detail panel
+var detailOverlay = document.getElementById('detailOverlay');
+var detailPanel = document.getElementById('detailPanel');
+
+function showDetail(sc) {
+    var color = CAT_COLORS[sc.cat];
+    var rgb = hexToRgb(color);
+    var height = getHeight(sc.code);
+    var miniH = Math.min(120, height * 0.3);
+
+    // Build mini building preview using DOM
+    var preview = document.getElementById('detailPreview');
+    preview.textContent = '';
+    var miniBld = document.createElement('div');
+    miniBld.className = 'detail-mini-building';
+    miniBld.style.height = miniH + 'px';
+    miniBld.style.background = 'linear-gradient(180deg, rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.2), rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.05))';
+    miniBld.style.borderTop = '2px solid rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.4)';
+    var miniWins = document.createElement('div');
+    miniWins.className = 'detail-mini-windows';
+    var winCount = Math.floor(miniH / 12) * 4;
+    for (var w = 0; w < winCount; w++) {
+        var mw = document.createElement('div');
+        mw.className = 'detail-mini-window';
+        var lit = Math.random() > 0.35;
+        mw.style.background = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + (lit ? 0.5 : 0.08) + ')';
+        miniWins.appendChild(mw);
+    }
+    miniBld.appendChild(miniWins);
+    preview.appendChild(miniBld);
+
+    var symbolEl = document.getElementById('detailSymbol');
+    symbolEl.textContent = sc.symbol;
+    symbolEl.style.background = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.12)';
+    symbolEl.style.color = color;
+    symbolEl.style.border = '1px solid rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.25)';
+
+    document.getElementById('detailCode').textContent = sc.code;
+    document.getElementById('detailCode').style.color = color;
+    document.getElementById('detailName').textContent = sc.name;
+    document.getElementById('detailDesc').textContent = sc.desc;
+
+    var tagsEl = document.getElementById('detailTags');
+    tagsEl.textContent = '';
+    var tag1 = document.createElement('span');
+    tag1.className = 'detail-tag';
+    tag1.textContent = sc.cat + ' ' + CAT_LABELS[sc.cat];
+    tag1.style.color = color;
+    tag1.style.border = '1px solid rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.2)';
+    var tag2 = document.createElement('span');
+    tag2.className = 'detail-tag';
+    tag2.textContent = sc.rfc;
+    var tag3 = document.createElement('span');
+    tag3.className = 'detail-tag';
+    tag3.textContent = sc.symbol;
+    tagsEl.appendChild(tag1);
+    tagsEl.appendChild(tag2);
+    tagsEl.appendChild(tag3);
+
+    detailPanel.style.borderColor = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.2)';
+    detailOverlay.classList.add('active');
+    detailPanel.classList.add('active');
+}
+
+function closeDetail() {
+    detailOverlay.classList.remove('active');
+    detailPanel.classList.remove('active');
+}
+
+detailOverlay.addEventListener('click', closeDetail);
+document.getElementById('detailClose').addEventListener('click', closeDetail);
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeDetail(); });
+
+// Navigation dots
+function buildNav() {
+    var nav = document.getElementById('navDots');
+    var categories = ['1xx', '2xx', '3xx', '4xx', '5xx'];
+    categories.forEach(function(cat) {
+        var dot = document.createElement('button');
+        dot.className = 'nav-dot';
+        var circle = document.createElement('div');
+        circle.className = 'nav-dot-circle';
+        circle.style.background = CAT_COLORS[cat];
+        circle.style.boxShadow = '0 0 6px ' + CAT_COLORS[cat] + '40';
+        var label = document.createElement('span');
+        label.className = 'nav-dot-label';
+        label.textContent = cat;
+        dot.appendChild(circle);
+        dot.appendChild(label);
+        dot.addEventListener('click', function() {
+            var district = document.getElementById('district-' + cat);
+            if (district) {
+                district.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'end' });
+            }
+        });
+        nav.appendChild(dot);
+    });
+}
+
+generateStars();
+buildCity();
+buildNav();
+</script>
+</body>
+</html>

@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1024, height=768">
+<title>HTTP Status Codes — Quick Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 1024px;
+    height: 768px;
+    max-height: 100vh;
+    overflow: hidden;
+    background: #0d1117;
+    color: #c9d1d9;
+    font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.container {
+    width: 1024px;
+    height: 768px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* === HEADER === */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    border-bottom: 1px solid #21262d;
+    flex-shrink: 0;
+    height: 40px;
+}
+
+.header h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: #e6edf3;
+    letter-spacing: 0.5px;
+}
+
+.header h1 span {
+    color: #58a6ff;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    padding: 3px 8px;
+    width: 200px;
+}
+
+.search-box svg {
+    width: 12px;
+    height: 12px;
+    color: #484f58;
+    flex-shrink: 0;
+}
+
+.search-box input {
+    background: transparent;
+    border: none;
+    color: #c9d1d9;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    width: 100%;
+    outline: none;
+}
+
+.search-box input::placeholder {
+    color: #484f58;
+}
+
+/* === COLUMNS AREA === */
+.columns {
+    display: flex;
+    flex: 1;
+    gap: 2px;
+    padding: 6px 8px 4px 8px;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    border-radius: 4px;
+    overflow: hidden;
+    min-width: 0;
+}
+
+/* Proportional widths adjusted for readability */
+.col-1xx { flex: 7; }
+.col-2xx { flex: 9; }
+.col-3xx { flex: 10; }
+.col-4xx { flex: 20; }
+.col-5xx { flex: 12; }
+
+.col-header {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 6px;
+    text-align: center;
+    flex-shrink: 0;
+    letter-spacing: 0.5px;
+    border-radius: 3px 3px 0 0;
+}
+
+.col-1xx .col-header { background: rgba(88,166,255,0.15); color: #58a6ff; }
+.col-2xx .col-header { background: rgba(63,185,80,0.15); color: #3fb950; }
+.col-3xx .col-header { background: rgba(210,153,34,0.15); color: #d29922; }
+.col-4xx .col-header { background: rgba(255,123,114,0.15); color: #ff7b72; }
+.col-5xx .col-header { background: rgba(188,140,255,0.15); color: #bc8cff; }
+
+.col-subheader {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    font-weight: 400;
+    padding: 2px 6px 4px;
+    text-align: center;
+    color: #484f58;
+    flex-shrink: 0;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.col-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 2px 3px;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* === STATUS CODE ROWS === */
+.code-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 5px;
+    border-radius: 3px;
+    cursor: default;
+    transition: background 0.12s ease;
+    position: relative;
+    flex-shrink: 0;
+    min-height: 0;
+}
+
+.code-row:hover {
+    background: rgba(255,255,255,0.06);
+}
+
+.code-row.highlight {
+    background: rgba(255,255,255,0.1);
+}
+
+.code-row.dimmed {
+    opacity: 0.2;
+}
+
+.code-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    flex-shrink: 0;
+    width: 28px;
+}
+
+.col-1xx .code-num { color: #58a6ff; }
+.col-2xx .code-num { color: #3fb950; }
+.col-3xx .code-num { color: #d29922; }
+.col-4xx .code-num { color: #ff7b72; }
+.col-5xx .code-num { color: #bc8cff; }
+
+.code-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: #8b949e;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.code-row:hover .code-name {
+    color: #c9d1d9;
+}
+
+/* === TOOLTIP === */
+.tooltip {
+    display: none;
+    position: fixed;
+    background: #1c2128;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 8px 10px;
+    max-width: 260px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    pointer-events: none;
+}
+
+.tooltip.visible {
+    display: block;
+}
+
+.tooltip-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.tooltip-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: #e6edf3;
+    margin-bottom: 4px;
+}
+
+.tooltip-desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: #8b949e;
+    line-height: 1.4;
+    margin-bottom: 3px;
+}
+
+.tooltip-rfc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: #484f58;
+}
+
+/* === FOOTER === */
+.footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 5px 16px;
+    border-top: 1px solid #21262d;
+    flex-shrink: 0;
+    height: 26px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: #484f58;
+}
+
+.legend-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.legend-label {
+    white-space: nowrap;
+}
+
+.code-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: #30363d;
+    margin-left: auto;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1><span>&gt;</span> HTTP Status Codes <span>--</span> Quick Reference</h1>
+        <div class="search-box">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.5 7a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm-.82 4.74a6 6 0 1 1 1.06-1.06l3.04 3.04a.75.75 0 1 1-1.06 1.06l-3.04-3.04Z"/></svg>
+            <input type="text" id="searchInput" placeholder="Filter codes..." spellcheck="false">
+        </div>
+    </div>
+
+    <div class="columns" id="columnsContainer"></div>
+
+    <div class="footer">
+        <div class="legend-item">
+            <div class="legend-dot" style="background:#58a6ff"></div>
+            <span class="legend-label">1xx Info</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background:#3fb950"></div>
+            <span class="legend-label">2xx Success</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background:#d29922"></div>
+            <span class="legend-label">3xx Redirect</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background:#ff7b72"></div>
+            <span class="legend-label">4xx Client Err</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background:#bc8cff"></div>
+            <span class="legend-label">5xx Server Err</span>
+        </div>
+        <span class="code-count">61 codes</span>
+    </div>
+</div>
+
+<div class="tooltip" id="tooltip">
+    <div class="tooltip-code" id="tooltipCode"></div>
+    <div class="tooltip-name" id="tooltipName"></div>
+    <div class="tooltip-desc" id="tooltipDesc"></div>
+    <div class="tooltip-rfc" id="tooltipRfc"></div>
+</div>
+
+<script>
+const STATUS_CODES = [
+    { code: 100, name: "Continue", symbol: "Cn", cat: "1xx", desc: "The server has received the request headers and the client should proceed to send the request body.", rfc: "RFC 9110" },
+    { code: 101, name: "Switching Protocols", symbol: "Sw", cat: "1xx", desc: "The server is switching protocols as requested by the client via the Upgrade header.", rfc: "RFC 9110" },
+    { code: 103, name: "Early Hints", symbol: "Eh", cat: "1xx", desc: "Used to return some response headers before the final HTTP message.", rfc: "RFC 8297" },
+    { code: 200, name: "OK", symbol: "Ok", cat: "2xx", desc: "The request has succeeded.", rfc: "RFC 9110" },
+    { code: 201, name: "Created", symbol: "Cr", cat: "2xx", desc: "A new resource has been created.", rfc: "RFC 9110" },
+    { code: 202, name: "Accepted", symbol: "Ac", cat: "2xx", desc: "Accepted for processing, not completed.", rfc: "RFC 9110" },
+    { code: 203, name: "Non-Authoritative", symbol: "Na", cat: "2xx", desc: "Metadata from transforming proxy.", rfc: "RFC 9110" },
+    { code: 204, name: "No Content", symbol: "Nc", cat: "2xx", desc: "No additional content to send.", rfc: "RFC 9110" },
+    { code: 205, name: "Reset Content", symbol: "Rc", cat: "2xx", desc: "Reset the document view.", rfc: "RFC 9110" },
+    { code: 206, name: "Partial Content", symbol: "Pc", cat: "2xx", desc: "Delivering part of resource (Range header).", rfc: "RFC 9110" },
+    { code: 207, name: "Multi-Status", symbol: "Ms", cat: "2xx", desc: "WebDAV multiple resource info.", rfc: "RFC 4918" },
+    { code: 208, name: "Already Reported", symbol: "Ar", cat: "2xx", desc: "WebDAV binding already enumerated.", rfc: "RFC 5842" },
+    { code: 226, name: "IM Used", symbol: "Im", cat: "2xx", desc: "Instance-manipulations applied.", rfc: "RFC 3229" },
+    { code: 300, name: "Multiple Choices", symbol: "Mc", cat: "3xx", desc: "Multiple possible responses.", rfc: "RFC 9110" },
+    { code: 301, name: "Moved Permanently", symbol: "Mp", cat: "3xx", desc: "URL changed permanently.", rfc: "RFC 9110" },
+    { code: 302, name: "Found", symbol: "Fd", cat: "3xx", desc: "URI changed temporarily.", rfc: "RFC 9110" },
+    { code: 303, name: "See Other", symbol: "So", cat: "3xx", desc: "Redirect to different resource via GET.", rfc: "RFC 9110" },
+    { code: 304, name: "Not Modified", symbol: "Nm", cat: "3xx", desc: "Use cached version.", rfc: "RFC 9110" },
+    { code: 305, name: "Use Proxy", symbol: "Up", cat: "3xx", desc: "Deprecated.", rfc: "Deprecated" },
+    { code: 307, name: "Temporary Redirect", symbol: "Tr", cat: "3xx", desc: "Same method redirect.", rfc: "RFC 9110" },
+    { code: 308, name: "Permanent Redirect", symbol: "Pr", cat: "3xx", desc: "Permanent, same method.", rfc: "RFC 9110" },
+    { code: 400, name: "Bad Request", symbol: "Br", cat: "4xx", desc: "Client error.", rfc: "RFC 9110" },
+    { code: 401, name: "Unauthorized", symbol: "Un", cat: "4xx", desc: "Authentication required.", rfc: "RFC 9110" },
+    { code: 402, name: "Payment Required", symbol: "Py", cat: "4xx", desc: "Reserved for future use.", rfc: "RFC 9110" },
+    { code: 403, name: "Forbidden", symbol: "Fb", cat: "4xx", desc: "No access rights.", rfc: "RFC 9110" },
+    { code: 404, name: "Not Found", symbol: "Nf", cat: "4xx", desc: "Resource not found.", rfc: "RFC 9110" },
+    { code: 405, name: "Method Not Allowed", symbol: "Ma", cat: "4xx", desc: "Method not supported.", rfc: "RFC 9110" },
+    { code: 406, name: "Not Acceptable", symbol: "Nx", cat: "4xx", desc: "Can't match Accept headers.", rfc: "RFC 9110" },
+    { code: 407, name: "Proxy Auth Required", symbol: "Pa", cat: "4xx", desc: "Proxy auth needed.", rfc: "RFC 9110" },
+    { code: 408, name: "Request Timeout", symbol: "Rt", cat: "4xx", desc: "Connection timed out.", rfc: "RFC 9110" },
+    { code: 409, name: "Conflict", symbol: "Cf", cat: "4xx", desc: "Conflicts with server state.", rfc: "RFC 9110" },
+    { code: 410, name: "Gone", symbol: "Gn", cat: "4xx", desc: "Permanently deleted.", rfc: "RFC 9110" },
+    { code: 411, name: "Length Required", symbol: "Lr", cat: "4xx", desc: "Content-Length required.", rfc: "RFC 9110" },
+    { code: 412, name: "Precondition Failed", symbol: "Pf", cat: "4xx", desc: "Preconditions not met.", rfc: "RFC 9110" },
+    { code: 413, name: "Content Too Large", symbol: "Tl", cat: "4xx", desc: "Entity too large.", rfc: "RFC 9110" },
+    { code: 414, name: "URI Too Long", symbol: "Ul", cat: "4xx", desc: "URI too long.", rfc: "RFC 9110" },
+    { code: 415, name: "Unsupported Media", symbol: "Um", cat: "4xx", desc: "Media not supported.", rfc: "RFC 9110" },
+    { code: 416, name: "Range Not Satisfiable", symbol: "Rn", cat: "4xx", desc: "Range can't be fulfilled.", rfc: "RFC 9110" },
+    { code: 417, name: "Expectation Failed", symbol: "Ef", cat: "4xx", desc: "Expect can't be met.", rfc: "RFC 9110" },
+    { code: 418, name: "I'm a Teapot", symbol: "Tp", cat: "4xx", desc: "April Fools' Easter egg.", rfc: "RFC 2324" },
+    { code: 421, name: "Misdirected", symbol: "Mr", cat: "4xx", desc: "Wrong server.", rfc: "RFC 9110" },
+    { code: 422, name: "Unprocessable", symbol: "Uc", cat: "4xx", desc: "Semantically erroneous.", rfc: "RFC 9110" },
+    { code: 423, name: "Locked", symbol: "Lk", cat: "4xx", desc: "Resource locked.", rfc: "RFC 4918" },
+    { code: 424, name: "Failed Dependency", symbol: "Dp", cat: "4xx", desc: "Previous request failed.", rfc: "RFC 4918" },
+    { code: 425, name: "Too Early", symbol: "Te", cat: "4xx", desc: "Won't risk replay.", rfc: "RFC 8470" },
+    { code: 426, name: "Upgrade Required", symbol: "Ur", cat: "4xx", desc: "Protocol upgrade needed.", rfc: "RFC 9110" },
+    { code: 428, name: "Precondition Req'd", symbol: "Pq", cat: "4xx", desc: "Conditional requests required.", rfc: "RFC 6585" },
+    { code: 429, name: "Too Many Requests", symbol: "Tm", cat: "4xx", desc: "Rate limited.", rfc: "RFC 6585" },
+    { code: 431, name: "Headers Too Large", symbol: "Hl", cat: "4xx", desc: "Headers too large.", rfc: "RFC 6585" },
+    { code: 451, name: "Legal Reasons", symbol: "Lg", cat: "4xx", desc: "Legal restrictions.", rfc: "RFC 7725" },
+    { code: 500, name: "Internal Error", symbol: "Is", cat: "5xx", desc: "Unhandled exception.", rfc: "RFC 9110" },
+    { code: 501, name: "Not Implemented", symbol: "Ni", cat: "5xx", desc: "Method not supported.", rfc: "RFC 9110" },
+    { code: 502, name: "Bad Gateway", symbol: "Bg", cat: "5xx", desc: "Invalid upstream response.", rfc: "RFC 9110" },
+    { code: 503, name: "Service Unavailable", symbol: "Su", cat: "5xx", desc: "Server not ready.", rfc: "RFC 9110" },
+    { code: 504, name: "Gateway Timeout", symbol: "Gt", cat: "5xx", desc: "Gateway timed out.", rfc: "RFC 9110" },
+    { code: 505, name: "HTTP Ver. Unsupported", symbol: "Hv", cat: "5xx", desc: "HTTP version unsupported.", rfc: "RFC 9110" },
+    { code: 506, name: "Variant Negotiates", symbol: "Vn", cat: "5xx", desc: "Config error.", rfc: "RFC 2295" },
+    { code: 507, name: "Insufficient Storage", symbol: "St", cat: "5xx", desc: "Can't store.", rfc: "RFC 4918" },
+    { code: 508, name: "Loop Detected", symbol: "Ld", cat: "5xx", desc: "Infinite loop.", rfc: "RFC 5842" },
+    { code: 510, name: "Not Extended", symbol: "Ne", cat: "5xx", desc: "Extensions required.", rfc: "RFC 2774" },
+    { code: 511, name: "Network Auth Req'd", symbol: "Nr", cat: "5xx", desc: "Network auth needed.", rfc: "RFC 6585" },
+];
+
+const CAT_COLORS = { '1xx': '#58a6ff', '2xx': '#3fb950', '3xx': '#d29922', '4xx': '#ff7b72', '5xx': '#bc8cff' };
+const CAT_LABELS = { '1xx': 'Informational', '2xx': 'Success', '3xx': 'Redirection', '4xx': 'Client Error', '5xx': 'Server Error' };
+
+// Group by category
+const categories = {};
+STATUS_CODES.forEach(sc => {
+    if (!categories[sc.cat]) categories[sc.cat] = [];
+    categories[sc.cat].push(sc);
+});
+
+// Build columns
+const container = document.getElementById('columnsContainer');
+const catOrder = ['1xx', '2xx', '3xx', '4xx', '5xx'];
+
+catOrder.forEach(cat => {
+    const codes = categories[cat] || [];
+    const col = document.createElement('div');
+    col.className = `column col-${cat}`;
+
+    const header = document.createElement('div');
+    header.className = 'col-header';
+    header.textContent = cat;
+    col.appendChild(header);
+
+    const subheader = document.createElement('div');
+    subheader.className = 'col-subheader';
+    subheader.textContent = CAT_LABELS[cat];
+    col.appendChild(subheader);
+
+    const body = document.createElement('div');
+    body.className = 'col-body';
+
+    codes.forEach(sc => {
+        const row = document.createElement('div');
+        row.className = 'code-row';
+        row.dataset.code = sc.code;
+        row.dataset.name = sc.name.toLowerCase();
+        row.dataset.desc = sc.desc;
+        row.dataset.rfc = sc.rfc;
+        row.dataset.cat = sc.cat;
+
+        const num = document.createElement('span');
+        num.className = 'code-num';
+        num.textContent = sc.code;
+
+        const name = document.createElement('span');
+        name.className = 'code-name';
+        name.textContent = sc.name;
+
+        row.appendChild(num);
+        row.appendChild(name);
+        body.appendChild(row);
+    });
+
+    col.appendChild(body);
+    container.appendChild(col);
+});
+
+// Tooltip logic
+const tooltip = document.getElementById('tooltip');
+const tooltipCode = document.getElementById('tooltipCode');
+const tooltipName = document.getElementById('tooltipName');
+const tooltipDesc = document.getElementById('tooltipDesc');
+const tooltipRfc = document.getElementById('tooltipRfc');
+
+document.querySelectorAll('.code-row').forEach(row => {
+    row.addEventListener('mouseenter', (e) => {
+        const sc = STATUS_CODES.find(s => s.code == row.dataset.code);
+        if (!sc) return;
+
+        tooltipCode.textContent = sc.code;
+        tooltipCode.style.color = CAT_COLORS[sc.cat];
+        tooltipName.textContent = sc.name;
+        tooltipDesc.textContent = sc.desc;
+        tooltipRfc.textContent = sc.rfc;
+
+        tooltip.classList.add('visible');
+
+        const rect = row.getBoundingClientRect();
+        let left = rect.right + 8;
+        let top = rect.top;
+
+        // Keep tooltip in viewport
+        if (left + 260 > 1024) {
+            left = rect.left - 268;
+        }
+        if (top + 80 > 768) {
+            top = 768 - 85;
+        }
+
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
+    });
+
+    row.addEventListener('mouseleave', () => {
+        tooltip.classList.remove('visible');
+    });
+});
+
+// Search/filter
+const searchInput = document.getElementById('searchInput');
+searchInput.addEventListener('input', () => {
+    const query = searchInput.value.toLowerCase().trim();
+    const rows = document.querySelectorAll('.code-row');
+
+    if (!query) {
+        rows.forEach(r => {
+            r.classList.remove('highlight', 'dimmed');
+        });
+        return;
+    }
+
+    rows.forEach(row => {
+        const code = row.dataset.code;
+        const name = row.dataset.name;
+        const match = code.includes(query) || name.includes(query);
+        row.classList.toggle('highlight', match);
+        row.classList.toggle('dimmed', !match);
+    });
+});
+
+// Keyboard shortcut: / to focus search
+document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement !== searchInput) {
+        e.preventDefault();
+        searchInput.focus();
+    }
+    if (e.key === 'Escape') {
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input'));
+        searchInput.blur();
+    }
+});
+</script>
+</body>
+</html>

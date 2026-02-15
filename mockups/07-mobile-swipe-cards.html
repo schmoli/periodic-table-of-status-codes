@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>StatusMatch - HTTP Singles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --1xx: #58a6ff;
+    --2xx: #3fb950;
+    --3xx: #d29922;
+    --4xx: #ff7b72;
+    --5xx: #bc8cff;
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #000;
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.app-container {
+    max-width: 430px;
+    width: 100%;
+    height: 100%;
+    margin: 0 auto;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Top Bar */
+.top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    padding-top: max(12px, env(safe-area-inset-top));
+    background: var(--bg);
+    z-index: 10;
+    flex-shrink: 0;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #ff6b9d, #c44dff);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 900;
+    color: white;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -1px;
+}
+
+.logo-text {
+    font-family: 'Pacifico', cursive;
+    font-size: 22px;
+    background: linear-gradient(135deg, #ff6b9d, #c44dff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.top-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.top-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.top-btn:active {
+    transform: scale(0.92);
+}
+
+/* Progress */
+.progress-bar {
+    padding: 0 20px 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.progress-track {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff6b9d, #c44dff);
+    border-radius: 2px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-text {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-weight: 600;
+    min-width: 42px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Card Area */
+.card-area {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 20px 12px;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.card-stack {
+    position: relative;
+    width: 100%;
+    max-width: 350px;
+    height: 100%;
+    max-height: 520px;
+}
+
+/* Cards */
+.card {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 24px;
+    overflow: hidden;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, opacity;
+    cursor: grab;
+    touch-action: pan-y;
+}
+
+.card:active {
+    cursor: grabbing;
+}
+
+.card-inner {
+    width: 100%;
+    height: 100%;
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-bg-pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.06;
+    font-size: 280px;
+    font-weight: 900;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    letter-spacing: -15px;
+    line-height: 1;
+}
+
+/* Swipe overlays */
+.card-swipe-overlay {
+    position: absolute;
+    top: 20px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 5;
+    border: 3px solid;
+}
+
+.card-swipe-overlay.like {
+    right: 20px;
+    color: #3fb950;
+    border-color: #3fb950;
+    transform: rotate(15deg);
+}
+
+.card-swipe-overlay.nope {
+    left: 20px;
+    color: #ff7b72;
+    border-color: #ff7b72;
+    transform: rotate(-15deg);
+}
+
+/* Card content */
+.card-category-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    width: fit-content;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.card-code {
+    font-size: 96px;
+    font-weight: 900;
+    line-height: 1;
+    margin-top: 12px;
+    letter-spacing: -4px;
+    text-shadow: 0 2px 30px rgba(0,0,0,0.3);
+}
+
+.card-name {
+    font-size: 24px;
+    font-weight: 700;
+    margin-top: 4px;
+    line-height: 1.2;
+}
+
+.card-personality {
+    font-size: 14px;
+    font-style: italic;
+    margin-top: 8px;
+    line-height: 1.4;
+    opacity: 0.85;
+}
+
+.card-divider {
+    width: 40px;
+    height: 3px;
+    border-radius: 2px;
+    margin-top: 16px;
+    opacity: 0.5;
+}
+
+.card-desc {
+    font-size: 14px;
+    line-height: 1.55;
+    margin-top: 14px;
+    opacity: 0.9;
+    flex: 1;
+}
+
+.card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 12px;
+}
+
+.card-rfc {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.5;
+}
+
+.card-symbol {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 800;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 12px 20px 8px;
+    flex-shrink: 0;
+}
+
+.action-btn {
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn:active {
+    transform: scale(0.88);
+}
+
+.action-btn.small {
+    width: 44px;
+    height: 44px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    font-size: 18px;
+    color: var(--text-dim);
+}
+
+.action-btn.nope {
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 123, 114, 0.12);
+    border: 2px solid rgba(255, 123, 114, 0.3);
+    color: #ff7b72;
+    font-size: 24px;
+}
+
+.action-btn.super {
+    width: 44px;
+    height: 44px;
+    background: rgba(88, 166, 255, 0.12);
+    border: 1.5px solid rgba(88, 166, 255, 0.3);
+    color: #58a6ff;
+    font-size: 18px;
+}
+
+.action-btn.like {
+    width: 56px;
+    height: 56px;
+    background: rgba(63, 185, 80, 0.12);
+    border: 2px solid rgba(63, 185, 80, 0.3);
+    color: #3fb950;
+    font-size: 24px;
+}
+
+.action-btn.info {
+    width: 44px;
+    height: 44px;
+    background: rgba(210, 153, 34, 0.12);
+    border: 1.5px solid rgba(210, 153, 34, 0.3);
+    color: #d29922;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Category Filter */
+.category-filter {
+    padding: 8px 16px 12px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-shrink: 0;
+    justify-content: center;
+}
+
+.category-filter::-webkit-scrollbar {
+    display: none;
+}
+
+.filter-pill {
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.25s;
+    letter-spacing: 0.3px;
+    font-family: 'Inter', sans-serif;
+}
+
+.filter-pill:active {
+    transform: scale(0.95);
+}
+
+.filter-pill.active {
+    border-color: currentColor;
+}
+
+/* Swipe Animation */
+.card.swiping-left {
+    animation: swipeLeft 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.card.swiping-right {
+    animation: swipeRight 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.card.swiping-up {
+    animation: swipeUp 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes swipeLeft {
+    to {
+        transform: translateX(-150%) rotate(-25deg);
+        opacity: 0;
+    }
+}
+
+@keyframes swipeRight {
+    to {
+        transform: translateX(150%) rotate(25deg);
+        opacity: 0;
+    }
+}
+
+@keyframes swipeUp {
+    to {
+        transform: translateY(-150%) scale(0.8);
+        opacity: 0;
+    }
+}
+
+/* Card enter from bottom */
+.card.entering {
+    animation: cardEnter 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes cardEnter {
+    from {
+        transform: scale(0.9) translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Toast notifications */
+.toast {
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 100;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Empty state */
+.empty-state {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    padding: 40px;
+}
+
+.empty-state.visible {
+    display: flex;
+}
+
+.empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.empty-desc {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-bottom: 24px;
+}
+
+.reset-btn {
+    padding: 12px 32px;
+    border-radius: 24px;
+    border: none;
+    background: linear-gradient(135deg, #ff6b9d, #c44dff);
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s;
+    font-family: 'Inter', sans-serif;
+}
+
+.reset-btn:active {
+    transform: scale(0.95);
+}
+
+/* Favorites counter badge */
+.fav-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ff6b9d;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.fav-badge.visible {
+    display: flex;
+}
+</style>
+</head>
+<body>
+
+<div class="app-container" id="app">
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="logo">
+            <div class="logo-icon">&lt;/&gt;</div>
+            <span class="logo-text">StatusMatch</span>
+        </div>
+        <div class="top-actions">
+            <button class="top-btn" id="shuffleBtn" title="Shuffle">&#x21C5;</button>
+            <button class="top-btn" id="favListBtn" title="Favorites" style="position:relative">
+                &#9829;
+                <span class="fav-badge" id="favBadge">0</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-bar">
+        <div class="progress-track">
+            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+        <span class="progress-text" id="progressText">1/61</span>
+    </div>
+
+    <!-- Card Area -->
+    <div class="card-area" id="cardArea">
+        <div class="card-stack" id="cardStack"></div>
+        <div class="empty-state" id="emptyState">
+            <div class="empty-icon">&#128148;</div>
+            <div class="empty-title">No more codes!</div>
+            <div class="empty-desc">You've seen all the HTTP status codes in this category. Try another filter or start over.</div>
+            <button class="reset-btn" id="resetBtn">Start Over</button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <button class="action-btn small" id="rewindBtn" title="Rewind">&#8634;</button>
+        <button class="action-btn nope" id="nopeBtn" title="Nope">&#10005;</button>
+        <button class="action-btn super" id="superBtn" title="Super Like">&#9733;</button>
+        <button class="action-btn like" id="likeBtn" title="Like">&#9829;</button>
+        <button class="action-btn info" id="infoBtn" title="Details">i</button>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="category-filter" id="categoryFilter">
+        <button class="filter-pill active" data-cat="all">All</button>
+        <button class="filter-pill" data-cat="1xx" style="color: var(--1xx)">1xx</button>
+        <button class="filter-pill" data-cat="2xx" style="color: var(--2xx)">2xx</button>
+        <button class="filter-pill" data-cat="3xx" style="color: var(--3xx)">3xx</button>
+        <button class="filter-pill" data-cat="4xx" style="color: var(--4xx)">4xx</button>
+        <button class="filter-pill" data-cat="5xx" style="color: var(--5xx)">5xx</button>
+    </div>
+</div>
+
+<script>
+const STATUS_CODES = [
+    { code: 100, name: "Continue", symbol: "Cn", cat: "1xx", desc: "The server has received the request headers and the client should proceed to send the request body.", rfc: "RFC 9110" },
+    { code: 101, name: "Switching Protocols", symbol: "Sw", cat: "1xx", desc: "The server is switching protocols as requested by the client via the Upgrade header.", rfc: "RFC 9110" },
+    { code: 103, name: "Early Hints", symbol: "Eh", cat: "1xx", desc: "Used to return some response headers before the final HTTP message.", rfc: "RFC 8297" },
+    { code: 200, name: "OK", symbol: "Ok", cat: "2xx", desc: "The request has succeeded.", rfc: "RFC 9110" },
+    { code: 201, name: "Created", symbol: "Cr", cat: "2xx", desc: "The request has been fulfilled and a new resource has been created.", rfc: "RFC 9110" },
+    { code: 202, name: "Accepted", symbol: "Ac", cat: "2xx", desc: "The request has been accepted for processing, but processing has not been completed.", rfc: "RFC 9110" },
+    { code: 203, name: "Non-Authoritative", symbol: "Na", cat: "2xx", desc: "The returned metadata is not exactly the same as available from the origin server.", rfc: "RFC 9110" },
+    { code: 204, name: "No Content", symbol: "Nc", cat: "2xx", desc: "The server has successfully fulfilled the request and there is no additional content.", rfc: "RFC 9110" },
+    { code: 205, name: "Reset Content", symbol: "Rc", cat: "2xx", desc: "The server has fulfilled the request and the user agent should reset the document view.", rfc: "RFC 9110" },
+    { code: 206, name: "Partial Content", symbol: "Pc", cat: "2xx", desc: "The server is delivering only part of the resource due to a Range header.", rfc: "RFC 9110" },
+    { code: 207, name: "Multi-Status", symbol: "Ms", cat: "2xx", desc: "A WebDAV response conveying information about multiple resources.", rfc: "RFC 4918" },
+    { code: 208, name: "Already Reported", symbol: "Ar", cat: "2xx", desc: "Used inside a WebDAV response to avoid enumerating internal members repeatedly.", rfc: "RFC 5842" },
+    { code: 226, name: "IM Used", symbol: "Im", cat: "2xx", desc: "The server has fulfilled a GET request with instance-manipulations applied.", rfc: "RFC 3229" },
+    { code: 300, name: "Multiple Choices", symbol: "Mc", cat: "3xx", desc: "The request has more than one possible response.", rfc: "RFC 9110" },
+    { code: 301, name: "Moved Permanently", symbol: "Mp", cat: "3xx", desc: "The URL of the requested resource has been changed permanently.", rfc: "RFC 9110" },
+    { code: 302, name: "Found", symbol: "Fd", cat: "3xx", desc: "The URI of the requested resource has been changed temporarily.", rfc: "RFC 9110" },
+    { code: 303, name: "See Other", symbol: "So", cat: "3xx", desc: "The server is redirecting to a different resource using GET.", rfc: "RFC 9110" },
+    { code: 304, name: "Not Modified", symbol: "Nm", cat: "3xx", desc: "The resource has not been modified since the version specified.", rfc: "RFC 9110" },
+    { code: 305, name: "Use Proxy", symbol: "Up", cat: "3xx", desc: "The requested resource must be accessed through a proxy. Deprecated.", rfc: "Deprecated" },
+    { code: 307, name: "Temporary Redirect", symbol: "Tr", cat: "3xx", desc: "The server is redirecting to another URI with same method.", rfc: "RFC 9110" },
+    { code: 308, name: "Permanent Redirect", symbol: "Pr", cat: "3xx", desc: "The resource has permanently moved, same method required.", rfc: "RFC 9110" },
+    { code: 400, name: "Bad Request", symbol: "Br", cat: "4xx", desc: "The server cannot process the request due to a client error.", rfc: "RFC 9110" },
+    { code: 401, name: "Unauthorized", symbol: "Un", cat: "4xx", desc: "The request requires authentication.", rfc: "RFC 9110" },
+    { code: 402, name: "Payment Required", symbol: "Py", cat: "4xx", desc: "Reserved for future use. Some APIs use it for billing limits.", rfc: "RFC 9110" },
+    { code: 403, name: "Forbidden", symbol: "Fb", cat: "4xx", desc: "The client does not have access rights.", rfc: "RFC 9110" },
+    { code: 404, name: "Not Found", symbol: "Nf", cat: "4xx", desc: "The server cannot find the requested resource.", rfc: "RFC 9110" },
+    { code: 405, name: "Method Not Allowed", symbol: "Ma", cat: "4xx", desc: "The request method is not supported for that resource.", rfc: "RFC 9110" },
+    { code: 406, name: "Not Acceptable", symbol: "Nx", cat: "4xx", desc: "The server can't produce a matching response.", rfc: "RFC 9110" },
+    { code: 407, name: "Proxy Auth Required", symbol: "Pa", cat: "4xx", desc: "Authentication needs to be done by a proxy.", rfc: "RFC 9110" },
+    { code: 408, name: "Request Timeout", symbol: "Rt", cat: "4xx", desc: "The server would like to shut down this unused connection.", rfc: "RFC 9110" },
+    { code: 409, name: "Conflict", symbol: "Cf", cat: "4xx", desc: "The request conflicts with the current state of the server.", rfc: "RFC 9110" },
+    { code: 410, name: "Gone", symbol: "Gn", cat: "4xx", desc: "The content has been permanently deleted.", rfc: "RFC 9110" },
+    { code: 411, name: "Length Required", symbol: "Lr", cat: "4xx", desc: "Content-Length header is not defined.", rfc: "RFC 9110" },
+    { code: 412, name: "Precondition Failed", symbol: "Pf", cat: "4xx", desc: "Preconditions in request headers are not met.", rfc: "RFC 9110" },
+    { code: 413, name: "Content Too Large", symbol: "Tl", cat: "4xx", desc: "Request entity is larger than server limits.", rfc: "RFC 9110" },
+    { code: 414, name: "URI Too Long", symbol: "Ul", cat: "4xx", desc: "The URI is longer than the server will interpret.", rfc: "RFC 9110" },
+    { code: 415, name: "Unsupported Media", symbol: "Um", cat: "4xx", desc: "The media format is not supported.", rfc: "RFC 9110" },
+    { code: 416, name: "Range Not Satisfiable", symbol: "Rn", cat: "4xx", desc: "The range specified can't be fulfilled.", rfc: "RFC 9110" },
+    { code: 417, name: "Expectation Failed", symbol: "Ef", cat: "4xx", desc: "The Expect header expectation can't be met.", rfc: "RFC 9110" },
+    { code: 418, name: "I'm a Teapot", symbol: "Tp", cat: "4xx", desc: "An April Fools' joke from 1998 that became beloved.", rfc: "RFC 2324" },
+    { code: 421, name: "Misdirected", symbol: "Mr", cat: "4xx", desc: "The request was directed at a wrong server.", rfc: "RFC 9110" },
+    { code: 422, name: "Unprocessable", symbol: "Uc", cat: "4xx", desc: "Well-formed but semantically erroneous.", rfc: "RFC 9110" },
+    { code: 423, name: "Locked", symbol: "Lk", cat: "4xx", desc: "The resource is locked (WebDAV).", rfc: "RFC 4918" },
+    { code: 424, name: "Failed Dependency", symbol: "Dp", cat: "4xx", desc: "Failed due to failure of a previous request.", rfc: "RFC 4918" },
+    { code: 425, name: "Too Early", symbol: "Te", cat: "4xx", desc: "Server won't risk processing a replay.", rfc: "RFC 8470" },
+    { code: 426, name: "Upgrade Required", symbol: "Ur", cat: "4xx", desc: "Server refuses current protocol.", rfc: "RFC 9110" },
+    { code: 428, name: "Precondition Req'd", symbol: "Pq", cat: "4xx", desc: "The server requires conditional requests.", rfc: "RFC 6585" },
+    { code: 429, name: "Too Many Requests", symbol: "Tm", cat: "4xx", desc: "Rate limited.", rfc: "RFC 6585" },
+    { code: 431, name: "Headers Too Large", symbol: "Hl", cat: "4xx", desc: "Header fields are too large.", rfc: "RFC 6585" },
+    { code: 451, name: "Legal Reasons", symbol: "Lg", cat: "4xx", desc: "Unavailable for legal reasons.", rfc: "RFC 7725" },
+    { code: 500, name: "Internal Error", symbol: "Is", cat: "5xx", desc: "Unhandled server exception.", rfc: "RFC 9110" },
+    { code: 501, name: "Not Implemented", symbol: "Ni", cat: "5xx", desc: "The request method is not supported.", rfc: "RFC 9110" },
+    { code: 502, name: "Bad Gateway", symbol: "Bg", cat: "5xx", desc: "Invalid response from upstream server.", rfc: "RFC 9110" },
+    { code: 503, name: "Service Unavailable", symbol: "Su", cat: "5xx", desc: "Server not ready \u2014 maintenance or overloaded.", rfc: "RFC 9110" },
+    { code: 504, name: "Gateway Timeout", symbol: "Gt", cat: "5xx", desc: "Gateway didn't get a response in time.", rfc: "RFC 9110" },
+    { code: 505, name: "HTTP Ver. Unsupported", symbol: "Hv", cat: "5xx", desc: "HTTP version not supported.", rfc: "RFC 9110" },
+    { code: 506, name: "Variant Negotiates", symbol: "Vn", cat: "5xx", desc: "Internal configuration error.", rfc: "RFC 2295" },
+    { code: 507, name: "Insufficient Storage", symbol: "St", cat: "5xx", desc: "Server can't store the representation.", rfc: "RFC 4918" },
+    { code: 508, name: "Loop Detected", symbol: "Ld", cat: "5xx", desc: "Infinite loop detected (WebDAV).", rfc: "RFC 5842" },
+    { code: 510, name: "Not Extended", symbol: "Ne", cat: "5xx", desc: "Further extensions required.", rfc: "RFC 2774" },
+    { code: 511, name: "Network Auth Req'd", symbol: "Nr", cat: "5xx", desc: "Client needs to authenticate for network access.", rfc: "RFC 6585" },
+];
+
+const CAT_COLORS = { '1xx': '#58a6ff', '2xx': '#3fb950', '3xx': '#d29922', '4xx': '#ff7b72', '5xx': '#bc8cff' };
+const CAT_LABELS = { '1xx': 'Informational', '2xx': 'Success', '3xx': 'Redirection', '4xx': 'Client Error', '5xx': 'Server Error' };
+
+// Fun personality taglines
+const PERSONALITIES = {
+    100: "Still loading... but full of potential.",
+    101: "Flexible and open to change. Swipe right if you like upgrades.",
+    103: "Gives you a sneak peek before the full reveal.",
+    200: "Always reliable, never flaky. The one you bring home to your API.",
+    201: "Brings something new into the world every time.",
+    202: "Says 'I'll get to it' and actually means it. Eventually.",
+    203: "Knows things, but heard it through the grapevine.",
+    204: "Strong, silent type. Gets the job done, says nothing.",
+    205: "Believes in fresh starts and clean slates.",
+    206: "Only gives you what you asked for. Respects boundaries.",
+    207: "Complex personality, many layers. It's complicated.",
+    208: "Remembers everything so you don't have to repeat yourself.",
+    226: "Creative type. Always transforming and adapting.",
+    300: "Can't decide where to go. Loves options.",
+    301: "Moved on permanently. Don't look back.",
+    302: "Just visiting somewhere else. Will be back... maybe.",
+    303: "Always pointing you to someone better.",
+    304: "Hasn't changed a bit since you last met.",
+    305: "Only talks through intermediaries. Very exclusive.",
+    307: "Taking a detour but keeping the same energy.",
+    308: "Relocated forever and committed to the new address.",
+    400: "It's not me, it's you. Definitely you.",
+    401: "Show me your credentials first, stranger.",
+    402: "Money talks. No pay, no play.",
+    403: "Knows who you are. Still says no.",
+    404: "The one that got away. Literally cannot be found.",
+    405: "Picky about how you approach. Method matters.",
+    406: "Has standards. You just don't meet them.",
+    407: "Talk to my agent first.",
+    408: "Got tired of waiting for you to make a move.",
+    409: "Dramatic. Everything is a conflict.",
+    410: "Gone forever. Don't even try.",
+    411: "Needs to know exactly how much you're bringing.",
+    412: "You didn't meet the prerequisites. Try again.",
+    413: "Says you're too much to handle.",
+    414: "Your URL is way too long. Keep it simple.",
+    415: "Only accepts specific types. Very particular.",
+    416: "Your range expectations are unrealistic.",
+    417: "Your expectations were too high.",
+    418: "Short, stout, and proud of it. A true original.",
+    421: "You knocked on the wrong door, friend.",
+    422: "Understood you perfectly, still thinks you're wrong.",
+    423: "Committed and unavailable. Respect the lock.",
+    424: "Blames others for their failures. Classic.",
+    425: "Too cautious for early moves. Slow and steady.",
+    426: "Demands you level up before proceeding.",
+    428: "Needs conditions met before any commitment.",
+    429: "Overwhelmed. You're being too much right now.",
+    431: "Says your baggage is too heavy.",
+    451: "Censored by forces beyond their control.",
+    500: "Hot mess internally but tries to keep it together.",
+    501: "Honest about what they can't do. Refreshingly limited.",
+    502: "Bad at passing messages. Communication breakdown.",
+    503: "Currently unavailable. Check back later.",
+    504: "Waited too long for a response. Sound familiar?",
+    505: "Old school. Won't adapt to your modern ways.",
+    506: "Can't even agree with themselves.",
+    507: "Has no room for anything new in their life.",
+    508: "Stuck in an endless loop. Therapy recommended.",
+    510: "Always wants more. Nothing is ever enough.",
+    511: "Won't let you in without a password to the WiFi."
+};
+
+// Gradient backgrounds for each category
+function getCardGradient(cat) {
+    var gradients = {
+        '1xx': 'linear-gradient(145deg, #0a1628 0%, #0d2847 30%, #1a3a5c 60%, #58a6ff33 100%)',
+        '2xx': 'linear-gradient(145deg, #0a1a0d 0%, #0d2812 30%, #1a3d22 60%, #3fb95033 100%)',
+        '3xx': 'linear-gradient(145deg, #1a1408 0%, #28200d 30%, #3d321a 60%, #d2992233 100%)',
+        '4xx': 'linear-gradient(145deg, #1a0d0c 0%, #280f0d 30%, #3d1a17 60%, #ff7b7233 100%)',
+        '5xx': 'linear-gradient(145deg, #150d1a 0%, #1e0d28 30%, #2d1a3d 60%, #bc8cff33 100%)',
+    };
+    return gradients[cat];
+}
+
+// State
+var currentCat = 'all';
+var filteredCodes = STATUS_CODES.slice();
+var currentIndex = 0;
+var favorites = {};
+var favCount = 0;
+var historyStack = [];
+var isDragging = false;
+var startX = 0;
+var startY = 0;
+var currentDragX = 0;
+var currentDragY = 0;
+
+// DOM
+var cardStack = document.getElementById('cardStack');
+var progressFill = document.getElementById('progressFill');
+var progressText = document.getElementById('progressText');
+var emptyState = document.getElementById('emptyState');
+var toastEl = document.getElementById('toast');
+var favBadge = document.getElementById('favBadge');
+
+function filterCodes(cat) {
+    currentCat = cat;
+    if (cat === 'all') {
+        filteredCodes = STATUS_CODES.slice();
+    } else {
+        filteredCodes = STATUS_CODES.filter(function(s) { return s.cat === cat; });
+    }
+    currentIndex = 0;
+    historyStack = [];
+    renderCards();
+    updateProgress();
+    updateFilterPills();
+}
+
+function updateFilterPills() {
+    var pills = document.querySelectorAll('.filter-pill');
+    for (var i = 0; i < pills.length; i++) {
+        var pill = pills[i];
+        if (pill.dataset.cat === currentCat) {
+            pill.classList.add('active');
+        } else {
+            pill.classList.remove('active');
+        }
+    }
+}
+
+function updateProgress() {
+    var total = filteredCodes.length;
+    var current = Math.min(currentIndex + 1, total);
+    var pct = total > 0 ? (current / total) * 100 : 0;
+    progressFill.style.width = pct + '%';
+    progressText.textContent = total > 0 ? current + '/' + total : '0/0';
+}
+
+function updateFavBadge() {
+    favBadge.textContent = favCount;
+    if (favCount > 0) {
+        favBadge.classList.add('visible');
+    } else {
+        favBadge.classList.remove('visible');
+    }
+}
+
+function showToast(msg, color) {
+    toastEl.textContent = msg;
+    toastEl.style.background = color || 'rgba(255,255,255,0.15)';
+    toastEl.style.color = '#fff';
+    toastEl.style.backdropFilter = 'blur(10px)';
+    toastEl.classList.add('show');
+    clearTimeout(toastEl._timeout);
+    toastEl._timeout = setTimeout(function() { toastEl.classList.remove('show'); }, 1500);
+}
+
+function buildCardDOM(statusCode) {
+    var color = CAT_COLORS[statusCode.cat];
+    var personality = PERSONALITIES[statusCode.code] || statusCode.desc;
+    var catLabel = CAT_LABELS[statusCode.cat];
+
+    var card = document.createElement('div');
+    card.className = 'card';
+
+    var inner = document.createElement('div');
+    inner.className = 'card-inner';
+
+    // Background pattern
+    var bgPattern = document.createElement('div');
+    bgPattern.className = 'card-bg-pattern';
+    bgPattern.textContent = statusCode.code;
+    inner.appendChild(bgPattern);
+
+    // Swipe overlays
+    var likeOverlay = document.createElement('div');
+    likeOverlay.className = 'card-swipe-overlay like';
+    likeOverlay.textContent = 'LIKE';
+    card.appendChild(likeOverlay);
+
+    var nopeOverlay = document.createElement('div');
+    nopeOverlay.className = 'card-swipe-overlay nope';
+    nopeOverlay.textContent = 'NOPE';
+    card.appendChild(nopeOverlay);
+
+    // Category badge
+    var badge = document.createElement('div');
+    badge.className = 'card-category-badge';
+    badge.style.background = color + '20';
+    badge.style.color = color;
+    badge.style.border = '1px solid ' + color + '40';
+    var dot = document.createElement('span');
+    dot.style.cssText = 'width:7px;height:7px;border-radius:50%;display:inline-block;background:' + color;
+    badge.appendChild(dot);
+    badge.appendChild(document.createTextNode(' ' + catLabel));
+    inner.appendChild(badge);
+
+    // Code
+    var codeEl = document.createElement('div');
+    codeEl.className = 'card-code';
+    codeEl.style.color = color;
+    codeEl.textContent = statusCode.code;
+    inner.appendChild(codeEl);
+
+    // Name
+    var nameEl = document.createElement('div');
+    nameEl.className = 'card-name';
+    nameEl.textContent = statusCode.name;
+    inner.appendChild(nameEl);
+
+    // Personality
+    var persEl = document.createElement('div');
+    persEl.className = 'card-personality';
+    persEl.textContent = '"' + personality + '"';
+    inner.appendChild(persEl);
+
+    // Divider
+    var divider = document.createElement('div');
+    divider.className = 'card-divider';
+    divider.style.background = color;
+    inner.appendChild(divider);
+
+    // Description
+    var descEl = document.createElement('div');
+    descEl.className = 'card-desc';
+    descEl.textContent = statusCode.desc;
+    inner.appendChild(descEl);
+
+    // Footer
+    var footer = document.createElement('div');
+    footer.className = 'card-footer';
+
+    var rfcEl = document.createElement('span');
+    rfcEl.className = 'card-rfc';
+    rfcEl.textContent = statusCode.rfc;
+    footer.appendChild(rfcEl);
+
+    var symbolEl = document.createElement('div');
+    symbolEl.className = 'card-symbol';
+    symbolEl.style.background = color + '20';
+    symbolEl.style.color = color;
+    symbolEl.style.border = '1px solid ' + color + '30';
+    symbolEl.textContent = statusCode.symbol;
+    footer.appendChild(symbolEl);
+
+    inner.appendChild(footer);
+    card.appendChild(inner);
+
+    return card;
+}
+
+function renderCards() {
+    // Remove all children
+    while (cardStack.firstChild) {
+        cardStack.removeChild(cardStack.firstChild);
+    }
+
+    if (currentIndex >= filteredCodes.length) {
+        emptyState.classList.add('visible');
+        return;
+    }
+    emptyState.classList.remove('visible');
+
+    // Render up to 3 cards (back to front)
+    var cardsToShow = Math.min(3, filteredCodes.length - currentIndex);
+    for (var i = cardsToShow - 1; i >= 0; i--) {
+        var idx = currentIndex + i;
+        if (idx < filteredCodes.length) {
+            var card = buildCardDOM(filteredCodes[idx]);
+            card.style.zIndex = 10 - i;
+            card.style.background = getCardGradient(filteredCodes[idx].cat);
+
+            var scale = 1 - i * 0.04;
+            var translateY = i * 10;
+            card.style.transform = 'scale(' + scale + ') translateY(' + translateY + 'px)';
+            if (i > 2) {
+                card.style.opacity = '0';
+            } else {
+                card.style.opacity = String(1 - i * 0.15);
+            }
+
+            cardStack.appendChild(card);
+
+            if (i === 0) {
+                setupSwipeHandlers(card);
+            }
+        }
+    }
+}
+
+function setupSwipeHandlers(card) {
+    var startTime;
+    var likeOvl = card.querySelector('.card-swipe-overlay.like');
+    var nopeOvl = card.querySelector('.card-swipe-overlay.nope');
+
+    function onStart(e) {
+        if (isDragging) return;
+        isDragging = true;
+        startTime = Date.now();
+        var point = e.touches ? e.touches[0] : e;
+        startX = point.clientX;
+        startY = point.clientY;
+        currentDragX = 0;
+        currentDragY = 0;
+        card.style.transition = 'none';
+    }
+
+    function onMove(e) {
+        if (!isDragging) return;
+        var point = e.touches ? e.touches[0] : e;
+        currentDragX = point.clientX - startX;
+        currentDragY = point.clientY - startY;
+
+        var rotation = currentDragX * 0.08;
+        card.style.transform = 'translateX(' + currentDragX + 'px) translateY(' + currentDragY + 'px) rotate(' + rotation + 'deg)';
+
+        var threshold = 60;
+        if (currentDragX > 0) {
+            likeOvl.style.opacity = String(Math.min(currentDragX / threshold, 1));
+            nopeOvl.style.opacity = '0';
+        } else {
+            nopeOvl.style.opacity = String(Math.min(Math.abs(currentDragX) / threshold, 1));
+            likeOvl.style.opacity = '0';
+        }
+    }
+
+    function onEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+
+        var elapsed = Date.now() - startTime;
+        var velocity = Math.abs(currentDragX) / elapsed;
+        var threshold = 80;
+
+        card.style.transition = '';
+
+        if (Math.abs(currentDragX) > threshold || velocity > 0.5) {
+            if (currentDragX > 0) {
+                swipeCard('right');
+            } else {
+                swipeCard('left');
+            }
+        } else {
+            card.style.transform = 'scale(1) translateY(0)';
+            likeOvl.style.opacity = '0';
+            nopeOvl.style.opacity = '0';
+        }
+    }
+
+    card.addEventListener('touchstart', onStart, { passive: true });
+    card.addEventListener('touchmove', onMove, { passive: true });
+    card.addEventListener('touchend', onEnd);
+    card.addEventListener('mousedown', onStart);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
+}
+
+function swipeCard(direction) {
+    var topCard = cardStack.lastElementChild;
+    if (!topCard || topCard.classList.contains('swiping-left') || topCard.classList.contains('swiping-right') || topCard.classList.contains('swiping-up')) return;
+
+    var code = filteredCodes[currentIndex];
+    historyStack.push({ index: currentIndex, code: code });
+
+    if (direction === 'right') {
+        topCard.classList.add('swiping-right');
+        if (!favorites[code.code]) {
+            favorites[code.code] = true;
+            favCount++;
+        }
+        updateFavBadge();
+        showToast('Liked ' + code.code + ' ' + code.name, 'rgba(63, 185, 80, 0.4)');
+    } else if (direction === 'left') {
+        topCard.classList.add('swiping-left');
+        showToast('Passed on ' + code.code, 'rgba(255, 123, 114, 0.3)');
+    } else if (direction === 'up') {
+        topCard.classList.add('swiping-up');
+        if (!favorites[code.code]) {
+            favorites[code.code] = true;
+            favCount++;
+        }
+        updateFavBadge();
+        showToast('Super Liked ' + code.code + '!', 'rgba(88, 166, 255, 0.4)');
+    }
+
+    setTimeout(function() {
+        currentIndex++;
+        updateProgress();
+        renderCards();
+    }, 400);
+}
+
+function rewind() {
+    if (historyStack.length === 0) {
+        showToast("No history to rewind", 'rgba(255,255,255,0.12)');
+        return;
+    }
+    var last = historyStack.pop();
+    currentIndex = last.index;
+    if (favorites[last.code.code]) {
+        delete favorites[last.code.code];
+        favCount--;
+    }
+    updateFavBadge();
+    updateProgress();
+    renderCards();
+    showToast('Back to ' + last.code.code, 'rgba(255,255,255,0.15)');
+}
+
+// Button handlers
+document.getElementById('nopeBtn').addEventListener('click', function() { swipeCard('left'); });
+document.getElementById('likeBtn').addEventListener('click', function() { swipeCard('right'); });
+document.getElementById('superBtn').addEventListener('click', function() { swipeCard('up'); });
+document.getElementById('rewindBtn').addEventListener('click', rewind);
+document.getElementById('infoBtn').addEventListener('click', function() {
+    if (currentIndex < filteredCodes.length) {
+        var code = filteredCodes[currentIndex];
+        showToast(code.rfc + ' - ' + code.cat + ' ' + CAT_LABELS[code.cat], 'rgba(210, 153, 34, 0.4)');
+    }
+});
+
+document.getElementById('shuffleBtn').addEventListener('click', function() {
+    for (var i = filteredCodes.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = filteredCodes[i];
+        filteredCodes[i] = filteredCodes[j];
+        filteredCodes[j] = temp;
+    }
+    currentIndex = 0;
+    historyStack = [];
+    renderCards();
+    updateProgress();
+    showToast("Shuffled!", 'rgba(188, 140, 255, 0.4)');
+});
+
+document.getElementById('favListBtn').addEventListener('click', function() {
+    if (favCount === 0) {
+        showToast("No favorites yet", 'rgba(255,255,255,0.12)');
+    } else {
+        var codes = [];
+        for (var k in favorites) {
+            if (favorites[k]) codes.push(k);
+        }
+        showToast('Favorites: ' + codes.join(', '), 'rgba(255, 107, 157, 0.4)');
+    }
+});
+
+document.getElementById('resetBtn').addEventListener('click', function() {
+    filterCodes(currentCat);
+});
+
+// Category filter
+document.getElementById('categoryFilter').addEventListener('click', function(e) {
+    var pill = e.target.closest('.filter-pill');
+    if (pill) {
+        filterCodes(pill.dataset.cat);
+    }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft') swipeCard('left');
+    else if (e.key === 'ArrowRight') swipeCard('right');
+    else if (e.key === 'ArrowUp') swipeCard('up');
+    else if (e.key === 'ArrowDown' || e.key === 'z') rewind();
+});
+
+// Init
+renderCards();
+updateProgress();
+updateFavBadge();
+</script>
+</body>
+</html>

@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=768, height=1024, initial-scale=1.0">
+<title>HTTP Status Codes - Accordion</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 768px;
+    height: 1024px;
+    max-height: 1024px;
+    overflow: hidden;
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: 'Inter', -apple-system, sans-serif;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* -- Header -- */
+  .header {
+    height: 56px;
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid #21262d;
+    background: #0d1117;
+  }
+
+  .header h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: #e6edf3;
+  }
+
+  .header h1 span {
+    color: #484f58;
+    font-weight: 400;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 6px 12px;
+    width: 220px;
+  }
+
+  .search-box svg { color: #484f58; flex-shrink: 0; }
+
+  .search-box input {
+    background: none;
+    border: none;
+    color: #e6edf3;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    outline: none;
+    width: 100%;
+  }
+
+  .search-box input::placeholder { color: #484f58; }
+
+  /* -- Accordion Container -- */
+  .accordion-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 8px 12px;
+    gap: 4px;
+  }
+
+  /* -- Accordion Section -- */
+  .accordion-section {
+    border-radius: 8px;
+    overflow: hidden;
+    transition: flex 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .accordion-section.collapsed {
+    flex: 0 0 46px;
+  }
+
+  .accordion-section.expanded {
+    flex: 1 1 auto;
+  }
+
+  /* -- Accordion Bar (header) -- */
+  .accordion-bar {
+    height: 46px;
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    cursor: pointer;
+    user-select: none;
+    gap: 12px;
+    transition: background 0.2s;
+    position: relative;
+  }
+
+  .accordion-bar:hover {
+    filter: brightness(1.15);
+  }
+
+  .color-indicator {
+    width: 4px;
+    height: 24px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .cat-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 600;
+    min-width: 32px;
+  }
+
+  .cat-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #c9d1d9;
+  }
+
+  .cat-count {
+    font-size: 12px;
+    color: #8b949e;
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .chevron {
+    width: 16px;
+    height: 16px;
+    color: #484f58;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+  }
+
+  .expanded .chevron {
+    transform: rotate(180deg);
+  }
+
+  /* -- Accordion Content (code tiles) -- */
+  .accordion-content {
+    flex: 1;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.25s ease 0.1s;
+    padding: 0;
+  }
+
+  .expanded .accordion-content {
+    opacity: 1;
+    padding: 6px 12px 10px;
+  }
+
+  .tile-grid {
+    display: grid;
+    gap: 6px;
+    height: 100%;
+    align-content: center;
+  }
+
+  .tile-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .tile-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .tile-grid.cols-5 { grid-template-columns: repeat(5, 1fr); }
+  .tile-grid.cols-6 { grid-template-columns: repeat(6, 1fr); }
+
+  /* -- Tile -- */
+  .tile {
+    border-radius: 6px;
+    padding: 8px 6px 7px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+    min-height: 0;
+  }
+
+  .tile:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    z-index: 2;
+  }
+
+  .tile:active {
+    transform: scale(0.97);
+  }
+
+  .tile-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .tile-symbol {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    opacity: 0.65;
+    line-height: 1;
+    margin-top: 1px;
+  }
+
+  .tile-name {
+    font-size: 9.5px;
+    font-weight: 500;
+    text-align: center;
+    line-height: 1.15;
+    opacity: 0.85;
+    margin-top: 3px;
+    word-break: break-word;
+    max-width: 100%;
+  }
+
+  /* -- Search highlight -- */
+  .tile.search-match {
+    box-shadow: 0 0 0 2px #fff, 0 0 12px rgba(255,255,255,0.3);
+    z-index: 3;
+  }
+
+  .tile.search-dimmed {
+    opacity: 0.15;
+  }
+
+  /* -- Detail Overlay -- */
+  .overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .overlay.visible {
+    display: flex;
+    opacity: 1;
+  }
+
+  .detail-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 14px;
+    padding: 28px 32px;
+    width: 380px;
+    max-width: 90%;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+    position: relative;
+    transform: scale(0.9);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .overlay.visible .detail-card {
+    transform: scale(1);
+  }
+
+  .detail-close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    background: none;
+    border: none;
+    color: #8b949e;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    line-height: 1;
+  }
+
+  .detail-close:hover { color: #e6edf3; background: #21262d; }
+
+  .detail-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .detail-badge {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .badge-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .badge-symbol {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    opacity: 0.7;
+  }
+
+  .detail-title {
+    flex: 1;
+  }
+
+  .detail-title h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .detail-cat {
+    font-size: 12px;
+    color: #8b949e;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .detail-desc {
+    font-size: 14px;
+    color: #c9d1d9;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    padding: 12px;
+    background: #0d1117;
+    border-radius: 8px;
+    border: 1px solid #21262d;
+  }
+
+  .detail-rfc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #8b949e;
+  }
+
+  /* -- Section backgrounds -- */
+  .section-1xx .accordion-bar { background: rgba(88,166,255,0.08); }
+  .section-2xx .accordion-bar { background: rgba(63,185,80,0.08); }
+  .section-3xx .accordion-bar { background: rgba(210,153,34,0.08); }
+  .section-4xx .accordion-bar { background: rgba(255,123,114,0.08); }
+  .section-5xx .accordion-bar { background: rgba(188,140,255,0.08); }
+
+  .section-1xx.expanded .accordion-bar { background: rgba(88,166,255,0.14); }
+  .section-2xx.expanded .accordion-bar { background: rgba(63,185,80,0.14); }
+  .section-3xx.expanded .accordion-bar { background: rgba(210,153,34,0.14); }
+  .section-4xx.expanded .accordion-bar { background: rgba(255,123,114,0.14); }
+  .section-5xx.expanded .accordion-bar { background: rgba(188,140,255,0.14); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>HTTP Status Codes <span>/ 61</span></h1>
+  <div class="search-box">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="searchInput" placeholder="Search codes..." autocomplete="off">
+  </div>
+</div>
+
+<div class="accordion-container" id="accordionContainer"></div>
+
+<!-- Detail overlay -->
+<div class="overlay" id="overlay">
+  <div class="detail-card">
+    <button class="detail-close" id="detailCloseBtn">&times;</button>
+    <div class="detail-header">
+      <div class="detail-badge" id="detailBadge">
+        <span class="badge-code" id="detailCode"></span>
+        <span class="badge-symbol" id="detailSymbol"></span>
+      </div>
+      <div class="detail-title">
+        <h2 id="detailName"></h2>
+        <div class="detail-cat" id="detailCat"></div>
+      </div>
+    </div>
+    <div class="detail-desc" id="detailDesc"></div>
+    <div class="detail-rfc" id="detailRfc"></div>
+  </div>
+</div>
+
+<script>
+const STATUS_CODES = [
+    { code: 100, name: "Continue", symbol: "Cn", cat: "1xx", desc: "Server received headers, proceed to send body.", rfc: "RFC 9110" },
+    { code: 101, name: "Switching Protocols", symbol: "Sw", cat: "1xx", desc: "Server switching protocols via Upgrade header.", rfc: "RFC 9110" },
+    { code: 103, name: "Early Hints", symbol: "Eh", cat: "1xx", desc: "Early response headers before final message.", rfc: "RFC 8297" },
+    { code: 200, name: "OK", symbol: "Ok", cat: "2xx", desc: "Request succeeded.", rfc: "RFC 9110" },
+    { code: 201, name: "Created", symbol: "Cr", cat: "2xx", desc: "New resource created.", rfc: "RFC 9110" },
+    { code: 202, name: "Accepted", symbol: "Ac", cat: "2xx", desc: "Accepted, processing not complete.", rfc: "RFC 9110" },
+    { code: 203, name: "Non-Authoritative", symbol: "Na", cat: "2xx", desc: "Metadata from transforming proxy.", rfc: "RFC 9110" },
+    { code: 204, name: "No Content", symbol: "Nc", cat: "2xx", desc: "No additional content.", rfc: "RFC 9110" },
+    { code: 205, name: "Reset Content", symbol: "Rc", cat: "2xx", desc: "Reset the document view.", rfc: "RFC 9110" },
+    { code: 206, name: "Partial Content", symbol: "Pc", cat: "2xx", desc: "Partial resource delivery.", rfc: "RFC 9110" },
+    { code: 207, name: "Multi-Status", symbol: "Ms", cat: "2xx", desc: "WebDAV multiple resources.", rfc: "RFC 4918" },
+    { code: 208, name: "Already Reported", symbol: "Ar", cat: "2xx", desc: "WebDAV binding enumerated.", rfc: "RFC 5842" },
+    { code: 226, name: "IM Used", symbol: "Im", cat: "2xx", desc: "Instance-manipulations applied.", rfc: "RFC 3229" },
+    { code: 300, name: "Multiple Choices", symbol: "Mc", cat: "3xx", desc: "Multiple possible responses.", rfc: "RFC 9110" },
+    { code: 301, name: "Moved Permanently", symbol: "Mp", cat: "3xx", desc: "URL changed permanently.", rfc: "RFC 9110" },
+    { code: 302, name: "Found", symbol: "Fd", cat: "3xx", desc: "URI changed temporarily.", rfc: "RFC 9110" },
+    { code: 303, name: "See Other", symbol: "So", cat: "3xx", desc: "Redirect via GET.", rfc: "RFC 9110" },
+    { code: 304, name: "Not Modified", symbol: "Nm", cat: "3xx", desc: "Use cached version.", rfc: "RFC 9110" },
+    { code: 305, name: "Use Proxy", symbol: "Up", cat: "3xx", desc: "Deprecated.", rfc: "Deprecated" },
+    { code: 307, name: "Temporary Redirect", symbol: "Tr", cat: "3xx", desc: "Same method redirect.", rfc: "RFC 9110" },
+    { code: 308, name: "Permanent Redirect", symbol: "Pr", cat: "3xx", desc: "Permanent, same method.", rfc: "RFC 9110" },
+    { code: 400, name: "Bad Request", symbol: "Br", cat: "4xx", desc: "Client error.", rfc: "RFC 9110" },
+    { code: 401, name: "Unauthorized", symbol: "Un", cat: "4xx", desc: "Authentication required.", rfc: "RFC 9110" },
+    { code: 402, name: "Payment Required", symbol: "Py", cat: "4xx", desc: "Reserved.", rfc: "RFC 9110" },
+    { code: 403, name: "Forbidden", symbol: "Fb", cat: "4xx", desc: "No access rights.", rfc: "RFC 9110" },
+    { code: 404, name: "Not Found", symbol: "Nf", cat: "4xx", desc: "Resource not found.", rfc: "RFC 9110" },
+    { code: 405, name: "Method Not Allowed", symbol: "Ma", cat: "4xx", desc: "Method not supported.", rfc: "RFC 9110" },
+    { code: 406, name: "Not Acceptable", symbol: "Nx", cat: "4xx", desc: "Can't match Accept headers.", rfc: "RFC 9110" },
+    { code: 407, name: "Proxy Auth Required", symbol: "Pa", cat: "4xx", desc: "Proxy auth needed.", rfc: "RFC 9110" },
+    { code: 408, name: "Request Timeout", symbol: "Rt", cat: "4xx", desc: "Connection timed out.", rfc: "RFC 9110" },
+    { code: 409, name: "Conflict", symbol: "Cf", cat: "4xx", desc: "Conflicts with server state.", rfc: "RFC 9110" },
+    { code: 410, name: "Gone", symbol: "Gn", cat: "4xx", desc: "Permanently deleted.", rfc: "RFC 9110" },
+    { code: 411, name: "Length Required", symbol: "Lr", cat: "4xx", desc: "Content-Length required.", rfc: "RFC 9110" },
+    { code: 412, name: "Precondition Failed", symbol: "Pf", cat: "4xx", desc: "Preconditions not met.", rfc: "RFC 9110" },
+    { code: 413, name: "Content Too Large", symbol: "Tl", cat: "4xx", desc: "Entity too large.", rfc: "RFC 9110" },
+    { code: 414, name: "URI Too Long", symbol: "Ul", cat: "4xx", desc: "URI too long.", rfc: "RFC 9110" },
+    { code: 415, name: "Unsupported Media", symbol: "Um", cat: "4xx", desc: "Media not supported.", rfc: "RFC 9110" },
+    { code: 416, name: "Range Not Satisfiable", symbol: "Rn", cat: "4xx", desc: "Range can't be fulfilled.", rfc: "RFC 9110" },
+    { code: 417, name: "Expectation Failed", symbol: "Ef", cat: "4xx", desc: "Expect can't be met.", rfc: "RFC 9110" },
+    { code: 418, name: "I'm a Teapot", symbol: "Tp", cat: "4xx", desc: "April Fools' Easter egg.", rfc: "RFC 2324" },
+    { code: 421, name: "Misdirected", symbol: "Mr", cat: "4xx", desc: "Wrong server.", rfc: "RFC 9110" },
+    { code: 422, name: "Unprocessable", symbol: "Uc", cat: "4xx", desc: "Semantically erroneous.", rfc: "RFC 9110" },
+    { code: 423, name: "Locked", symbol: "Lk", cat: "4xx", desc: "Resource locked.", rfc: "RFC 4918" },
+    { code: 424, name: "Failed Dependency", symbol: "Dp", cat: "4xx", desc: "Previous request failed.", rfc: "RFC 4918" },
+    { code: 425, name: "Too Early", symbol: "Te", cat: "4xx", desc: "Won't risk replay.", rfc: "RFC 8470" },
+    { code: 426, name: "Upgrade Required", symbol: "Ur", cat: "4xx", desc: "Protocol upgrade needed.", rfc: "RFC 9110" },
+    { code: 428, name: "Precondition Req'd", symbol: "Pq", cat: "4xx", desc: "Conditional requests required.", rfc: "RFC 6585" },
+    { code: 429, name: "Too Many Requests", symbol: "Tm", cat: "4xx", desc: "Rate limited.", rfc: "RFC 6585" },
+    { code: 431, name: "Headers Too Large", symbol: "Hl", cat: "4xx", desc: "Headers too large.", rfc: "RFC 6585" },
+    { code: 451, name: "Legal Reasons", symbol: "Lg", cat: "4xx", desc: "Legal restrictions.", rfc: "RFC 7725" },
+    { code: 500, name: "Internal Error", symbol: "Is", cat: "5xx", desc: "Unhandled exception.", rfc: "RFC 9110" },
+    { code: 501, name: "Not Implemented", symbol: "Ni", cat: "5xx", desc: "Method not supported.", rfc: "RFC 9110" },
+    { code: 502, name: "Bad Gateway", symbol: "Bg", cat: "5xx", desc: "Invalid upstream response.", rfc: "RFC 9110" },
+    { code: 503, name: "Service Unavailable", symbol: "Su", cat: "5xx", desc: "Server not ready.", rfc: "RFC 9110" },
+    { code: 504, name: "Gateway Timeout", symbol: "Gt", cat: "5xx", desc: "Gateway timed out.", rfc: "RFC 9110" },
+    { code: 505, name: "HTTP Ver. Unsupported", symbol: "Hv", cat: "5xx", desc: "HTTP version unsupported.", rfc: "RFC 9110" },
+    { code: 506, name: "Variant Negotiates", symbol: "Vn", cat: "5xx", desc: "Config error.", rfc: "RFC 2295" },
+    { code: 507, name: "Insufficient Storage", symbol: "St", cat: "5xx", desc: "Can't store.", rfc: "RFC 4918" },
+    { code: 508, name: "Loop Detected", symbol: "Ld", cat: "5xx", desc: "Infinite loop.", rfc: "RFC 5842" },
+    { code: 510, name: "Not Extended", symbol: "Ne", cat: "5xx", desc: "Extensions required.", rfc: "RFC 2774" },
+    { code: 511, name: "Network Auth Req'd", symbol: "Nr", cat: "5xx", desc: "Network auth needed.", rfc: "RFC 6585" },
+];
+const CAT_COLORS = { '1xx': '#58a6ff', '2xx': '#3fb950', '3xx': '#d29922', '4xx': '#ff7b72', '5xx': '#bc8cff' };
+const CAT_LABELS = { '1xx': 'Informational', '2xx': 'Success', '3xx': 'Redirection', '4xx': 'Client Error', '5xx': 'Server Error' };
+
+const CATEGORIES = ['1xx', '2xx', '3xx', '4xx', '5xx'];
+let expandedCat = '4xx';
+
+function getCodesForCat(cat) {
+  return STATUS_CODES.filter(function(s) { return s.cat === cat; });
+}
+
+function getColsForCat(cat) {
+  const count = getCodesForCat(cat).length;
+  if (count <= 3) return 3;
+  if (count <= 8) return 4;
+  if (count <= 15) return 5;
+  return 6;
+}
+
+function hexToRgba(hex, a) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+}
+
+function buildAccordion() {
+  const container = document.getElementById('accordionContainer');
+  container.textContent = '';
+
+  CATEGORIES.forEach(function(cat) {
+    const codes = getCodesForCat(cat);
+    const color = CAT_COLORS[cat];
+    const label = CAT_LABELS[cat];
+    const isExpanded = cat === expandedCat;
+    const cols = getColsForCat(cat);
+
+    const section = document.createElement('div');
+    section.className = 'accordion-section section-' + cat + ' ' + (isExpanded ? 'expanded' : 'collapsed');
+    section.dataset.cat = cat;
+
+    // Build bar using DOM methods
+    const bar = document.createElement('div');
+    bar.className = 'accordion-bar';
+
+    const colorInd = document.createElement('div');
+    colorInd.className = 'color-indicator';
+    colorInd.style.background = color;
+    bar.appendChild(colorInd);
+
+    const catCodeSpan = document.createElement('span');
+    catCodeSpan.className = 'cat-code';
+    catCodeSpan.style.color = color;
+    catCodeSpan.textContent = cat;
+    bar.appendChild(catCodeSpan);
+
+    const catLabelSpan = document.createElement('span');
+    catLabelSpan.className = 'cat-label';
+    catLabelSpan.textContent = label;
+    bar.appendChild(catLabelSpan);
+
+    const catCountSpan = document.createElement('span');
+    catCountSpan.className = 'cat-count';
+    catCountSpan.textContent = codes.length + ' codes';
+    bar.appendChild(catCountSpan);
+
+    // Chevron SVG
+    const chevronSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    chevronSvg.setAttribute('class', 'chevron');
+    chevronSvg.setAttribute('viewBox', '0 0 24 24');
+    chevronSvg.setAttribute('fill', 'none');
+    chevronSvg.setAttribute('stroke', 'currentColor');
+    chevronSvg.setAttribute('stroke-width', '2.5');
+    chevronSvg.setAttribute('stroke-linecap', 'round');
+    chevronSvg.setAttribute('stroke-linejoin', 'round');
+    const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    polyline.setAttribute('points', '6 9 12 15 18 9');
+    chevronSvg.appendChild(polyline);
+    bar.appendChild(chevronSvg);
+
+    bar.addEventListener('click', function() { toggleSection(cat); });
+
+    // Content
+    const content = document.createElement('div');
+    content.className = 'accordion-content';
+
+    const grid = document.createElement('div');
+    grid.className = 'tile-grid cols-' + cols;
+
+    codes.forEach(function(sc) {
+      const tile = document.createElement('div');
+      tile.className = 'tile';
+      tile.dataset.code = String(sc.code);
+      tile.dataset.name = sc.name.toLowerCase();
+      tile.style.background = hexToRgba(color, 0.15);
+      tile.style.border = '1px solid ' + hexToRgba(color, 0.25);
+      tile.style.color = color;
+
+      const tileCode = document.createElement('span');
+      tileCode.className = 'tile-code';
+      tileCode.textContent = sc.code;
+      tile.appendChild(tileCode);
+
+      const tileSym = document.createElement('span');
+      tileSym.className = 'tile-symbol';
+      tileSym.textContent = sc.symbol;
+      tile.appendChild(tileSym);
+
+      const tileName = document.createElement('span');
+      tileName.className = 'tile-name';
+      tileName.textContent = sc.name;
+      tile.appendChild(tileName);
+
+      tile.addEventListener('click', function(e) {
+        e.stopPropagation();
+        showDetail(sc);
+      });
+      grid.appendChild(tile);
+    });
+
+    content.appendChild(grid);
+    section.appendChild(bar);
+    section.appendChild(content);
+    container.appendChild(section);
+  });
+}
+
+function toggleSection(cat) {
+  if (expandedCat === cat) return;
+  expandedCat = cat;
+
+  document.querySelectorAll('.accordion-section').forEach(function(sec) {
+    if (sec.dataset.cat === cat) {
+      sec.classList.remove('collapsed');
+      sec.classList.add('expanded');
+    } else {
+      sec.classList.remove('expanded');
+      sec.classList.add('collapsed');
+    }
+  });
+}
+
+function showDetail(sc) {
+  const color = CAT_COLORS[sc.cat];
+  const overlay = document.getElementById('overlay');
+  var badge = document.getElementById('detailBadge');
+  badge.style.background = hexToRgba(color, 0.2);
+  badge.style.border = '2px solid ' + hexToRgba(color, 0.4);
+  var dc = document.getElementById('detailCode');
+  dc.textContent = sc.code;
+  dc.style.color = color;
+  var ds = document.getElementById('detailSymbol');
+  ds.textContent = sc.symbol;
+  ds.style.color = color;
+  document.getElementById('detailName').textContent = sc.name;
+  var dcat = document.getElementById('detailCat');
+  dcat.textContent = sc.cat + ' ' + CAT_LABELS[sc.cat];
+  dcat.style.color = color;
+  document.getElementById('detailDesc').textContent = sc.desc;
+  document.getElementById('detailRfc').textContent = sc.rfc;
+  overlay.style.display = 'flex';
+  requestAnimationFrame(function() { overlay.classList.add('visible'); });
+}
+
+function closeOverlay(e) {
+  if (e && e.target !== e.currentTarget) return;
+  var overlay = document.getElementById('overlay');
+  overlay.classList.remove('visible');
+  setTimeout(function() { overlay.style.display = 'none'; }, 200);
+}
+
+// Overlay click handlers
+document.getElementById('overlay').addEventListener('click', closeOverlay);
+document.querySelector('.detail-card').addEventListener('click', function(e) { e.stopPropagation(); });
+document.getElementById('detailCloseBtn').addEventListener('click', function() {
+  var overlay = document.getElementById('overlay');
+  overlay.classList.remove('visible');
+  setTimeout(function() { overlay.style.display = 'none'; }, 200);
+});
+
+// Search
+document.getElementById('searchInput').addEventListener('input', function() {
+  var q = this.value.toLowerCase().trim();
+  var allTiles = document.querySelectorAll('.tile');
+
+  if (!q) {
+    allTiles.forEach(function(t) {
+      t.classList.remove('search-match', 'search-dimmed');
+    });
+    return;
+  }
+
+  var matchedCat = null;
+  allTiles.forEach(function(t) {
+    var code = t.dataset.code;
+    var name = t.dataset.name;
+    if (code.indexOf(q) !== -1 || name.indexOf(q) !== -1) {
+      t.classList.add('search-match');
+      t.classList.remove('search-dimmed');
+      var section = t.closest('.accordion-section');
+      if (section && !matchedCat) matchedCat = section.dataset.cat;
+    } else {
+      t.classList.remove('search-match');
+      t.classList.add('search-dimmed');
+    }
+  });
+
+  if (matchedCat && matchedCat !== expandedCat) {
+    toggleSection(matchedCat);
+  }
+});
+
+// Escape to close overlay
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    var overlay = document.getElementById('overlay');
+    overlay.classList.remove('visible');
+    setTimeout(function() { overlay.style.display = 'none'; }, 200);
+  }
+});
+
+// Build on load
+buildAccordion();
+</script>
+</body>
+</html>

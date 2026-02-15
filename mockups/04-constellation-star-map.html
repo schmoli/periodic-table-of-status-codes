@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Celestial Atlas of HTTP Status Codes</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0e1a;
+    color: #c8d1e0;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    cursor: crosshair;
+  }
+
+  #starfield {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  #celestial-grid {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.06;
+  }
+
+  #constellation-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 2;
+  }
+
+  #star-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  .star-point {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: all;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+
+  .star-point:hover {
+    transform: scale(1.8);
+  }
+
+  .star-point .star-glow {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    filter: blur(4px);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .star-point .star-core {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .star-point .star-label {
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 6px);
+    transform: translateY(-50%);
+    font-family: 'Inter', sans-serif;
+    font-size: 9.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0.65;
+    pointer-events: none;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 8px currentColor;
+  }
+
+  /* Diffraction spikes for bright stars */
+  .star-point .star-spike {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform-origin: center center;
+    pointer-events: none;
+  }
+  .star-point .star-spike::before,
+  .star-point .star-spike::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(90deg, transparent, currentColor, transparent);
+    opacity: 0.3;
+  }
+  .star-point .star-spike::before {
+    width: var(--spike-len, 30px);
+    height: 1px;
+  }
+  .star-point .star-spike::after {
+    width: 1px;
+    height: var(--spike-len, 30px);
+  }
+  .star-point .star-spike-diag {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform-origin: center center;
+    pointer-events: none;
+  }
+  .star-point .star-spike-diag::before,
+  .star-point .star-spike-diag::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    background: linear-gradient(90deg, transparent, currentColor, transparent);
+    opacity: 0.15;
+  }
+  .star-point .star-spike-diag::before {
+    width: var(--spike-len-d, 20px);
+    height: 1px;
+  }
+  .star-point .star-spike-diag::after {
+    width: 1px;
+    height: var(--spike-len-d, 20px);
+  }
+
+  @keyframes twinkle1 {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+  @keyframes twinkle2 {
+    0%, 100% { opacity: 0.8; }
+    30% { opacity: 0.5; }
+    70% { opacity: 1; }
+  }
+  @keyframes twinkle3 {
+    0%, 100% { opacity: 0.7; }
+    40% { opacity: 1; }
+    80% { opacity: 0.5; }
+  }
+
+  .twinkle-1 { animation: twinkle1 3s ease-in-out infinite; }
+  .twinkle-2 { animation: twinkle2 4s ease-in-out infinite; }
+  .twinkle-3 { animation: twinkle3 5s ease-in-out infinite; }
+
+  #header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 10;
+    text-align: center;
+    padding: 24px 40px 16px;
+    background: linear-gradient(to bottom, rgba(10,14,26,0.95) 0%, rgba(10,14,26,0.6) 70%, transparent 100%);
+    pointer-events: none;
+  }
+
+  #header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: 36px;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    color: #e8ecf4;
+    text-shadow: 0 0 40px rgba(88, 166, 255, 0.3);
+  }
+
+  #header .subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-style: italic;
+    font-size: 14px;
+    letter-spacing: 4px;
+    color: #6b7a94;
+    margin-top: 4px;
+  }
+
+  #compass {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    z-index: 10;
+    width: 80px;
+    height: 80px;
+    pointer-events: none;
+    opacity: 0.4;
+  }
+
+  #legend {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  #legend .legend-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #6b7a94;
+    margin-bottom: 10px;
+    text-align: right;
+  }
+
+  #legend .legend-item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 5px;
+    font-size: 11px;
+    color: #6b7a94;
+    letter-spacing: 0.5px;
+  }
+
+  #legend .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  #tooltip {
+    position: fixed;
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    max-width: 280px;
+  }
+
+  #tooltip.visible {
+    opacity: 1;
+  }
+
+  #tooltip .tooltip-inner {
+    background: rgba(10, 14, 26, 0.92);
+    border: 1px solid rgba(200, 209, 224, 0.12);
+    border-radius: 8px;
+    padding: 16px 20px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 60px rgba(88, 166, 255, 0.05);
+  }
+
+  #tooltip .tooltip-code {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+
+  #tooltip .tooltip-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 400;
+    margin-top: 2px;
+    opacity: 0.8;
+  }
+
+  #tooltip .tooltip-desc {
+    font-size: 11px;
+    line-height: 1.5;
+    margin-top: 10px;
+    color: #8b95a8;
+  }
+
+  #tooltip .tooltip-rfc {
+    font-size: 10px;
+    margin-top: 8px;
+    color: #555f73;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  #tooltip .tooltip-symbol {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 300;
+    opacity: 0.3;
+  }
+
+  #telescope {
+    position: fixed;
+    top: 100px;
+    right: 30px;
+    z-index: 10;
+    width: 180px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  #telescope.active {
+    opacity: 1;
+  }
+
+  #telescope .scope-border {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    border: 1px solid rgba(200, 209, 224, 0.15);
+    position: relative;
+    overflow: hidden;
+    margin: 0 auto;
+    background: radial-gradient(circle, rgba(10,14,26,0.3) 0%, rgba(10,14,26,0.9) 70%);
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.5), 0 0 20px rgba(0,0,0,0.3);
+  }
+
+  #telescope .scope-star {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    filter: blur(3px);
+  }
+
+  #telescope .scope-star-core {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    width: 8px;
+    height: 8px;
+    background: white;
+  }
+
+  #telescope .scope-crosshair {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  #telescope .scope-crosshair::before,
+  #telescope .scope-crosshair::after {
+    content: '';
+    position: absolute;
+    background: rgba(200, 209, 224, 0.1);
+  }
+  #telescope .scope-crosshair::before {
+    top: 50%; left: 10%; right: 10%;
+    height: 1px;
+    transform: translateY(-50%);
+  }
+  #telescope .scope-crosshair::after {
+    left: 50%; top: 10%; bottom: 10%;
+    width: 1px;
+    transform: translateX(-50%);
+  }
+
+  #telescope .scope-label {
+    text-align: center;
+    margin-top: 12px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: #6b7a94;
+    text-transform: uppercase;
+  }
+
+  #telescope .scope-info {
+    text-align: center;
+    font-size: 10px;
+    color: #4a5468;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  .constellation-label {
+    position: absolute;
+    z-index: 4;
+    pointer-events: none;
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    font-size: 14px;
+    font-weight: 400;
+    opacity: 0.5;
+    text-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
+  }
+
+  .constellation-label .latin-name {
+    font-style: italic;
+    font-size: 10px;
+    letter-spacing: 2px;
+    opacity: 0.7;
+    margin-top: 2px;
+  }
+
+  .coord-label {
+    position: fixed;
+    z-index: 1;
+    font-family: 'Inter', sans-serif;
+    font-size: 8px;
+    letter-spacing: 1px;
+    color: rgba(107, 122, 148, 0.25);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+<canvas id="celestial-grid"></canvas>
+<canvas id="constellation-canvas"></canvas>
+<div id="star-overlay"></div>
+
+<div id="header">
+  <h1>Celestial Atlas of HTTP</h1>
+  <div class="subtitle">A Star Map of Response Status Codes</div>
+</div>
+
+<svg id="compass" viewBox="0 0 100 100">
+  <g transform="translate(50,50)">
+    <circle r="38" fill="none" stroke="rgba(200,209,224,0.3)" stroke-width="0.5"/>
+    <circle r="28" fill="none" stroke="rgba(200,209,224,0.15)" stroke-width="0.5"/>
+    <polygon points="0,-36 -4,-24 4,-24" fill="rgba(200,209,224,0.5)"/>
+    <polygon points="0,36 -3,26 3,26" fill="rgba(200,209,224,0.2)"/>
+    <polygon points="-36,0 -26,-3 -26,3" fill="rgba(200,209,224,0.2)"/>
+    <polygon points="36,0 26,-3 26,3" fill="rgba(200,209,224,0.2)"/>
+    <line x1="0" y1="-20" x2="0" y2="20" stroke="rgba(200,209,224,0.15)" stroke-width="0.5"/>
+    <line x1="-20" y1="0" x2="20" y2="0" stroke="rgba(200,209,224,0.15)" stroke-width="0.5"/>
+    <text y="-40" text-anchor="middle" fill="rgba(200,209,224,0.5)" font-family="Cormorant Garamond, serif" font-size="8" letter-spacing="1">N</text>
+    <text y="46" text-anchor="middle" fill="rgba(200,209,224,0.3)" font-family="Cormorant Garamond, serif" font-size="7" letter-spacing="1">S</text>
+    <text x="-43" y="3" text-anchor="middle" fill="rgba(200,209,224,0.3)" font-family="Cormorant Garamond, serif" font-size="7" letter-spacing="1">W</text>
+    <text x="43" y="3" text-anchor="middle" fill="rgba(200,209,224,0.3)" font-family="Cormorant Garamond, serif" font-size="7" letter-spacing="1">E</text>
+    <line x1="14" y1="-14" x2="20" y2="-20" stroke="rgba(200,209,224,0.1)" stroke-width="0.5"/>
+    <line x1="-14" y1="-14" x2="-20" y2="-20" stroke="rgba(200,209,224,0.1)" stroke-width="0.5"/>
+    <line x1="14" y1="14" x2="20" y2="20" stroke="rgba(200,209,224,0.1)" stroke-width="0.5"/>
+    <line x1="-14" y1="14" x2="-20" y2="20" stroke="rgba(200,209,224,0.1)" stroke-width="0.5"/>
+    <circle r="2" fill="rgba(200,209,224,0.3)"/>
+  </g>
+</svg>
+
+<div id="legend">
+  <div class="legend-title">Constellations</div>
+  <div class="legend-item"><span>Informational</span><div class="legend-dot" style="background:#58a6ff;box-shadow:0 0 6px #58a6ff"></div></div>
+  <div class="legend-item"><span>Success</span><div class="legend-dot" style="background:#3fb950;box-shadow:0 0 6px #3fb950"></div></div>
+  <div class="legend-item"><span>Redirection</span><div class="legend-dot" style="background:#d29922;box-shadow:0 0 6px #d29922"></div></div>
+  <div class="legend-item"><span>Client Error</span><div class="legend-dot" style="background:#ff7b72;box-shadow:0 0 6px #ff7b72"></div></div>
+  <div class="legend-item"><span>Server Error</span><div class="legend-dot" style="background:#bc8cff;box-shadow:0 0 6px #bc8cff"></div></div>
+</div>
+
+<div id="tooltip">
+  <div class="tooltip-inner">
+    <div class="tooltip-code" id="tooltip-code"></div>
+    <div class="tooltip-name" id="tooltip-name"></div>
+    <div class="tooltip-symbol" id="tooltip-symbol"></div>
+    <div class="tooltip-desc" id="tooltip-desc"></div>
+    <div class="tooltip-rfc" id="tooltip-rfc"></div>
+  </div>
+</div>
+
+<div id="telescope">
+  <div class="scope-border">
+    <div class="scope-star" id="scope-star"></div>
+    <div class="scope-star-core" id="scope-star-core"></div>
+    <div class="scope-crosshair"></div>
+  </div>
+  <div class="scope-label" id="scope-label">Telescope</div>
+  <div class="scope-info" id="scope-info">Hover a star</div>
+</div>
+
+<script>
+const STATUS_CODES = [
+    { code: 100, name: "Continue", symbol: "Cn", cat: "1xx", desc: "The server has received the request headers and the client should proceed to send the request body.", rfc: "RFC 9110" },
+    { code: 101, name: "Switching Protocols", symbol: "Sw", cat: "1xx", desc: "The server is switching protocols as requested by the client via the Upgrade header.", rfc: "RFC 9110" },
+    { code: 103, name: "Early Hints", symbol: "Eh", cat: "1xx", desc: "Used to return some response headers before the final HTTP message.", rfc: "RFC 8297" },
+    { code: 200, name: "OK", symbol: "Ok", cat: "2xx", desc: "The request has succeeded.", rfc: "RFC 9110" },
+    { code: 201, name: "Created", symbol: "Cr", cat: "2xx", desc: "The request has been fulfilled and a new resource has been created.", rfc: "RFC 9110" },
+    { code: 202, name: "Accepted", symbol: "Ac", cat: "2xx", desc: "The request has been accepted for processing, but processing has not been completed.", rfc: "RFC 9110" },
+    { code: 203, name: "Non-Authoritative", symbol: "Na", cat: "2xx", desc: "The returned metadata is not exactly the same as available from the origin server.", rfc: "RFC 9110" },
+    { code: 204, name: "No Content", symbol: "Nc", cat: "2xx", desc: "The server has successfully fulfilled the request and there is no additional content.", rfc: "RFC 9110" },
+    { code: 205, name: "Reset Content", symbol: "Rc", cat: "2xx", desc: "The server has fulfilled the request and the user agent should reset the document view.", rfc: "RFC 9110" },
+    { code: 206, name: "Partial Content", symbol: "Pc", cat: "2xx", desc: "The server is delivering only part of the resource due to a Range header.", rfc: "RFC 9110" },
+    { code: 207, name: "Multi-Status", symbol: "Ms", cat: "2xx", desc: "A WebDAV response conveying information about multiple resources.", rfc: "RFC 4918" },
+    { code: 208, name: "Already Reported", symbol: "Ar", cat: "2xx", desc: "Used inside a WebDAV response to avoid enumerating internal members repeatedly.", rfc: "RFC 5842" },
+    { code: 226, name: "IM Used", symbol: "Im", cat: "2xx", desc: "The server has fulfilled a GET request with instance-manipulations applied.", rfc: "RFC 3229" },
+    { code: 300, name: "Multiple Choices", symbol: "Mc", cat: "3xx", desc: "The request has more than one possible response.", rfc: "RFC 9110" },
+    { code: 301, name: "Moved Permanently", symbol: "Mp", cat: "3xx", desc: "The URL of the requested resource has been changed permanently.", rfc: "RFC 9110" },
+    { code: 302, name: "Found", symbol: "Fd", cat: "3xx", desc: "The URI of the requested resource has been changed temporarily.", rfc: "RFC 9110" },
+    { code: 303, name: "See Other", symbol: "So", cat: "3xx", desc: "The server is redirecting to a different resource using GET.", rfc: "RFC 9110" },
+    { code: 304, name: "Not Modified", symbol: "Nm", cat: "3xx", desc: "The resource has not been modified since the version specified.", rfc: "RFC 9110" },
+    { code: 305, name: "Use Proxy", symbol: "Up", cat: "3xx", desc: "The requested resource must be accessed through a proxy. Deprecated.", rfc: "Deprecated" },
+    { code: 307, name: "Temporary Redirect", symbol: "Tr", cat: "3xx", desc: "The server is redirecting to another URI with same method.", rfc: "RFC 9110" },
+    { code: 308, name: "Permanent Redirect", symbol: "Pr", cat: "3xx", desc: "The resource has permanently moved, same method required.", rfc: "RFC 9110" },
+    { code: 400, name: "Bad Request", symbol: "Br", cat: "4xx", desc: "The server cannot process the request due to a client error.", rfc: "RFC 9110" },
+    { code: 401, name: "Unauthorized", symbol: "Un", cat: "4xx", desc: "The request requires authentication.", rfc: "RFC 9110" },
+    { code: 402, name: "Payment Required", symbol: "Py", cat: "4xx", desc: "Reserved for future use. Some APIs use it for billing limits.", rfc: "RFC 9110" },
+    { code: 403, name: "Forbidden", symbol: "Fb", cat: "4xx", desc: "The client does not have access rights.", rfc: "RFC 9110" },
+    { code: 404, name: "Not Found", symbol: "Nf", cat: "4xx", desc: "The server cannot find the requested resource.", rfc: "RFC 9110" },
+    { code: 405, name: "Method Not Allowed", symbol: "Ma", cat: "4xx", desc: "The request method is not supported for that resource.", rfc: "RFC 9110" },
+    { code: 406, name: "Not Acceptable", symbol: "Nx", cat: "4xx", desc: "The server can't produce a matching response.", rfc: "RFC 9110" },
+    { code: 407, name: "Proxy Auth Required", symbol: "Pa", cat: "4xx", desc: "Authentication needs to be done by a proxy.", rfc: "RFC 9110" },
+    { code: 408, name: "Request Timeout", symbol: "Rt", cat: "4xx", desc: "The server would like to shut down this unused connection.", rfc: "RFC 9110" },
+    { code: 409, name: "Conflict", symbol: "Cf", cat: "4xx", desc: "The request conflicts with the current state of the server.", rfc: "RFC 9110" },
+    { code: 410, name: "Gone", symbol: "Gn", cat: "4xx", desc: "The content has been permanently deleted.", rfc: "RFC 9110" },
+    { code: 411, name: "Length Required", symbol: "Lr", cat: "4xx", desc: "Content-Length header is not defined.", rfc: "RFC 9110" },
+    { code: 412, name: "Precondition Failed", symbol: "Pf", cat: "4xx", desc: "Preconditions in request headers are not met.", rfc: "RFC 9110" },
+    { code: 413, name: "Content Too Large", symbol: "Tl", cat: "4xx", desc: "Request entity is larger than server limits.", rfc: "RFC 9110" },
+    { code: 414, name: "URI Too Long", symbol: "Ul", cat: "4xx", desc: "The URI is longer than the server will interpret.", rfc: "RFC 9110" },
+    { code: 415, name: "Unsupported Media", symbol: "Um", cat: "4xx", desc: "The media format is not supported.", rfc: "RFC 9110" },
+    { code: 416, name: "Range Not Satisfiable", symbol: "Rn", cat: "4xx", desc: "The range specified can't be fulfilled.", rfc: "RFC 9110" },
+    { code: 417, name: "Expectation Failed", symbol: "Ef", cat: "4xx", desc: "The Expect header expectation can't be met.", rfc: "RFC 9110" },
+    { code: 418, name: "I'm a Teapot", symbol: "Tp", cat: "4xx", desc: "An April Fools' joke from 1998 that became beloved.", rfc: "RFC 2324" },
+    { code: 421, name: "Misdirected", symbol: "Mr", cat: "4xx", desc: "The request was directed at a wrong server.", rfc: "RFC 9110" },
+    { code: 422, name: "Unprocessable", symbol: "Uc", cat: "4xx", desc: "Well-formed but semantically erroneous.", rfc: "RFC 9110" },
+    { code: 423, name: "Locked", symbol: "Lk", cat: "4xx", desc: "The resource is locked (WebDAV).", rfc: "RFC 4918" },
+    { code: 424, name: "Failed Dependency", symbol: "Dp", cat: "4xx", desc: "Failed due to failure of a previous request.", rfc: "RFC 4918" },
+    { code: 425, name: "Too Early", symbol: "Te", cat: "4xx", desc: "Server won't risk processing a replay.", rfc: "RFC 8470" },
+    { code: 426, name: "Upgrade Required", symbol: "Ur", cat: "4xx", desc: "Server refuses current protocol.", rfc: "RFC 9110" },
+    { code: 428, name: "Precondition Req'd", symbol: "Pq", cat: "4xx", desc: "The server requires conditional requests.", rfc: "RFC 6585" },
+    { code: 429, name: "Too Many Requests", symbol: "Tm", cat: "4xx", desc: "Rate limited.", rfc: "RFC 6585" },
+    { code: 431, name: "Headers Too Large", symbol: "Hl", cat: "4xx", desc: "Header fields are too large.", rfc: "RFC 6585" },
+    { code: 451, name: "Legal Reasons", symbol: "Lg", cat: "4xx", desc: "Unavailable for legal reasons.", rfc: "RFC 7725" },
+    { code: 500, name: "Internal Error", symbol: "Is", cat: "5xx", desc: "Unhandled server exception.", rfc: "RFC 9110" },
+    { code: 501, name: "Not Implemented", symbol: "Ni", cat: "5xx", desc: "The request method is not supported.", rfc: "RFC 9110" },
+    { code: 502, name: "Bad Gateway", symbol: "Bg", cat: "5xx", desc: "Invalid response from upstream server.", rfc: "RFC 9110" },
+    { code: 503, name: "Service Unavailable", symbol: "Su", cat: "5xx", desc: "Server not ready - maintenance or overloaded.", rfc: "RFC 9110" },
+    { code: 504, name: "Gateway Timeout", symbol: "Gt", cat: "5xx", desc: "Gateway didn't get a response in time.", rfc: "RFC 9110" },
+    { code: 505, name: "HTTP Ver. Unsupported", symbol: "Hv", cat: "5xx", desc: "HTTP version not supported.", rfc: "RFC 9110" },
+    { code: 506, name: "Variant Negotiates", symbol: "Vn", cat: "5xx", desc: "Internal configuration error.", rfc: "RFC 2295" },
+    { code: 507, name: "Insufficient Storage", symbol: "St", cat: "5xx", desc: "Server can't store the representation.", rfc: "RFC 4918" },
+    { code: 508, name: "Loop Detected", symbol: "Ld", cat: "5xx", desc: "Infinite loop detected (WebDAV).", rfc: "RFC 5842" },
+    { code: 510, name: "Not Extended", symbol: "Ne", cat: "5xx", desc: "Further extensions required.", rfc: "RFC 2774" },
+    { code: 511, name: "Network Auth Req'd", symbol: "Nr", cat: "5xx", desc: "Client needs to authenticate for network access.", rfc: "RFC 6585" },
+];
+
+const CAT_COLORS = { '1xx': '#58a6ff', '2xx': '#3fb950', '3xx': '#d29922', '4xx': '#ff7b72', '5xx': '#bc8cff' };
+const CAT_LABELS = { '1xx': 'Informational', '2xx': 'Success', '3xx': 'Redirection', '4xx': 'Client Error', '5xx': 'Server Error' };
+
+const CONSTELLATION_NAMES = {
+  '1xx': { name: 'Initium', latin: 'Ursa Informaticus' },
+  '2xx': { name: 'Prosperitas', latin: 'Serpens Successus' },
+  '3xx': { name: 'Via Mutata', latin: 'Aquila Redirectus' },
+  '4xx': { name: 'Erratum Clientis', latin: 'Draco Clienterrorus' },
+  '5xx': { name: 'Ruina Servii', latin: 'Phoenix Serverfailus' },
+};
+
+const PROMINENCE = {
+  200: 1.0, 404: 0.95, 500: 0.9, 301: 0.8, 302: 0.75, 201: 0.7,
+  400: 0.75, 401: 0.7, 403: 0.7, 503: 0.7, 502: 0.65, 204: 0.65,
+  304: 0.65, 429: 0.6, 409: 0.55, 422: 0.55
+};
+
+function getProminence(code) {
+  return PROMINENCE[code] || 0.35;
+}
+
+const W = 1440;
+const H = 900;
+let starPositions = {};
+
+function mulberry32(a) {
+  return function() {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+}
+
+function drawStarfield() {
+  const canvas = document.getElementById('starfield');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  const grad = ctx.createRadialGradient(W/2, H/2, 100, W/2, H/2, W * 0.7);
+  grad.addColorStop(0, '#0f1428');
+  grad.addColorStop(1, '#0a0e1a');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  const nebulae = [
+    { x: 200, y: 350, r: 250, color: 'rgba(88,166,255,0.015)' },
+    { x: 1100, y: 200, r: 300, color: 'rgba(63,185,80,0.012)' },
+    { x: 700, y: 600, r: 350, color: 'rgba(188,140,255,0.01)' },
+    { x: 1200, y: 650, r: 200, color: 'rgba(255,123,114,0.01)' },
+  ];
+  nebulae.forEach(function(n) {
+    const ng = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
+    ng.addColorStop(0, n.color);
+    ng.addColorStop(1, 'transparent');
+    ctx.fillStyle = ng;
+    ctx.fillRect(0, 0, W, H);
+  });
+
+  const rng = mulberry32(42);
+  for (let i = 0; i < 600; i++) {
+    const x = rng() * W;
+    const y = rng() * H;
+    const size = rng() * 1.5 + 0.3;
+    const brightness = rng() * 0.4 + 0.1;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(200, 210, 230, ' + brightness + ')';
+    ctx.fill();
+  }
+}
+
+function drawGrid() {
+  const canvas = document.getElementById('celestial-grid');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  ctx.strokeStyle = 'rgba(200, 209, 224, 0.5)';
+  ctx.lineWidth = 0.5;
+
+  for (let x = 0; x <= W; x += 120) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, H);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= H; y += 120) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = 'rgba(200, 209, 224, 0.3)';
+  for (let r = 200; r < 1200; r += 300) {
+    ctx.beginPath();
+    ctx.arc(W / 2, H / 2, r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+function layoutConstellations() {
+  var regions = {
+    '1xx': { cx: 200, cy: 220, spread: 90 },
+    '2xx': { cx: 430, cy: 360, spread: 150 },
+    '3xx': { cx: 1080, cy: 190, spread: 130 },
+    '4xx': { cx: 760, cy: 580, spread: 240 },
+    '5xx': { cx: 1220, cy: 560, spread: 150 },
+  };
+
+  var rng = mulberry32(123);
+  var positions = {};
+  var cats = ['1xx', '2xx', '3xx', '4xx', '5xx'];
+
+  cats.forEach(function(cat) {
+    var codes = STATUS_CODES.filter(function(s) { return s.cat === cat; });
+    var region = regions[cat];
+    var count = codes.length;
+
+    codes.forEach(function(sc, i) {
+      var angle = (i / count) * Math.PI * 2 + rng() * 0.5;
+      var dist = (rng() * 0.6 + 0.3) * region.spread;
+      var prominence = getProminence(sc.code);
+      var adjustedDist = dist * (1.2 - prominence * 0.5);
+
+      positions[sc.code] = {
+        x: region.cx + Math.cos(angle) * adjustedDist,
+        y: region.cy + Math.sin(angle) * adjustedDist,
+        prominence: prominence,
+        code: sc.code,
+        name: sc.name,
+        symbol: sc.symbol,
+        cat: sc.cat,
+        desc: sc.desc,
+        rfc: sc.rfc
+      };
+    });
+  });
+
+  return positions;
+}
+
+function getConstellationEdges(cat) {
+  var codes = STATUS_CODES.filter(function(s) { return s.cat === cat; }).map(function(s) { return s.code; });
+  var edges = [];
+  for (var i = 0; i < codes.length - 1; i++) {
+    edges.push([codes[i], codes[i+1]]);
+  }
+  if (codes.length > 4) {
+    edges.push([codes[0], codes[Math.floor(codes.length/2)]]);
+  }
+  if (codes.length > 6) {
+    edges.push([codes[2], codes[codes.length - 2]]);
+  }
+  if (codes.length > 10) {
+    edges.push([codes[4], codes[codes.length - 3]]);
+    edges.push([codes[1], codes[Math.floor(codes.length * 0.7)]]);
+  }
+  return edges;
+}
+
+function drawConstellations() {
+  var canvas = document.getElementById('constellation-canvas');
+  canvas.width = W;
+  canvas.height = H;
+  var ctx = canvas.getContext('2d');
+  var cats = ['1xx', '2xx', '3xx', '4xx', '5xx'];
+
+  cats.forEach(function(cat) {
+    var color = CAT_COLORS[cat];
+    var edges = getConstellationEdges(cat);
+
+    edges.forEach(function(edge) {
+      var p1 = starPositions[edge[0]];
+      var p2 = starPositions[edge[1]];
+      if (!p1 || !p2) return;
+
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = 0.18;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    });
+
+    STATUS_CODES.filter(function(s) { return s.cat === cat; }).forEach(function(sc) {
+      var pos = starPositions[sc.code];
+      if (!pos) return;
+      var prom = pos.prominence;
+      var glowRadius = 8 + prom * 25;
+
+      var grad = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, glowRadius);
+      grad.addColorStop(0, color + '40');
+      grad.addColorStop(0.4, color + '15');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, glowRadius, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  });
+}
+
+function createStarElements() {
+  var overlay = document.getElementById('star-overlay');
+  var allPositions = Object.values(starPositions);
+
+  allPositions.forEach(function(pos, idx) {
+    var prom = pos.prominence;
+    var color = CAT_COLORS[pos.cat];
+    var starSize = 4 + prom * 10;
+    var coreSize = 2 + prom * 5;
+    var glowSize = starSize * 2.5;
+
+    var star = document.createElement('div');
+    star.className = 'star-point twinkle-' + ((idx % 3) + 1);
+    star.style.left = (pos.x - starSize / 2) + 'px';
+    star.style.top = (pos.y - starSize / 2) + 'px';
+    star.style.width = starSize + 'px';
+    star.style.height = starSize + 'px';
+    star.style.animationDelay = (idx * 0.37) + 's';
+    star.dataset.code = pos.code;
+
+    var glow = document.createElement('div');
+    glow.className = 'star-glow';
+    glow.style.width = glowSize + 'px';
+    glow.style.height = glowSize + 'px';
+    glow.style.background = color;
+    star.appendChild(glow);
+
+    var core = document.createElement('div');
+    core.className = 'star-core';
+    core.style.width = coreSize + 'px';
+    core.style.height = coreSize + 'px';
+    core.style.background = prom > 0.6 ? '#fff' : color;
+    core.style.boxShadow = '0 0 ' + (coreSize * 2) + 'px ' + color;
+    star.appendChild(core);
+
+    var label = document.createElement('div');
+    label.className = 'star-label';
+    label.style.color = color;
+    label.textContent = String(pos.code);
+    star.appendChild(label);
+
+    // Add diffraction spikes to prominent stars
+    if (prom >= 0.55) {
+      var spikeLen = Math.round(20 + prom * 40);
+      var spikeLenD = Math.round(14 + prom * 25);
+      var spike = document.createElement('div');
+      spike.className = 'star-spike';
+      spike.style.color = color;
+      spike.style.setProperty('--spike-len', spikeLen + 'px');
+      star.appendChild(spike);
+
+      var spikeDiag = document.createElement('div');
+      spikeDiag.className = 'star-spike-diag';
+      spikeDiag.style.color = color;
+      spikeDiag.style.setProperty('--spike-len-d', spikeLenD + 'px');
+      star.appendChild(spikeDiag);
+    }
+
+    star.addEventListener('mouseenter', function() { showTooltip(pos); });
+    star.addEventListener('mouseleave', hideTooltip);
+
+    overlay.appendChild(star);
+  });
+}
+
+function createConstellationLabels() {
+  var overlay = document.getElementById('star-overlay');
+  var labelPositions = {
+    '1xx': { x: 110, y: 130 },
+    '2xx': { x: 310, y: 215 },
+    '3xx': { x: 960, y: 75 },
+    '4xx': { x: 530, y: 380 },
+    '5xx': { x: 1100, y: 410 },
+  };
+
+  var cats = ['1xx', '2xx', '3xx', '4xx', '5xx'];
+  cats.forEach(function(cat) {
+    var info = CONSTELLATION_NAMES[cat];
+    var pos = labelPositions[cat];
+    var color = CAT_COLORS[cat];
+
+    var labelEl = document.createElement('div');
+    labelEl.className = 'constellation-label';
+    labelEl.style.left = pos.x + 'px';
+    labelEl.style.top = pos.y + 'px';
+    labelEl.style.color = color;
+
+    var nameSpan = document.createTextNode(info.name);
+    labelEl.appendChild(nameSpan);
+
+    var latinDiv = document.createElement('div');
+    latinDiv.className = 'latin-name';
+    latinDiv.textContent = info.latin + ' (' + cat + ')';
+    labelEl.appendChild(latinDiv);
+
+    overlay.appendChild(labelEl);
+  });
+}
+
+function createCoordLabels() {
+  for (var x = 120; x < W; x += 240) {
+    var label = document.createElement('div');
+    label.className = 'coord-label';
+    label.style.left = x + 'px';
+    label.style.bottom = '8px';
+    var ra = Math.floor((x / W) * 24);
+    label.textContent = ra + 'h RA';
+    document.body.appendChild(label);
+  }
+  for (var y = 120; y < H; y += 240) {
+    var label = document.createElement('div');
+    label.className = 'coord-label';
+    label.style.left = '8px';
+    label.style.top = y + 'px';
+    var dec = Math.floor(90 - (y / H) * 180);
+    label.textContent = (dec > 0 ? '+' : '') + dec + '\u00B0';
+    document.body.appendChild(label);
+  }
+}
+
+function showTooltip(pos) {
+  var tooltip = document.getElementById('tooltip');
+  var color = CAT_COLORS[pos.cat];
+
+  document.getElementById('tooltip-code').textContent = pos.code;
+  document.getElementById('tooltip-code').style.color = color;
+  document.getElementById('tooltip-name').textContent = pos.name;
+  document.getElementById('tooltip-name').style.color = color;
+  document.getElementById('tooltip-symbol').textContent = pos.symbol;
+  document.getElementById('tooltip-desc').textContent = pos.desc;
+  document.getElementById('tooltip-rfc').textContent = pos.rfc;
+
+  var tx = pos.x + 20;
+  var ty = pos.y - 30;
+  if (tx + 280 > W) tx = pos.x - 300;
+  if (ty + 160 > H) ty = H - 170;
+  if (ty < 80) ty = 80;
+
+  tooltip.style.left = tx + 'px';
+  tooltip.style.top = ty + 'px';
+  tooltip.classList.add('visible');
+
+  updateTelescope(pos, color);
+}
+
+function hideTooltip() {
+  document.getElementById('tooltip').classList.remove('visible');
+  document.getElementById('telescope').classList.remove('active');
+}
+
+function updateTelescope(pos, color) {
+  var telescope = document.getElementById('telescope');
+  var scopeStar = document.getElementById('scope-star');
+  var scopeCore = document.getElementById('scope-star-core');
+  var scopeLabel = document.getElementById('scope-label');
+  var scopeInfo = document.getElementById('scope-info');
+
+  var size = 30 + pos.prominence * 60;
+  scopeStar.style.width = size + 'px';
+  scopeStar.style.height = size + 'px';
+  scopeStar.style.background = color;
+  scopeStar.style.boxShadow = '0 0 ' + size + 'px ' + color + ', 0 0 ' + (size*2) + 'px ' + color + '40';
+  scopeCore.style.background = '#fff';
+  scopeCore.style.boxShadow = '0 0 10px #fff, 0 0 20px ' + color;
+
+  scopeLabel.textContent = pos.code + ' ' + pos.symbol;
+  scopeLabel.style.color = color;
+  scopeInfo.textContent = pos.name;
+
+  telescope.classList.add('active');
+}
+
+function initParallax() {
+  document.addEventListener('mousemove', function(e) {
+    var overlay = document.getElementById('star-overlay');
+    var dx = (e.clientX - W / 2) / W * 8;
+    var dy = (e.clientY - H / 2) / H * 8;
+    overlay.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+
+    var canvas = document.getElementById('constellation-canvas');
+    var dx2 = (e.clientX - W / 2) / W * 4;
+    var dy2 = (e.clientY - H / 2) / H * 4;
+    canvas.style.transform = 'translate(' + dx2 + 'px, ' + dy2 + 'px)';
+  });
+}
+
+function init() {
+  starPositions = layoutConstellations();
+  drawStarfield();
+  drawGrid();
+  drawConstellations();
+  createStarElements();
+  createConstellationLabels();
+  createCoordLabels();
+  initParallax();
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>

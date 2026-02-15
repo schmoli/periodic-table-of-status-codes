@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The HTTP Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #1a120b;
+    color: #e8dcc8;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 900px;
+    height: 600px;
+    background: radial-gradient(ellipse, rgba(255, 200, 100, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .bookcase {
+    position: relative;
+    max-width: 1440px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 2px,
+        rgba(139, 90, 43, 0.03) 2px,
+        rgba(139, 90, 43, 0.03) 4px
+      ),
+      linear-gradient(180deg, #1a120b 0%, #231810 50%, #1a120b 100%);
+    padding: 0 0 60px 0;
+  }
+
+  .header {
+    text-align: center;
+    padding: 40px 20px 10px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 48px;
+    color: #f5e6c8;
+    text-shadow: 0 2px 20px rgba(255, 200, 100, 0.3);
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+
+  .header .subtitle {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 16px;
+    color: #a08a6e;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+
+  .lamp {
+    position: absolute;
+    top: 20px;
+    right: 80px;
+    width: 40px;
+    height: 60px;
+    z-index: 2;
+  }
+  .lamp .shade {
+    width: 40px;
+    height: 24px;
+    background: linear-gradient(180deg, #5a4a2a, #3d3220);
+    border-radius: 0 0 20px 20px;
+    position: relative;
+  }
+  .lamp .shade::after {
+    content: '';
+    position: absolute;
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 60px;
+    background: radial-gradient(ellipse, rgba(255, 200, 100, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .lamp .pole {
+    width: 4px;
+    height: 36px;
+    background: #8a7a5a;
+    margin: 0 auto;
+  }
+
+  .search-area {
+    display: flex;
+    justify-content: center;
+    padding: 16px 20px 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .search-wrapper {
+    position: relative;
+    width: 420px;
+  }
+
+  .search-wrapper input {
+    width: 100%;
+    padding: 12px 20px 12px 44px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: #e8dcc8;
+    background: linear-gradient(135deg, #2a1f14, #322416);
+    border: 1px solid #4a3828;
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.3s ease;
+  }
+
+  .search-wrapper input::placeholder {
+    color: #7a6a52;
+    font-style: italic;
+  }
+
+  .search-wrapper input:focus {
+    border-color: #8a7a5a;
+    box-shadow: 0 0 20px rgba(255, 200, 100, 0.1);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #7a6a52;
+    font-size: 16px;
+    pointer-events: none;
+  }
+
+  .shelves {
+    position: relative;
+    z-index: 1;
+    padding: 0 40px;
+  }
+
+  .shelf-row {
+    position: relative;
+    margin-bottom: 12px;
+  }
+
+  .shelf-label {
+    position: absolute;
+    left: 0;
+    bottom: 18px;
+    width: 130px;
+    text-align: right;
+    padding-right: 16px;
+    z-index: 2;
+  }
+
+  .shelf-label .cat-code {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  .shelf-label .cat-name {
+    font-size: 11px;
+    color: #8a7a62;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+
+  .books-area {
+    margin-left: 140px;
+    display: flex;
+    align-items: flex-end;
+    gap: 0;
+    padding: 10px 12px 0;
+    min-height: 140px;
+    position: relative;
+  }
+
+  .shelf-plank {
+    margin-left: 130px;
+    height: 14px;
+    background: linear-gradient(180deg, #6b4c2a 0%, #5a3e20 40%, #4a3218 80%, #3d2a14 100%);
+    border-radius: 0 0 3px 3px;
+    position: relative;
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.5),
+      0 2px 4px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 200, 100, 0.1);
+  }
+
+  .shelf-plank::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 40px,
+      rgba(0,0,0,0.05) 40px,
+      rgba(0,0,0,0.05) 42px
+    );
+    border-radius: inherit;
+  }
+
+  .shelf-plank::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 40px;
+    width: calc(100% - 80px);
+    height: 6px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.3), transparent);
+    border-radius: 0 0 4px 4px;
+  }
+
+  .book {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+    transform-origin: bottom center;
+    border-radius: 2px 3px 1px 1px;
+    margin: 0 1px;
+    flex-shrink: 0;
+  }
+
+  .book .spine {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 2px 3px 1px 1px;
+    position: relative;
+    overflow: hidden;
+    padding: 8px 2px;
+  }
+
+  .book .spine::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(0,0,0,0.2) 0%, transparent 15%, transparent 85%, rgba(0,0,0,0.15) 100%);
+    pointer-events: none;
+  }
+
+  .book .spine::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.1), transparent);
+    pointer-events: none;
+  }
+
+  .book .code-num {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: rgba(255,255,255,0.95);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    letter-spacing: 1px;
+    writing-mode: vertical-rl;
+  }
+
+  .book .code-symbol {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.6);
+    writing-mode: vertical-rl;
+    margin-top: 6px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Gold band decoration on some books */
+  .book.has-band .spine .band {
+    position: absolute;
+    top: 8px;
+    left: 3px;
+    right: 3px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(218, 186, 120, 0.5), transparent);
+  }
+
+  .book.has-band .spine .band-bottom {
+    position: absolute;
+    bottom: 8px;
+    left: 3px;
+    right: 3px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(218, 186, 120, 0.5), transparent);
+  }
+
+  .book:hover {
+    transform: translateY(-14px) rotate(-2deg);
+    z-index: 10;
+    box-shadow: 4px 4px 16px rgba(0,0,0,0.5);
+  }
+
+  .book .tooltip {
+    position: absolute;
+    top: -36px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    background: #2a1f14;
+    color: #e8dcc8;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid #4a3828;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    z-index: 20;
+  }
+
+  .book .tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #2a1f14;
+  }
+
+  .book:hover .tooltip {
+    opacity: 1;
+  }
+
+  .bookend {
+    width: 12px;
+    height: 90px;
+    align-self: flex-end;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .bookend-left {
+    background: linear-gradient(90deg, #5a4020, #6b4c2a);
+    margin-right: 4px;
+    box-shadow: 2px 0 4px rgba(0,0,0,0.3);
+  }
+
+  .bookend-right {
+    background: linear-gradient(90deg, #6b4c2a, #5a4020);
+    margin-left: 4px;
+    box-shadow: -2px 0 4px rgba(0,0,0,0.3);
+  }
+
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 6, 2, 0.8);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
+  }
+
+  .overlay.active {
+    display: flex;
+  }
+
+  .detail-card {
+    background: linear-gradient(145deg, #2a1f14, #1e1610);
+    border: 1px solid #4a3828;
+    border-radius: 12px;
+    padding: 40px;
+    max-width: 480px;
+    width: 90%;
+    position: relative;
+    box-shadow:
+      0 20px 60px rgba(0,0,0,0.6),
+      0 0 80px rgba(255, 200, 100, 0.05);
+    animation: cardIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes cardIn {
+    from {
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .detail-card .close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    color: #8a7a62;
+    font-size: 24px;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+  }
+
+  .detail-card .close-btn:hover {
+    background: rgba(255,255,255,0.05);
+    color: #e8dcc8;
+  }
+
+  .detail-card .book-preview {
+    width: 60px;
+    height: 100px;
+    border-radius: 3px;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 4px 4px 16px rgba(0,0,0,0.4);
+  }
+
+  .detail-card .book-preview::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(0,0,0,0.2) 0%, transparent 15%, transparent 85%, rgba(0,0,0,0.15) 100%);
+    border-radius: inherit;
+  }
+
+  .detail-card .book-preview .code-big {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 22px;
+    color: rgba(255,255,255,0.95);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    position: relative;
+    z-index: 1;
+  }
+
+  .detail-card .detail-code {
+    font-family: 'Playfair Display', serif;
+    font-size: 42px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .detail-card .detail-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 600;
+    text-align: center;
+    color: #f5e6c8;
+    margin-bottom: 20px;
+  }
+
+  .detail-card .detail-desc {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #b0a08a;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .detail-card .detail-meta {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #3a2a1a;
+  }
+
+  .detail-card .meta-item {
+    text-align: center;
+  }
+
+  .detail-card .meta-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #6a5a42;
+    margin-bottom: 4px;
+  }
+
+  .detail-card .meta-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: #c8b898;
+  }
+
+  .plant {
+    position: fixed;
+    bottom: 20px;
+    right: 40px;
+    z-index: 2;
+    opacity: 0.7;
+  }
+
+  .plant .pot {
+    width: 28px;
+    height: 22px;
+    background: linear-gradient(180deg, #8a5a30, #6a4020);
+    border-radius: 3px 3px 6px 6px;
+    margin: 0 auto;
+    border-top: 2px solid #9a6a38;
+  }
+
+  .plant .leaves {
+    text-align: center;
+    margin-bottom: -4px;
+  }
+
+  .plant .leaves svg {
+    width: 36px;
+    height: 30px;
+  }
+
+  .glasses {
+    position: fixed;
+    bottom: 28px;
+    right: 100px;
+    z-index: 2;
+    opacity: 0.4;
+  }
+
+  .glasses svg {
+    width: 40px;
+    height: 18px;
+  }
+
+  .book.dimmed {
+    opacity: 0.15;
+    filter: grayscale(0.5);
+    transition: opacity 0.3s ease, filter 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  }
+
+  .book.dimmed:hover {
+    opacity: 0.3;
+  }
+
+  .footer {
+    text-align: center;
+    padding: 30px 20px 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer p {
+    font-size: 11px;
+    color: #5a4a32;
+    font-style: italic;
+  }
+
+  .bookcase-frame-left,
+  .bookcase-frame-right {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  .bookcase-frame-left {
+    left: 0;
+    background: linear-gradient(90deg, #3d2a14, transparent);
+  }
+
+  .bookcase-frame-right {
+    right: 0;
+    background: linear-gradient(270deg, #3d2a14, transparent);
+  }
+</style>
+</head>
+<body>
+
+<div class="bookcase">
+  <div class="bookcase-frame-left"></div>
+  <div class="bookcase-frame-right"></div>
+
+  <div class="header">
+    <h1>The HTTP Library</h1>
+    <div class="subtitle">A Collection of Status Codes</div>
+    <div class="lamp">
+      <div class="shade"></div>
+      <div class="pole"></div>
+    </div>
+  </div>
+
+  <div class="search-area">
+    <div class="search-wrapper">
+      <span class="search-icon">&#128269;</span>
+      <input type="text" id="searchInput" placeholder="Search the card catalog...">
+    </div>
+  </div>
+
+  <div class="shelves" id="shelves"></div>
+
+  <div class="footer">
+    <p>"In the beginning was the Request, and the Request was with the Server, and the Server responded."</p>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="detail-card" id="detailCard">
+    <button class="close-btn" id="closeBtn">&times;</button>
+    <div class="book-preview" id="detailPreview">
+      <span class="code-big" id="detailPreviewCode"></span>
+    </div>
+    <div class="detail-code" id="detailCode"></div>
+    <div class="detail-name" id="detailName"></div>
+    <div class="detail-desc" id="detailDesc"></div>
+    <div class="detail-meta">
+      <div class="meta-item">
+        <div class="meta-label">Category</div>
+        <div class="meta-value" id="detailCat"></div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Symbol</div>
+        <div class="meta-value" id="detailSymbol"></div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Reference</div>
+        <div class="meta-value" id="detailRfc"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="plant">
+  <div class="leaves">
+    <svg viewBox="0 0 36 30" fill="none">
+      <path d="M18 28 C18 20, 10 16, 6 10 C4 7, 8 4, 12 6 C14 7, 16 12, 18 18" stroke="#4a7a3a" stroke-width="2" fill="none"/>
+      <path d="M18 28 C18 18, 24 14, 28 8 C30 5, 26 3, 22 5 C20 6, 18 12, 18 18" stroke="#5a8a4a" stroke-width="2" fill="none"/>
+      <path d="M18 28 C18 22, 14 18, 8 16" stroke="#3a6a2a" stroke-width="1.5" fill="none"/>
+      <path d="M18 28 C18 22, 22 18, 28 16" stroke="#4a7a3a" stroke-width="1.5" fill="none"/>
+      <path d="M18 28 L18 30" stroke="#5a4020" stroke-width="2"/>
+    </svg>
+  </div>
+  <div class="pot"></div>
+</div>
+
+<div class="glasses">
+  <svg viewBox="0 0 40 18" fill="none">
+    <ellipse cx="10" cy="10" rx="9" ry="7" stroke="#8a7a5a" stroke-width="1.5" fill="none"/>
+    <ellipse cx="30" cy="10" rx="9" ry="7" stroke="#8a7a5a" stroke-width="1.5" fill="none"/>
+    <path d="M19 10 Q20 7 21 10" stroke="#8a7a5a" stroke-width="1.5" fill="none"/>
+    <line x1="1" y1="10" x2="0" y2="6" stroke="#8a7a5a" stroke-width="1"/>
+    <line x1="39" y1="10" x2="40" y2="6" stroke="#8a7a5a" stroke-width="1"/>
+  </svg>
+</div>
+
+<script>
+const STATUS_CODES = [
+    { code: 100, name: "Continue", symbol: "Cn", cat: "1xx", desc: "The server has received the request headers and the client should proceed to send the request body.", rfc: "RFC 9110" },
+    { code: 101, name: "Switching Protocols", symbol: "Sw", cat: "1xx", desc: "The server is switching protocols as requested by the client via the Upgrade header.", rfc: "RFC 9110" },
+    { code: 103, name: "Early Hints", symbol: "Eh", cat: "1xx", desc: "Used to return some response headers before the final HTTP message.", rfc: "RFC 8297" },
+    { code: 200, name: "OK", symbol: "Ok", cat: "2xx", desc: "The request has succeeded.", rfc: "RFC 9110" },
+    { code: 201, name: "Created", symbol: "Cr", cat: "2xx", desc: "The request has been fulfilled and a new resource has been created.", rfc: "RFC 9110" },
+    { code: 202, name: "Accepted", symbol: "Ac", cat: "2xx", desc: "The request has been accepted for processing, but processing has not been completed.", rfc: "RFC 9110" },
+    { code: 203, name: "Non-Authoritative", symbol: "Na", cat: "2xx", desc: "The returned metadata is not exactly the same as available from the origin server.", rfc: "RFC 9110" },
+    { code: 204, name: "No Content", symbol: "Nc", cat: "2xx", desc: "The server has successfully fulfilled the request and there is no additional content.", rfc: "RFC 9110" },
+    { code: 205, name: "Reset Content", symbol: "Rc", cat: "2xx", desc: "The server has fulfilled the request and the user agent should reset the document view.", rfc: "RFC 9110" },
+    { code: 206, name: "Partial Content", symbol: "Pc", cat: "2xx", desc: "The server is delivering only part of the resource due to a Range header.", rfc: "RFC 9110" },
+    { code: 207, name: "Multi-Status", symbol: "Ms", cat: "2xx", desc: "A WebDAV response conveying information about multiple resources.", rfc: "RFC 4918" },
+    { code: 208, name: "Already Reported", symbol: "Ar", cat: "2xx", desc: "Used inside a WebDAV response to avoid enumerating internal members repeatedly.", rfc: "RFC 5842" },
+    { code: 226, name: "IM Used", symbol: "Im", cat: "2xx", desc: "The server has fulfilled a GET request with instance-manipulations applied.", rfc: "RFC 3229" },
+    { code: 300, name: "Multiple Choices", symbol: "Mc", cat: "3xx", desc: "The request has more than one possible response.", rfc: "RFC 9110" },
+    { code: 301, name: "Moved Permanently", symbol: "Mp", cat: "3xx", desc: "The URL of the requested resource has been changed permanently.", rfc: "RFC 9110" },
+    { code: 302, name: "Found", symbol: "Fd", cat: "3xx", desc: "The URI of the requested resource has been changed temporarily.", rfc: "RFC 9110" },
+    { code: 303, name: "See Other", symbol: "So", cat: "3xx", desc: "The server is redirecting to a different resource using GET.", rfc: "RFC 9110" },
+    { code: 304, name: "Not Modified", symbol: "Nm", cat: "3xx", desc: "The resource has not been modified since the version specified.", rfc: "RFC 9110" },
+    { code: 305, name: "Use Proxy", symbol: "Up", cat: "3xx", desc: "The requested resource must be accessed through a proxy. Deprecated.", rfc: "Deprecated" },
+    { code: 307, name: "Temporary Redirect", symbol: "Tr", cat: "3xx", desc: "The server is redirecting to another URI with same method.", rfc: "RFC 9110" },
+    { code: 308, name: "Permanent Redirect", symbol: "Pr", cat: "3xx", desc: "The resource has permanently moved, same method required.", rfc: "RFC 9110" },
+    { code: 400, name: "Bad Request", symbol: "Br", cat: "4xx", desc: "The server cannot process the request due to a client error.", rfc: "RFC 9110" },
+    { code: 401, name: "Unauthorized", symbol: "Un", cat: "4xx", desc: "The request requires authentication.", rfc: "RFC 9110" },
+    { code: 402, name: "Payment Required", symbol: "Py", cat: "4xx", desc: "Reserved for future use. Some APIs use it for billing limits.", rfc: "RFC 9110" },
+    { code: 403, name: "Forbidden", symbol: "Fb", cat: "4xx", desc: "The client does not have access rights.", rfc: "RFC 9110" },
+    { code: 404, name: "Not Found", symbol: "Nf", cat: "4xx", desc: "The server cannot find the requested resource.", rfc: "RFC 9110" },
+    { code: 405, name: "Method Not Allowed", symbol: "Ma", cat: "4xx", desc: "The request method is not supported for that resource.", rfc: "RFC 9110" },
+    { code: 406, name: "Not Acceptable", symbol: "Nx", cat: "4xx", desc: "The server can't produce a matching response.", rfc: "RFC 9110" },
+    { code: 407, name: "Proxy Auth Required", symbol: "Pa", cat: "4xx", desc: "Authentication needs to be done by a proxy.", rfc: "RFC 9110" },
+    { code: 408, name: "Request Timeout", symbol: "Rt", cat: "4xx", desc: "The server would like to shut down this unused connection.", rfc: "RFC 9110" },
+    { code: 409, name: "Conflict", symbol: "Cf", cat: "4xx", desc: "The request conflicts with the current state of the server.", rfc: "RFC 9110" },
+    { code: 410, name: "Gone", symbol: "Gn", cat: "4xx", desc: "The content has been permanently deleted.", rfc: "RFC 9110" },
+    { code: 411, name: "Length Required", symbol: "Lr", cat: "4xx", desc: "Content-Length header is not defined.", rfc: "RFC 9110" },
+    { code: 412, name: "Precondition Failed", symbol: "Pf", cat: "4xx", desc: "Preconditions in request headers are not met.", rfc: "RFC 9110" },
+    { code: 413, name: "Content Too Large", symbol: "Tl", cat: "4xx", desc: "Request entity is larger than server limits.", rfc: "RFC 9110" },
+    { code: 414, name: "URI Too Long", symbol: "Ul", cat: "4xx", desc: "The URI is longer than the server will interpret.", rfc: "RFC 9110" },
+    { code: 415, name: "Unsupported Media", symbol: "Um", cat: "4xx", desc: "The media format is not supported.", rfc: "RFC 9110" },
+    { code: 416, name: "Range Not Satisfiable", symbol: "Rn", cat: "4xx", desc: "The range specified can't be fulfilled.", rfc: "RFC 9110" },
+    { code: 417, name: "Expectation Failed", symbol: "Ef", cat: "4xx", desc: "The Expect header expectation can't be met.", rfc: "RFC 9110" },
+    { code: 418, name: "I'm a Teapot", symbol: "Tp", cat: "4xx", desc: "An April Fools' joke from 1998 that became beloved.", rfc: "RFC 2324" },
+    { code: 421, name: "Misdirected", symbol: "Mr", cat: "4xx", desc: "The request was directed at a wrong server.", rfc: "RFC 9110" },
+    { code: 422, name: "Unprocessable", symbol: "Uc", cat: "4xx", desc: "Well-formed but semantically erroneous.", rfc: "RFC 9110" },
+    { code: 423, name: "Locked", symbol: "Lk", cat: "4xx", desc: "The resource is locked (WebDAV).", rfc: "RFC 4918" },
+    { code: 424, name: "Failed Dependency", symbol: "Dp", cat: "4xx", desc: "Failed due to failure of a previous request.", rfc: "RFC 4918" },
+    { code: 425, name: "Too Early", symbol: "Te", cat: "4xx", desc: "Server won't risk processing a replay.", rfc: "RFC 8470" },
+    { code: 426, name: "Upgrade Required", symbol: "Ur", cat: "4xx", desc: "Server refuses current protocol.", rfc: "RFC 9110" },
+    { code: 428, name: "Precondition Req'd", symbol: "Pq", cat: "4xx", desc: "The server requires conditional requests.", rfc: "RFC 6585" },
+    { code: 429, name: "Too Many Requests", symbol: "Tm", cat: "4xx", desc: "Rate limited.", rfc: "RFC 6585" },
+    { code: 431, name: "Headers Too Large", symbol: "Hl", cat: "4xx", desc: "Header fields are too large.", rfc: "RFC 6585" },
+    { code: 451, name: "Legal Reasons", symbol: "Lg", cat: "4xx", desc: "Unavailable for legal reasons.", rfc: "RFC 7725" },
+    { code: 500, name: "Internal Error", symbol: "Is", cat: "5xx", desc: "Unhandled server exception.", rfc: "RFC 9110" },
+    { code: 501, name: "Not Implemented", symbol: "Ni", cat: "5xx", desc: "The request method is not supported.", rfc: "RFC 9110" },
+    { code: 502, name: "Bad Gateway", symbol: "Bg", cat: "5xx", desc: "Invalid response from upstream server.", rfc: "RFC 9110" },
+    { code: 503, name: "Service Unavailable", symbol: "Su", cat: "5xx", desc: "Server not ready - maintenance or overloaded.", rfc: "RFC 9110" },
+    { code: 504, name: "Gateway Timeout", symbol: "Gt", cat: "5xx", desc: "Gateway didn't get a response in time.", rfc: "RFC 9110" },
+    { code: 505, name: "HTTP Ver. Unsupported", symbol: "Hv", cat: "5xx", desc: "HTTP version not supported.", rfc: "RFC 9110" },
+    { code: 506, name: "Variant Negotiates", symbol: "Vn", cat: "5xx", desc: "Internal configuration error.", rfc: "RFC 2295" },
+    { code: 507, name: "Insufficient Storage", symbol: "St", cat: "5xx", desc: "Server can't store the representation.", rfc: "RFC 4918" },
+    { code: 508, name: "Loop Detected", symbol: "Ld", cat: "5xx", desc: "Infinite loop detected (WebDAV).", rfc: "RFC 5842" },
+    { code: 510, name: "Not Extended", symbol: "Ne", cat: "5xx", desc: "Further extensions required.", rfc: "RFC 2774" },
+    { code: 511, name: "Network Auth Req'd", symbol: "Nr", cat: "5xx", desc: "Client needs to authenticate for network access.", rfc: "RFC 6585" },
+];
+
+const CAT_COLORS = { '1xx': '#58a6ff', '2xx': '#3fb950', '3xx': '#d29922', '4xx': '#ff7b72', '5xx': '#bc8cff' };
+const CAT_LABELS = { '1xx': 'Informational', '2xx': 'Success', '3xx': 'Redirection', '4xx': 'Client Error', '5xx': 'Server Error' };
+
+function darkenColor(hex, amount) {
+  const r = Math.max(0, parseInt(hex.slice(1,3), 16) - amount);
+  const g = Math.max(0, parseInt(hex.slice(3,5), 16) - amount);
+  const b = Math.max(0, parseInt(hex.slice(5,7), 16) - amount);
+  return 'rgb(' + r + ', ' + g + ', ' + b + ')';
+}
+
+function seededRandom(seed) {
+  let x = Math.sin(seed * 9301 + 49297) * 49297;
+  return x - Math.floor(x);
+}
+
+function buildShelves() {
+  const shelvesEl = document.getElementById('shelves');
+  const categories = ['1xx', '2xx', '3xx', '4xx', '5xx'];
+
+  categories.forEach(function(cat) {
+    const codes = STATUS_CODES.filter(function(s) { return s.cat === cat; });
+    const color = CAT_COLORS[cat];
+
+    const row = document.createElement('div');
+    row.className = 'shelf-row';
+
+    // Shelf label
+    const label = document.createElement('div');
+    label.className = 'shelf-label';
+
+    const catCodeEl = document.createElement('div');
+    catCodeEl.className = 'cat-code';
+    catCodeEl.style.color = color;
+    catCodeEl.textContent = cat;
+    label.appendChild(catCodeEl);
+
+    const catNameEl = document.createElement('div');
+    catNameEl.className = 'cat-name';
+    catNameEl.textContent = CAT_LABELS[cat];
+    label.appendChild(catNameEl);
+
+    row.appendChild(label);
+
+    // Books area
+    const booksArea = document.createElement('div');
+    booksArea.className = 'books-area';
+
+    // Left bookend
+    const bookendL = document.createElement('div');
+    bookendL.className = 'bookend bookend-left';
+    booksArea.appendChild(bookendL);
+
+    codes.forEach(function(sc) {
+      const rand = seededRandom(sc.code);
+      const rand2 = seededRandom(sc.code + 7);
+      const rand3 = seededRandom(sc.code + 13);
+
+      const bookHeight = Math.floor(95 + rand * 40);
+      const bookWidth = Math.floor(32 + rand2 * 16);
+      const hasBand = rand3 > 0.5;
+
+      const book = document.createElement('div');
+      book.className = 'book' + (hasBand ? ' has-band' : '');
+      book.setAttribute('data-code', sc.code);
+      book.style.width = bookWidth + 'px';
+      book.style.height = bookHeight + 'px';
+
+      // Vary the color saturation/brightness slightly per book
+      const darkenAmount = 60 + Math.floor(rand2 * 30);
+      const darkBg = darkenColor(color, darkenAmount);
+
+      const spine = document.createElement('div');
+      spine.className = 'spine';
+      // Some books get a slightly different gradient angle
+      const gradAngle = rand3 > 0.7 ? '170deg' : (rand3 < 0.3 ? '190deg' : '180deg');
+      spine.style.background = 'linear-gradient(' + gradAngle + ', ' + color + ', ' + darkBg + ')';
+
+      // Add gold band decorations for some books
+      if (hasBand) {
+        const bandTop = document.createElement('div');
+        bandTop.className = 'band';
+        spine.appendChild(bandTop);
+
+        const bandBottom = document.createElement('div');
+        bandBottom.className = 'band-bottom';
+        spine.appendChild(bandBottom);
+      }
+
+      const codeNum = document.createElement('span');
+      codeNum.className = 'code-num';
+      codeNum.textContent = sc.code;
+      spine.appendChild(codeNum);
+
+      const codeSym = document.createElement('span');
+      codeSym.className = 'code-symbol';
+      codeSym.textContent = sc.symbol;
+      spine.appendChild(codeSym);
+
+      book.appendChild(spine);
+
+      const tooltip = document.createElement('div');
+      tooltip.className = 'tooltip';
+      tooltip.textContent = sc.code + ' ' + sc.name;
+      book.appendChild(tooltip);
+
+      book.addEventListener('click', function() { openDetail(sc); });
+      booksArea.appendChild(book);
+    });
+
+    // Right bookend
+    const bookendR = document.createElement('div');
+    bookendR.className = 'bookend bookend-right';
+    booksArea.appendChild(bookendR);
+
+    row.appendChild(booksArea);
+
+    // Shelf plank
+    const plank = document.createElement('div');
+    plank.className = 'shelf-plank';
+    row.appendChild(plank);
+
+    shelvesEl.appendChild(row);
+  });
+}
+
+function openDetail(sc) {
+  const overlay = document.getElementById('overlay');
+  const color = CAT_COLORS[sc.cat];
+
+  document.getElementById('detailPreview').style.background = 'linear-gradient(180deg, ' + color + ', ' + darkenColor(color, 80) + ')';
+  document.getElementById('detailPreviewCode').textContent = sc.code;
+  document.getElementById('detailCode').textContent = sc.code;
+  document.getElementById('detailCode').style.color = color;
+  document.getElementById('detailName').textContent = sc.name;
+  document.getElementById('detailDesc').textContent = sc.desc;
+  document.getElementById('detailCat').textContent = sc.cat + ' ' + CAT_LABELS[sc.cat];
+  document.getElementById('detailSymbol').textContent = sc.symbol;
+  document.getElementById('detailRfc').textContent = sc.rfc;
+
+  overlay.classList.add('active');
+}
+
+function closeDetail() {
+  document.getElementById('overlay').classList.remove('active');
+}
+
+document.getElementById('closeBtn').addEventListener('click', closeDetail);
+document.getElementById('overlay').addEventListener('click', function(e) {
+  if (e.target === document.getElementById('overlay')) closeDetail();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeDetail();
+});
+
+document.getElementById('searchInput').addEventListener('input', function(e) {
+  const query = e.target.value.toLowerCase().trim();
+  const books = document.querySelectorAll('.book');
+
+  if (!query) {
+    books.forEach(function(b) { b.classList.remove('dimmed'); });
+    return;
+  }
+
+  books.forEach(function(book) {
+    const code = book.getAttribute('data-code');
+    const sc = STATUS_CODES.find(function(s) { return s.code === parseInt(code); });
+    const match =
+      sc.code.toString().includes(query) ||
+      sc.name.toLowerCase().includes(query) ||
+      sc.symbol.toLowerCase().includes(query) ||
+      sc.desc.toLowerCase().includes(query) ||
+      sc.rfc.toLowerCase().includes(query) ||
+      sc.cat.includes(query);
+
+    if (match) {
+      book.classList.remove('dimmed');
+    } else {
+      book.classList.add('dimmed');
+    }
+  });
+});
+
+buildShelves();
+</script>
+</body>
+</html>

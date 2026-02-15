@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HTTP Status Codes - Stories</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #000;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .phone-frame {
+    width: 390px;
+    min-height: 844px;
+    position: relative;
+    overflow: hidden;
+    background: #000;
+  }
+
+  /* ============ FEED VIEW ============ */
+  #feed-view {
+    width: 100%;
+    min-height: 844px;
+    background: #000;
+    transition: opacity 0.3s ease;
+  }
+
+  .feed-header {
+    padding: 12px 16px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #1a1a1a;
+  }
+
+  .feed-header h1 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .feed-header .camera-icon {
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    opacity: 0.8;
+  }
+
+  /* Stories Row */
+  .stories-row {
+    display: flex;
+    gap: 16px;
+    padding: 16px 16px 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .stories-row::-webkit-scrollbar { display: none; }
+
+  .story-avatar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .story-ring {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    padding: 3px;
+    background: conic-gradient(var(--ring-color) 0deg, var(--ring-color) 360deg);
+    transition: transform 0.2s ease;
+  }
+  .story-avatar:hover .story-ring { transform: scale(1.08); }
+  .story-avatar:active .story-ring { transform: scale(0.95); }
+
+  .story-ring-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid #000;
+    background: var(--ring-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 800;
+    color: #000;
+  }
+
+  .story-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #ccc;
+    white-space: nowrap;
+    max-width: 72px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+  }
+
+  /* Separator */
+  .feed-separator {
+    height: 1px;
+    background: #1a1a1a;
+    margin: 0 16px;
+  }
+
+  /* Feed Grid */
+  .feed-grid-header {
+    padding: 14px 16px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .feed-grid-header .profile-pic {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #405de6, #833ab4, #e1306c, #f77737, #fcaf45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .feed-grid-header .username {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .feed-bio {
+    padding: 12px 16px 6px;
+  }
+
+  .feed-bio-name {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .feed-bio-desc {
+    font-size: 13px;
+    color: #ccc;
+    line-height: 1.4;
+  }
+
+  .feed-bio-link {
+    font-size: 13px;
+    color: #e0d5f7;
+    font-weight: 500;
+  }
+
+  .feed-stats {
+    display: flex;
+    padding: 12px 0;
+    margin: 0 16px;
+    border-top: 1px solid #1a1a1a;
+    border-bottom: 1px solid #1a1a1a;
+  }
+
+  .feed-stat {
+    flex: 1;
+    text-align: center;
+  }
+
+  .feed-stat-num {
+    font-size: 17px;
+    font-weight: 800;
+  }
+
+  .feed-stat-label {
+    font-size: 11px;
+    color: #888;
+    margin-top: 2px;
+  }
+
+  .feed-tabs {
+    display: flex;
+    border-bottom: 1px solid #1a1a1a;
+    margin: 0 16px;
+  }
+
+  .feed-tab {
+    flex: 1;
+    text-align: center;
+    padding: 12px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .feed-tab.active {
+    color: #fff;
+    border-bottom-color: #fff;
+  }
+
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    padding: 2px;
+  }
+
+  .post-tile {
+    aspect-ratio: 1;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    transition: opacity 0.15s;
+  }
+  .post-tile:hover { opacity: 0.85; }
+
+  .post-tile-bg {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .post-tile-code {
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  .post-tile-name {
+    font-size: 9px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.85);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+    padding: 0 4px;
+  }
+
+  .post-tile-symbol {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* ============ STORY VIEW ============ */
+  #story-view {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 390px;
+    height: 844px;
+    z-index: 1000;
+    display: none;
+    overflow: hidden;
+  }
+
+  #story-view.active {
+    display: block;
+  }
+
+  .story-bg {
+    position: absolute;
+    inset: 0;
+    transition: background 0.4s ease;
+  }
+
+  .story-overlay-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%);
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .story-overlay-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 250px;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  /* Progress Bar */
+  .progress-container {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    display: flex;
+    gap: 3px;
+    z-index: 10;
+  }
+
+  .progress-segment {
+    flex: 1;
+    height: 2.5px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: #fff;
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+
+  .progress-segment.completed .progress-fill { width: 100%; }
+  .progress-segment.active .progress-fill { width: 100%; }
+
+  /* Story Header */
+  .story-header {
+    position: absolute;
+    top: 18px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 10;
+  }
+
+  .story-header-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--cat-color, #fff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    background: rgba(0,0,0,0.4);
+    flex-shrink: 0;
+  }
+
+  .story-header-info {
+    flex: 1;
+  }
+
+  .story-header-username {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .story-header-time {
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+  }
+
+  .story-close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 22px;
+    font-weight: 300;
+    opacity: 0.9;
+    z-index: 20;
+    background: none;
+    border: none;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .story-close:hover { opacity: 1; }
+
+  .story-more {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 20px;
+    opacity: 0.7;
+    background: none;
+    border: none;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  /* Story Content */
+  .story-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    padding: 80px 32px 140px;
+    text-align: center;
+  }
+
+  .story-code-number {
+    font-size: 120px;
+    font-weight: 900;
+    letter-spacing: -6px;
+    line-height: 1;
+    text-shadow: 0 4px 30px rgba(0,0,0,0.3);
+    margin-bottom: 4px;
+    opacity: 0;
+    transform: scale(0.8);
+    animation: codePopIn 0.4s ease forwards;
+  }
+
+  @keyframes codePopIn {
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .story-code-symbol {
+    font-size: 20px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 12px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+
+  .story-code-name {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    opacity: 0;
+    animation: fadeSlideUp 0.4s ease 0.15s forwards;
+  }
+
+  .story-code-desc {
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.85);
+    max-width: 320px;
+    opacity: 0;
+    animation: fadeSlideUp 0.4s ease 0.25s forwards;
+  }
+
+  .story-code-rfc {
+    margin-top: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.4);
+    padding: 6px 16px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    opacity: 0;
+    animation: fadeSlideUp 0.4s ease 0.35s forwards;
+  }
+
+  @keyframes fadeSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Tap Zones */
+  .tap-zone-left, .tap-zone-right {
+    position: absolute;
+    top: 70px;
+    bottom: 100px;
+    z-index: 8;
+    cursor: pointer;
+  }
+  .tap-zone-left { left: 0; width: 35%; }
+  .tap-zone-right { right: 0; width: 65%; }
+
+  /* Story Footer */
+  .story-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    padding: 0 16px 20px;
+  }
+
+  .story-reply {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .story-reply-input {
+    flex: 1;
+    height: 44px;
+    border-radius: 22px;
+    border: 1px solid rgba(255,255,255,0.25);
+    background: transparent;
+    padding: 0 20px;
+    font-size: 14px;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+  }
+  .story-reply-input::placeholder {
+    color: rgba(255,255,255,0.5);
+  }
+
+  .story-reply-icons {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .story-reply-icon {
+    font-size: 22px;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+  }
+  .story-reply-icon:hover { opacity: 1; }
+
+  .story-seen {
+    text-align: center;
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    padding-top: 4px;
+  }
+
+  /* Category Mini Dots at bottom of story */
+  .story-cat-nav {
+    position: absolute;
+    bottom: 110px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+  }
+
+  .story-cat-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    opacity: 0.3;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .story-cat-dot.active {
+    opacity: 1;
+    transform: scale(1.4);
+  }
+
+  /* Page transition */
+  .slide-transition {
+    animation: slideIn 0.15s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0.6; }
+    to { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <!-- ============ FEED VIEW ============ -->
+  <div id="feed-view">
+    <div class="feed-header">
+      <h1>@http_status</h1>
+      <svg class="camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="5" width="20" height="15" rx="2"/>
+        <circle cx="12" cy="12.5" r="3.5"/>
+        <circle cx="17.5" cy="7.5" r="1"/>
+      </svg>
+    </div>
+
+    <div class="stories-row" id="stories-row"></div>
+    <div class="feed-separator"></div>
+
+    <div class="feed-grid-header">
+      <div class="profile-pic">HC</div>
+      <div class="username">@status_codes_official</div>
+    </div>
+
+    <div class="feed-bio">
+      <div class="feed-bio-name">HTTP Status Codes</div>
+      <div class="feed-bio-desc">The complete collection of HTTP response status codes. Tap a story to explore each category.</div>
+      <div class="feed-bio-link">ietf.org/rfc/rfc9110</div>
+    </div>
+
+    <div class="feed-stats">
+      <div class="feed-stat">
+        <div class="feed-stat-num">61</div>
+        <div class="feed-stat-label">codes</div>
+      </div>
+      <div class="feed-stat">
+        <div class="feed-stat-num">5</div>
+        <div class="feed-stat-label">categories</div>
+      </div>
+      <div class="feed-stat">
+        <div class="feed-stat-num">1.1M</div>
+        <div class="feed-stat-label">developers</div>
+      </div>
+    </div>
+
+    <div class="feed-tabs">
+      <div class="feed-tab active" data-tab="grid">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="1" width="9" height="9" rx="1"/><rect x="14" y="1" width="9" height="9" rx="1"/><rect x="1" y="14" width="9" height="9" rx="1"/><rect x="14" y="14" width="9" height="9" rx="1"/></svg>
+      </div>
+      <div class="feed-tab" data-tab="tagged">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      </div>
+    </div>
+
+    <div class="posts-grid" id="posts-grid"></div>
+  </div>
+
+  <!-- ============ STORY VIEW ============ -->
+  <div id="story-view">
+    <div class="story-bg" id="story-bg"></div>
+    <div class="story-overlay-top"></div>
+    <div class="story-overlay-bottom"></div>
+
+    <div class="progress-container" id="progress-container"></div>
+
+    <div class="story-header">
+      <div class="story-header-avatar" id="story-avatar"></div>
+      <div class="story-header-info">
+        <div class="story-header-username" id="story-username"></div>
+        <div class="story-header-time" id="story-time"></div>
+      </div>
+      <button class="story-more">...</button>
+      <button class="story-close" id="story-close">&times;</button>
+    </div>
+
+    <div class="story-content" id="story-content"></div>
+
+    <div class="tap-zone-left" id="tap-left"></div>
+    <div class="tap-zone-right" id="tap-right"></div>
+
+    <div class="story-cat-nav" id="cat-nav"></div>
+
+    <div class="story-footer">
+      <div class="story-reply">
+        <input class="story-reply-input" placeholder="Send a message..." readonly>
+        <div class="story-reply-icons">
+          <span class="story-reply-icon" id="icon-heart"></span>
+          <span class="story-reply-icon" id="icon-send"></span>
+        </div>
+      </div>
+      <div class="story-seen" id="story-seen"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STATUS_CODES = [
+    { code: 100, name: "Continue", symbol: "Cn", cat: "1xx", desc: "The server has received the request headers and the client should proceed to send the request body.", rfc: "RFC 9110" },
+    { code: 101, name: "Switching Protocols", symbol: "Sw", cat: "1xx", desc: "The server is switching protocols as requested by the client via the Upgrade header.", rfc: "RFC 9110" },
+    { code: 103, name: "Early Hints", symbol: "Eh", cat: "1xx", desc: "Used to return some response headers before the final HTTP message.", rfc: "RFC 8297" },
+    { code: 200, name: "OK", symbol: "Ok", cat: "2xx", desc: "The request has succeeded.", rfc: "RFC 9110" },
+    { code: 201, name: "Created", symbol: "Cr", cat: "2xx", desc: "The request has been fulfilled and a new resource has been created.", rfc: "RFC 9110" },
+    { code: 202, name: "Accepted", symbol: "Ac", cat: "2xx", desc: "The request has been accepted for processing, but processing has not been completed.", rfc: "RFC 9110" },
+    { code: 203, name: "Non-Authoritative", symbol: "Na", cat: "2xx", desc: "The returned metadata is not exactly the same as available from the origin server.", rfc: "RFC 9110" },
+    { code: 204, name: "No Content", symbol: "Nc", cat: "2xx", desc: "The server has successfully fulfilled the request and there is no additional content.", rfc: "RFC 9110" },
+    { code: 205, name: "Reset Content", symbol: "Rc", cat: "2xx", desc: "The server has fulfilled the request and the user agent should reset the document view.", rfc: "RFC 9110" },
+    { code: 206, name: "Partial Content", symbol: "Pc", cat: "2xx", desc: "The server is delivering only part of the resource due to a Range header.", rfc: "RFC 9110" },
+    { code: 207, name: "Multi-Status", symbol: "Ms", cat: "2xx", desc: "A WebDAV response conveying information about multiple resources.", rfc: "RFC 4918" },
+    { code: 208, name: "Already Reported", symbol: "Ar", cat: "2xx", desc: "Used inside a WebDAV response to avoid enumerating internal members repeatedly.", rfc: "RFC 5842" },
+    { code: 226, name: "IM Used", symbol: "Im", cat: "2xx", desc: "The server has fulfilled a GET request with instance-manipulations applied.", rfc: "RFC 3229" },
+    { code: 300, name: "Multiple Choices", symbol: "Mc", cat: "3xx", desc: "The request has more than one possible response.", rfc: "RFC 9110" },
+    { code: 301, name: "Moved Permanently", symbol: "Mp", cat: "3xx", desc: "The URL of the requested resource has been changed permanently.", rfc: "RFC 9110" },
+    { code: 302, name: "Found", symbol: "Fd", cat: "3xx", desc: "The URI of the requested resource has been changed temporarily.", rfc: "RFC 9110" },
+    { code: 303, name: "See Other", symbol: "So", cat: "3xx", desc: "The server is redirecting to a different resource using GET.", rfc: "RFC 9110" },
+    { code: 304, name: "Not Modified", symbol: "Nm", cat: "3xx", desc: "The resource has not been modified since the version specified.", rfc: "RFC 9110" },
+    { code: 305, name: "Use Proxy", symbol: "Up", cat: "3xx", desc: "The requested resource must be accessed through a proxy. Deprecated.", rfc: "Deprecated" },
+    { code: 307, name: "Temporary Redirect", symbol: "Tr", cat: "3xx", desc: "The server is redirecting to another URI with same method.", rfc: "RFC 9110" },
+    { code: 308, name: "Permanent Redirect", symbol: "Pr", cat: "3xx", desc: "The resource has permanently moved, same method required.", rfc: "RFC 9110" },
+    { code: 400, name: "Bad Request", symbol: "Br", cat: "4xx", desc: "The server cannot process the request due to a client error.", rfc: "RFC 9110" },
+    { code: 401, name: "Unauthorized", symbol: "Un", cat: "4xx", desc: "The request requires authentication.", rfc: "RFC 9110" },
+    { code: 402, name: "Payment Required", symbol: "Py", cat: "4xx", desc: "Reserved for future use. Some APIs use it for billing limits.", rfc: "RFC 9110" },
+    { code: 403, name: "Forbidden", symbol: "Fb", cat: "4xx", desc: "The client does not have access rights.", rfc: "RFC 9110" },
+    { code: 404, name: "Not Found", symbol: "Nf", cat: "4xx", desc: "The server cannot find the requested resource.", rfc: "RFC 9110" },
+    { code: 405, name: "Method Not Allowed", symbol: "Ma", cat: "4xx", desc: "The request method is not supported for that resource.", rfc: "RFC 9110" },
+    { code: 406, name: "Not Acceptable", symbol: "Nx", cat: "4xx", desc: "The server can't produce a matching response.", rfc: "RFC 9110" },
+    { code: 407, name: "Proxy Auth Required", symbol: "Pa", cat: "4xx", desc: "Authentication needs to be done by a proxy.", rfc: "RFC 9110" },
+    { code: 408, name: "Request Timeout", symbol: "Rt", cat: "4xx", desc: "The server would like to shut down this unused connection.", rfc: "RFC 9110" },
+    { code: 409, name: "Conflict", symbol: "Cf", cat: "4xx", desc: "The request conflicts with the current state of the server.", rfc: "RFC 9110" },
+    { code: 410, name: "Gone", symbol: "Gn", cat: "4xx", desc: "The content has been permanently deleted.", rfc: "RFC 9110" },
+    { code: 411, name: "Length Required", symbol: "Lr", cat: "4xx", desc: "Content-Length header is not defined.", rfc: "RFC 9110" },
+    { code: 412, name: "Precondition Failed", symbol: "Pf", cat: "4xx", desc: "Preconditions in request headers are not met.", rfc: "RFC 9110" },
+    { code: 413, name: "Content Too Large", symbol: "Tl", cat: "4xx", desc: "Request entity is larger than server limits.", rfc: "RFC 9110" },
+    { code: 414, name: "URI Too Long", symbol: "Ul", cat: "4xx", desc: "The URI is longer than the server will interpret.", rfc: "RFC 9110" },
+    { code: 415, name: "Unsupported Media", symbol: "Um", cat: "4xx", desc: "The media format is not supported.", rfc: "RFC 9110" },
+    { code: 416, name: "Range Not Satisfiable", symbol: "Rn", cat: "4xx", desc: "The range specified can't be fulfilled.", rfc: "RFC 9110" },
+    { code: 417, name: "Expectation Failed", symbol: "Ef", cat: "4xx", desc: "The Expect header expectation can't be met.", rfc: "RFC 9110" },
+    { code: 418, name: "I'm a Teapot", symbol: "Tp", cat: "4xx", desc: "An April Fools' joke from 1998 that became beloved.", rfc: "RFC 2324" },
+    { code: 421, name: "Misdirected", symbol: "Mr", cat: "4xx", desc: "The request was directed at a wrong server.", rfc: "RFC 9110" },
+    { code: 422, name: "Unprocessable", symbol: "Uc", cat: "4xx", desc: "Well-formed but semantically erroneous.", rfc: "RFC 9110" },
+    { code: 423, name: "Locked", symbol: "Lk", cat: "4xx", desc: "The resource is locked (WebDAV).", rfc: "RFC 4918" },
+    { code: 424, name: "Failed Dependency", symbol: "Dp", cat: "4xx", desc: "Failed due to failure of a previous request.", rfc: "RFC 4918" },
+    { code: 425, name: "Too Early", symbol: "Te", cat: "4xx", desc: "Server won't risk processing a replay.", rfc: "RFC 8470" },
+    { code: 426, name: "Upgrade Required", symbol: "Ur", cat: "4xx", desc: "Server refuses current protocol.", rfc: "RFC 9110" },
+    { code: 428, name: "Precondition Req'd", symbol: "Pq", cat: "4xx", desc: "The server requires conditional requests.", rfc: "RFC 6585" },
+    { code: 429, name: "Too Many Requests", symbol: "Tm", cat: "4xx", desc: "Rate limited.", rfc: "RFC 6585" },
+    { code: 431, name: "Headers Too Large", symbol: "Hl", cat: "4xx", desc: "Header fields are too large.", rfc: "RFC 6585" },
+    { code: 451, name: "Legal Reasons", symbol: "Lg", cat: "4xx", desc: "Unavailable for legal reasons.", rfc: "RFC 7725" },
+    { code: 500, name: "Internal Error", symbol: "Is", cat: "5xx", desc: "Unhandled server exception.", rfc: "RFC 9110" },
+    { code: 501, name: "Not Implemented", symbol: "Ni", cat: "5xx", desc: "The request method is not supported.", rfc: "RFC 9110" },
+    { code: 502, name: "Bad Gateway", symbol: "Bg", cat: "5xx", desc: "Invalid response from upstream server.", rfc: "RFC 9110" },
+    { code: 503, name: "Service Unavailable", symbol: "Su", cat: "5xx", desc: "Server not ready \u2014 maintenance or overloaded.", rfc: "RFC 9110" },
+    { code: 504, name: "Gateway Timeout", symbol: "Gt", cat: "5xx", desc: "Gateway didn't get a response in time.", rfc: "RFC 9110" },
+    { code: 505, name: "HTTP Ver. Unsupported", symbol: "Hv", cat: "5xx", desc: "HTTP version not supported.", rfc: "RFC 9110" },
+    { code: 506, name: "Variant Negotiates", symbol: "Vn", cat: "5xx", desc: "Internal configuration error.", rfc: "RFC 2295" },
+    { code: 507, name: "Insufficient Storage", symbol: "St", cat: "5xx", desc: "Server can't store the representation.", rfc: "RFC 4918" },
+    { code: 508, name: "Loop Detected", symbol: "Ld", cat: "5xx", desc: "Infinite loop detected (WebDAV).", rfc: "RFC 5842" },
+    { code: 510, name: "Not Extended", symbol: "Ne", cat: "5xx", desc: "Further extensions required.", rfc: "RFC 2774" },
+    { code: 511, name: "Network Auth Req'd", symbol: "Nr", cat: "5xx", desc: "Client needs to authenticate for network access.", rfc: "RFC 6585" },
+];
+
+const CAT_COLORS = { '1xx': '#58a6ff', '2xx': '#3fb950', '3xx': '#d29922', '4xx': '#ff7b72', '5xx': '#bc8cff' };
+const CAT_LABELS = { '1xx': 'Informational', '2xx': 'Success', '3xx': 'Redirection', '4xx': 'Client Error', '5xx': 'Server Error' };
+
+const CATEGORIES = ['1xx', '2xx', '3xx', '4xx', '5xx'];
+const codesByCat = {};
+CATEGORIES.forEach(function(cat) {
+  codesByCat[cat] = STATUS_CODES.filter(function(sc) { return sc.cat === cat; });
+});
+
+const CAT_GRADIENTS = {
+  '1xx': 'linear-gradient(135deg, #1a3a5c 0%, #0d1f33 30%, #1a4a6c 60%, #0d2844 100%)',
+  '2xx': 'linear-gradient(135deg, #1a3c2a 0%, #0d2217 30%, #1a4c2a 60%, #0d2d1a 100%)',
+  '3xx': 'linear-gradient(135deg, #3c2e0a 0%, #221a05 30%, #4c3a0a 60%, #2d2208 100%)',
+  '4xx': 'linear-gradient(135deg, #3c1a1a 0%, #220d0d 30%, #4c1a1a 60%, #2d1010 100%)',
+  '5xx': 'linear-gradient(135deg, #2a1a3c 0%, #180d22 30%, #3a1a4c 60%, #22102d 100%)'
+};
+
+// State
+var currentCatIndex = 0;
+var currentSlideIndex = 0;
+var autoTimer = null;
+var AUTO_DURATION = 6000;
+
+// Set emoji icons via textContent (safe DOM method)
+document.getElementById('icon-heart').textContent = '\u2764\uFE0F';
+document.getElementById('icon-send').textContent = '\uD83D\uDCE4';
+
+function buildFeed() {
+  var storiesRow = document.getElementById('stories-row');
+  CATEGORIES.forEach(function(cat, i) {
+    var el = document.createElement('div');
+    el.className = 'story-avatar';
+    el.style.setProperty('--ring-color', CAT_COLORS[cat]);
+
+    var ring = document.createElement('div');
+    ring.className = 'story-ring';
+    var ringInner = document.createElement('div');
+    ringInner.className = 'story-ring-inner';
+    ringInner.textContent = cat;
+    ring.appendChild(ringInner);
+
+    var label = document.createElement('div');
+    label.className = 'story-label';
+    label.textContent = CAT_LABELS[cat];
+
+    el.appendChild(ring);
+    el.appendChild(label);
+    el.addEventListener('click', function() { openStory(i, 0); });
+    storiesRow.appendChild(el);
+  });
+
+  var grid = document.getElementById('posts-grid');
+  STATUS_CODES.forEach(function(sc) {
+    var color = CAT_COLORS[sc.cat];
+    var tile = document.createElement('div');
+    tile.className = 'post-tile';
+
+    var bg = document.createElement('div');
+    bg.className = 'post-tile-bg';
+    bg.style.background = 'linear-gradient(135deg, ' + color + '33, ' + color + '11)';
+
+    var sym = document.createElement('span');
+    sym.className = 'post-tile-symbol';
+    sym.textContent = sc.symbol;
+
+    var code = document.createElement('span');
+    code.className = 'post-tile-code';
+    code.style.color = color;
+    code.textContent = sc.code;
+
+    var name = document.createElement('span');
+    name.className = 'post-tile-name';
+    name.textContent = sc.name;
+
+    bg.appendChild(sym);
+    bg.appendChild(code);
+    bg.appendChild(name);
+    tile.appendChild(bg);
+
+    tile.addEventListener('click', function() {
+      var catIdx = CATEGORIES.indexOf(sc.cat);
+      var slideIdx = codesByCat[sc.cat].indexOf(sc);
+      openStory(catIdx, slideIdx);
+    });
+    grid.appendChild(tile);
+  });
+}
+
+function openStory(catIndex, slideIndex) {
+  currentCatIndex = catIndex;
+  currentSlideIndex = slideIndex;
+
+  document.getElementById('feed-view').style.display = 'none';
+  document.getElementById('story-view').classList.add('active');
+
+  renderStory();
+  startAutoAdvance();
+}
+
+function closeStory() {
+  clearAutoAdvance();
+  document.getElementById('story-view').classList.remove('active');
+  document.getElementById('feed-view').style.display = 'block';
+}
+
+function renderStory() {
+  var cat = CATEGORIES[currentCatIndex];
+  var codes = codesByCat[cat];
+  var sc = codes[currentSlideIndex];
+  var color = CAT_COLORS[cat];
+
+  document.getElementById('story-bg').style.background = CAT_GRADIENTS[cat];
+
+  // Progress bar
+  var progressContainer = document.getElementById('progress-container');
+  while (progressContainer.firstChild) progressContainer.removeChild(progressContainer.firstChild);
+
+  codes.forEach(function(_, i) {
+    var seg = document.createElement('div');
+    seg.className = 'progress-segment';
+    if (i < currentSlideIndex) seg.classList.add('completed');
+    if (i === currentSlideIndex) seg.classList.add('active');
+    var fill = document.createElement('div');
+    fill.className = 'progress-fill';
+    seg.appendChild(fill);
+    progressContainer.appendChild(seg);
+  });
+
+  requestAnimationFrame(function() {
+    var activeSeg = progressContainer.querySelector('.progress-segment.active .progress-fill');
+    if (activeSeg) {
+      activeSeg.style.transition = 'width ' + AUTO_DURATION + 'ms linear';
+      activeSeg.style.width = '100%';
+    }
+  });
+
+  // Header
+  var avatar = document.getElementById('story-avatar');
+  avatar.style.setProperty('--cat-color', color);
+  avatar.textContent = cat;
+
+  document.getElementById('story-username').textContent = '@http_' + cat + '_' + CAT_LABELS[cat].toLowerCase().replace(' ', '_');
+  document.getElementById('story-time').textContent = (currentSlideIndex + 1) + ' of ' + codes.length;
+
+  // Content
+  var content = document.getElementById('story-content');
+  while (content.firstChild) content.removeChild(content.firstChild);
+
+  var symEl = document.createElement('div');
+  symEl.className = 'story-code-symbol';
+  symEl.textContent = sc.symbol;
+
+  var numEl = document.createElement('div');
+  numEl.className = 'story-code-number';
+  numEl.style.color = color;
+  numEl.textContent = sc.code;
+
+  var nameEl = document.createElement('div');
+  nameEl.className = 'story-code-name';
+  nameEl.textContent = sc.name;
+
+  var descEl = document.createElement('div');
+  descEl.className = 'story-code-desc';
+  descEl.textContent = sc.desc;
+
+  var rfcEl = document.createElement('div');
+  rfcEl.className = 'story-code-rfc';
+  rfcEl.textContent = sc.rfc;
+
+  content.appendChild(symEl);
+  content.appendChild(numEl);
+  content.appendChild(nameEl);
+  content.appendChild(descEl);
+  content.appendChild(rfcEl);
+
+  content.classList.remove('slide-transition');
+  void content.offsetWidth;
+  content.classList.add('slide-transition');
+
+  // Category dots
+  var catNav = document.getElementById('cat-nav');
+  while (catNav.firstChild) catNav.removeChild(catNav.firstChild);
+
+  CATEGORIES.forEach(function(c, i) {
+    var dot = document.createElement('div');
+    dot.className = 'story-cat-dot' + (i === currentCatIndex ? ' active' : '');
+    dot.style.background = CAT_COLORS[c];
+    dot.addEventListener('click', function(e) {
+      e.stopPropagation();
+      currentCatIndex = i;
+      currentSlideIndex = 0;
+      renderStory();
+      restartAutoAdvance();
+    });
+    catNav.appendChild(dot);
+  });
+
+  // Seen by
+  var seenCount = Math.floor(sc.code * 7.3 + 42);
+  document.getElementById('story-seen').textContent = 'Seen by ' + seenCount.toLocaleString() + ' developers';
+}
+
+function nextSlide() {
+  var cat = CATEGORIES[currentCatIndex];
+  var codes = codesByCat[cat];
+
+  if (currentSlideIndex < codes.length - 1) {
+    currentSlideIndex++;
+    renderStory();
+    restartAutoAdvance();
+  } else if (currentCatIndex < CATEGORIES.length - 1) {
+    currentCatIndex++;
+    currentSlideIndex = 0;
+    renderStory();
+    restartAutoAdvance();
+  } else {
+    closeStory();
+  }
+}
+
+function prevSlide() {
+  if (currentSlideIndex > 0) {
+    currentSlideIndex--;
+    renderStory();
+    restartAutoAdvance();
+  } else if (currentCatIndex > 0) {
+    currentCatIndex--;
+    currentSlideIndex = codesByCat[CATEGORIES[currentCatIndex]].length - 1;
+    renderStory();
+    restartAutoAdvance();
+  }
+}
+
+function startAutoAdvance() {
+  clearAutoAdvance();
+  autoTimer = setTimeout(function() { nextSlide(); }, AUTO_DURATION);
+}
+
+function clearAutoAdvance() {
+  if (autoTimer) {
+    clearTimeout(autoTimer);
+    autoTimer = null;
+  }
+}
+
+function restartAutoAdvance() {
+  clearAutoAdvance();
+  startAutoAdvance();
+}
+
+// Event listeners
+document.getElementById('tap-right').addEventListener('click', nextSlide);
+document.getElementById('tap-left').addEventListener('click', prevSlide);
+document.getElementById('story-close').addEventListener('click', closeStory);
+
+// Touch/swipe support
+var touchStartX = 0;
+var touchStartY = 0;
+document.getElementById('story-view').addEventListener('touchstart', function(e) {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.getElementById('story-view').addEventListener('touchend', function(e) {
+  var dx = e.changedTouches[0].clientX - touchStartX;
+  var dy = e.changedTouches[0].clientY - touchStartY;
+
+  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
+    if (dx < 0 && currentCatIndex < CATEGORIES.length - 1) {
+      currentCatIndex++;
+      currentSlideIndex = 0;
+      renderStory();
+      restartAutoAdvance();
+    } else if (dx > 0 && currentCatIndex > 0) {
+      currentCatIndex--;
+      currentSlideIndex = 0;
+      renderStory();
+      restartAutoAdvance();
+    }
+  } else if (dy > 100) {
+    closeStory();
+  }
+}, { passive: true });
+
+// Keyboard support
+document.addEventListener('keydown', function(e) {
+  var storyView = document.getElementById('story-view');
+  if (!storyView.classList.contains('active')) return;
+
+  switch (e.key) {
+    case 'ArrowRight': nextSlide(); break;
+    case 'ArrowLeft': prevSlide(); break;
+    case 'Escape': closeStory(); break;
+    case 'ArrowUp':
+      if (currentCatIndex > 0) {
+        currentCatIndex--;
+        currentSlideIndex = 0;
+        renderStory();
+        restartAutoAdvance();
+      }
+      break;
+    case 'ArrowDown':
+      if (currentCatIndex < CATEGORIES.length - 1) {
+        currentCatIndex++;
+        currentSlideIndex = 0;
+        renderStory();
+        restartAutoAdvance();
+      }
+      break;
+  }
+});
+
+buildFeed();
+
+// Auto-open story for screenshot if URL has #story param
+if (window.location.hash === '#story') {
+  setTimeout(function() { openStory(3, 4); }, 200); // open 4xx category, 404 Not Found
+}
+</script>
+</body>
+</html>

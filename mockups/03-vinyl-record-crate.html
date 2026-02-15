@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTTP Records - Status Code Collection</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Righteous&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-dark: #1a1108;
+    --bg-wood: #2a1c0e;
+    --bg-wood-light: #3d2b18;
+    --text-primary: #f0e6d3;
+    --text-secondary: #b8a68e;
+    --text-muted: #7a6a55;
+    --accent-gold: #d4a853;
+    --accent-warm: #c4783e;
+    --cat-1xx: #4a7ab5;
+    --cat-1xx-dark: #2a4a75;
+    --cat-2xx: #3d9e4a;
+    --cat-2xx-dark: #1d6e2a;
+    --cat-3xx: #c49520;
+    --cat-3xx-dark: #8a6510;
+    --cat-4xx: #c44040;
+    --cat-4xx-dark: #8a2020;
+    --cat-5xx: #8a5cc0;
+    --cat-5xx-dark: #5a3c80;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 40px,
+        rgba(0,0,0,0.03) 40px,
+        rgba(0,0,0,0.03) 42px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 80px,
+        rgba(255,200,100,0.02) 80px,
+        rgba(255,200,100,0.02) 82px
+      ),
+      linear-gradient(180deg, #1a1108 0%, #2a1c0e 40%, #1e1409 100%);
+    z-index: -1;
+  }
+
+  .header {
+    padding: 28px 48px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(212,168,83,0.15);
+    background: linear-gradient(180deg, rgba(42,28,14,0.95) 0%, transparent 100%);
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .logo-icon {
+    width: 52px;
+    height: 52px;
+  }
+
+  .logo-icon .vinyl {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, #111 0%, #333 25%, #111 50%, #333 75%, #111 100%);
+    border: 2px solid var(--accent-gold);
+    position: relative;
+    animation: spin 4s linear infinite;
+  }
+
+  .logo-icon .vinyl::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent-gold);
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .header-title {
+    font-family: 'Righteous', cursive;
+    font-size: 32px;
+    color: var(--accent-gold);
+    text-shadow: 0 2px 8px rgba(212,168,83,0.3);
+    letter-spacing: 1px;
+  }
+
+  .header-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .search-box {
+    position: relative;
+  }
+
+  .search-box input {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(212,168,83,0.2);
+    border-radius: 24px;
+    padding: 10px 18px 10px 40px;
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    width: 240px;
+    outline: none;
+    transition: all 0.3s;
+  }
+
+  .search-box input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .search-box input:focus {
+    border-color: var(--accent-gold);
+    background: rgba(255,255,255,0.1);
+    box-shadow: 0 0 20px rgba(212,168,83,0.1);
+  }
+
+  .search-box .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .genre-tabs {
+    display: flex;
+    gap: 6px;
+  }
+
+  .genre-tab {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .genre-tab:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.2);
+  }
+
+  .genre-tab.active {
+    background: rgba(212,168,83,0.15);
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+  }
+
+  .genre-tab .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  .main-content {
+    display: flex;
+    height: calc(100vh - 100px);
+    overflow: hidden;
+  }
+
+  .crate-section {
+    flex: 1;
+    padding: 32px 24px 32px 48px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .crate-label {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 14px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .crate-count {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+
+  .crate-container {
+    flex: 1;
+    perspective: 1200px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .crate-inner {
+    position: relative;
+    width: 100%;
+    height: 380px;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .crate-box {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 360px;
+    background: linear-gradient(180deg, rgba(61,43,24,0.6) 0%, rgba(42,28,14,0.9) 100%);
+    border: 1px solid rgba(212,168,83,0.12);
+    border-radius: 4px 4px 8px 8px;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.05),
+      0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  .crate-box::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.3));
+    border-radius: 0 0 8px 8px;
+  }
+
+  .records-row {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    height: 320px;
+    display: flex;
+    align-items: flex-end;
+    gap: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 10px;
+    scroll-behavior: smooth;
+    z-index: 2;
+  }
+
+  .records-row::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .records-row::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.3);
+    border-radius: 3px;
+  }
+
+  .records-row::-webkit-scrollbar-thumb {
+    background: rgba(212,168,83,0.3);
+    border-radius: 3px;
+  }
+
+  .record-sleeve {
+    flex-shrink: 0;
+    width: 14px;
+    height: 290px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    transform-origin: bottom center;
+    transform: rotateY(-2deg);
+    z-index: 1;
+  }
+
+  .record-sleeve:hover {
+    width: 24px;
+    transform: rotateY(0deg) translateY(-8px);
+    z-index: 5;
+  }
+
+  .record-sleeve.selected {
+    width: 28px;
+    transform: rotateY(0deg) translateY(-30px);
+    z-index: 10;
+  }
+
+  .sleeve-spine {
+    width: 100%;
+    height: 100%;
+    border-radius: 2px 2px 1px 1px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 8px 2px;
+    box-shadow:
+      inset -1px 0 0 rgba(255,255,255,0.1),
+      inset 1px 0 0 rgba(0,0,0,0.2),
+      2px 0 4px rgba(0,0,0,0.3);
+    overflow: hidden;
+  }
+
+  .sleeve-spine::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(255,255,255,0.08) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.15) 100%);
+    pointer-events: none;
+  }
+
+  .spine-code {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-family: 'Righteous', cursive;
+    font-size: 11px;
+    color: rgba(255,255,255,0.85);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  .spine-line {
+    width: 2px;
+    height: 20px;
+    background: rgba(255,255,255,0.2);
+    margin: 6px 0;
+    border-radius: 1px;
+  }
+
+  .spine-name {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-size: 7px;
+    color: rgba(255,255,255,0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    max-height: 140px;
+  }
+
+  .record-sleeve[data-cat="1xx"] .sleeve-spine {
+    background: linear-gradient(180deg, var(--cat-1xx) 0%, var(--cat-1xx-dark) 100%);
+  }
+  .record-sleeve[data-cat="2xx"] .sleeve-spine {
+    background: linear-gradient(180deg, var(--cat-2xx) 0%, var(--cat-2xx-dark) 100%);
+  }
+  .record-sleeve[data-cat="3xx"] .sleeve-spine {
+    background: linear-gradient(180deg, var(--cat-3xx) 0%, var(--cat-3xx-dark) 100%);
+  }
+  .record-sleeve[data-cat="4xx"] .sleeve-spine {
+    background: linear-gradient(180deg, var(--cat-4xx) 0%, var(--cat-4xx-dark) 100%);
+  }
+  .record-sleeve[data-cat="5xx"] .sleeve-spine {
+    background: linear-gradient(180deg, var(--cat-5xx) 0%, var(--cat-5xx-dark) 100%);
+  }
+
+  .now-playing-section {
+    width: 480px;
+    flex-shrink: 0;
+    padding: 32px 48px 32px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto;
+  }
+
+  .now-playing-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-weight: 600;
+  }
+
+  .np-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e74c3c;
+    animation: pulse-dot 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .album-cover-container {
+    position: relative;
+    width: 380px;
+    height: 380px;
+    margin: 0 auto;
+    perspective: 800px;
+  }
+
+  .album-cover {
+    width: 100%;
+    height: 100%;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      0 20px 60px rgba(0,0,0,0.6),
+      0 0 0 1px rgba(255,255,255,0.05);
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .album-cover[data-cat="1xx"] {
+    background: linear-gradient(135deg, #1a2a4a 0%, #2a4a75 40%, #4a7ab5 100%);
+  }
+  .album-cover[data-cat="2xx"] {
+    background: linear-gradient(135deg, #0d2e14 0%, #1d6e2a 40%, #3d9e4a 100%);
+  }
+  .album-cover[data-cat="3xx"] {
+    background: linear-gradient(135deg, #3a2800 0%, #8a6510 40%, #c49520 100%);
+  }
+  .album-cover[data-cat="4xx"] {
+    background: linear-gradient(135deg, #3a0a0a 0%, #8a2020 40%, #c44040 100%);
+  }
+  .album-cover[data-cat="5xx"] {
+    background: linear-gradient(135deg, #1a0a2a 0%, #5a3c80 40%, #8a5cc0 100%);
+  }
+
+  .album-cover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.15;
+    pointer-events: none;
+  }
+
+  .album-cover[data-cat="1xx"]::before {
+    background:
+      repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255,255,255,0.1) 20px, rgba(255,255,255,0.1) 21px),
+      repeating-linear-gradient(-45deg, transparent, transparent 40px, rgba(255,255,255,0.05) 40px, rgba(255,255,255,0.05) 41px);
+    opacity: 0.3;
+  }
+
+  .album-cover[data-cat="2xx"]::before {
+    background: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.15) 0%, transparent 30%),
+                radial-gradient(circle at 80% 70%, rgba(255,255,255,0.1) 0%, transparent 25%),
+                radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05) 0%, transparent 50%);
+    opacity: 0.5;
+  }
+
+  .album-cover[data-cat="3xx"]::before {
+    background:
+      repeating-conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(255,255,255,0.03) 10deg, transparent 20deg),
+      radial-gradient(circle at 30% 40%, rgba(255,200,0,0.1) 0%, transparent 50%);
+    opacity: 0.6;
+  }
+
+  .album-cover[data-cat="4xx"]::before {
+    background:
+      repeating-linear-gradient(135deg, transparent, transparent 8px, rgba(255,255,255,0.04) 8px, rgba(255,255,255,0.04) 16px),
+      repeating-linear-gradient(45deg, transparent, transparent 12px, rgba(0,0,0,0.1) 12px, rgba(0,0,0,0.1) 24px);
+    opacity: 0.5;
+  }
+
+  .album-cover[data-cat="5xx"]::before {
+    background:
+      linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.05) 40%, rgba(255,255,255,0.05) 41%, transparent 41%),
+      linear-gradient(-135deg, transparent 60%, rgba(255,255,255,0.03) 60%, rgba(255,255,255,0.03) 61%, transparent 61%),
+      radial-gradient(ellipse at 50% 0%, rgba(200,100,255,0.1) 0%, transparent 60%);
+    opacity: 0.6;
+  }
+
+  .cover-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 32px;
+  }
+
+  .cover-genre-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.6);
+    font-weight: 600;
+    background: rgba(0,0,0,0.3);
+    padding: 6px 12px;
+    border-radius: 3px;
+    align-self: flex-start;
+  }
+
+  .cover-center {
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cover-code {
+    font-family: 'Righteous', cursive;
+    font-size: 96px;
+    color: rgba(255,255,255,0.95);
+    text-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    line-height: 1;
+  }
+
+  .cover-symbol {
+    font-family: 'Righteous', cursive;
+    font-size: 24px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 4px;
+    letter-spacing: 6px;
+  }
+
+  .cover-title {
+    font-family: 'Righteous', cursive;
+    font-size: 22px;
+    color: rgba(255,255,255,0.9);
+    margin-top: 16px;
+    letter-spacing: 1px;
+  }
+
+  .cover-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .cover-rfc {
+    font-size: 10px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 1px;
+  }
+
+  .cover-http-label {
+    font-family: 'Righteous', cursive;
+    font-size: 12px;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 4px;
+  }
+
+  .vinyl-peek {
+    position: absolute;
+    top: 50%;
+    right: -30px;
+    transform: translateY(-50%);
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, #0a0a0a 0%, #222 10%, #0a0a0a 20%, #222 30%, #0a0a0a 40%, #222 50%, #0a0a0a 60%, #222 70%, #0a0a0a 80%, #222 90%, #0a0a0a 100%);
+    box-shadow: -4px 0 20px rgba(0,0,0,0.5);
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    z-index: -1;
+  }
+
+  .vinyl-peek::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.1);
+  }
+
+  .vinyl-peek::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #333;
+    border: 2px solid rgba(255,255,255,0.15);
+  }
+
+  .album-cover-container:hover .vinyl-peek {
+    right: -60px;
+  }
+
+  .track-listing {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 20px 24px;
+  }
+
+  .track-listing-header {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .track-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .track-item:last-child {
+    border-bottom: none;
+  }
+
+  .track-number {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+    min-width: 20px;
+  }
+
+  .track-name {
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.5;
+  }
+
+  .category-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .category-badge[data-cat="1xx"] {
+    background: rgba(74,122,181,0.15);
+    color: var(--cat-1xx);
+    border: 1px solid rgba(74,122,181,0.3);
+  }
+  .category-badge[data-cat="2xx"] {
+    background: rgba(61,158,74,0.15);
+    color: var(--cat-2xx);
+    border: 1px solid rgba(61,158,74,0.3);
+  }
+  .category-badge[data-cat="3xx"] {
+    background: rgba(196,149,32,0.15);
+    color: var(--cat-3xx);
+    border: 1px solid rgba(196,149,32,0.3);
+  }
+  .category-badge[data-cat="4xx"] {
+    background: rgba(196,64,64,0.15);
+    color: var(--cat-4xx);
+    border: 1px solid rgba(196,64,64,0.3);
+  }
+  .category-badge[data-cat="5xx"] {
+    background: rgba(138,92,192,0.15);
+    color: var(--cat-5xx);
+    border: 1px solid rgba(138,92,192,0.3);
+  }
+
+  .empty-state {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+    font-size: 16px;
+    gap: 8px;
+  }
+
+  .empty-state.visible {
+    display: flex;
+  }
+
+  .empty-state .empty-icon {
+    font-size: 48px;
+    opacity: 0.3;
+    margin-bottom: 8px;
+  }
+
+  .no-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    color: var(--text-muted);
+    gap: 16px;
+    padding: 40px;
+  }
+
+  .no-selection .big-vinyl {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, #111 0%, #222 25%, #111 50%, #222 75%, #111 100%);
+    border: 2px solid rgba(212,168,83,0.2);
+    position: relative;
+    opacity: 0.4;
+    animation: spin 8s linear infinite;
+  }
+
+  .no-selection .big-vinyl::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(212,168,83,0.3);
+  }
+
+  .no-selection p {
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 280px;
+  }
+
+  .keyboard-hint {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: rgba(0,0,0,0.6);
+    padding: 8px 20px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.06);
+    z-index: 100;
+  }
+
+  .key-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 22px;
+    padding: 0 6px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-right: 4px;
+  }
+
+  .scroll-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(212,168,83,0.2);
+    color: var(--accent-gold);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    transition: all 0.2s;
+  }
+
+  .scroll-arrow:hover {
+    background: rgba(0,0,0,0.8);
+    border-color: var(--accent-gold);
+  }
+
+  .scroll-arrow.left { left: 4px; }
+  .scroll-arrow.right { right: 4px; }
+
+  .eq-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 16px;
+  }
+
+  .eq-bar {
+    width: 3px;
+    background: var(--accent-gold);
+    border-radius: 1px;
+    animation: eq-bounce 0.8s ease-in-out infinite;
+  }
+
+  .eq-bar:nth-child(1) { height: 6px; animation-delay: 0s; }
+  .eq-bar:nth-child(2) { height: 12px; animation-delay: 0.15s; }
+  .eq-bar:nth-child(3) { height: 8px; animation-delay: 0.3s; }
+  .eq-bar:nth-child(4) { height: 14px; animation-delay: 0.45s; }
+  .eq-bar:nth-child(5) { height: 10px; animation-delay: 0.6s; }
+
+  @keyframes eq-bounce {
+    0%, 100% { transform: scaleY(0.5); }
+    50% { transform: scaleY(1); }
+  }
+
+  .details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .detail-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 6px;
+    padding: 12px 16px;
+  }
+
+  .detail-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .detail-value {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo-icon">
+      <div class="vinyl"></div>
+    </div>
+    <div>
+      <div class="header-title">HTTP Records</div>
+      <div class="header-subtitle">The Definitive Status Code Collection</div>
+    </div>
+  </div>
+  <div class="filter-bar">
+    <div class="search-box">
+      <span class="search-icon">&#9906;</span>
+      <input type="text" id="searchInput" placeholder="Search codes, names...">
+    </div>
+    <div class="genre-tabs" id="genreTabs">
+      <button class="genre-tab active" data-filter="all">All Genres</button>
+      <button class="genre-tab" data-filter="1xx"><span class="dot" style="background:var(--cat-1xx)"></span>Jazz</button>
+      <button class="genre-tab" data-filter="2xx"><span class="dot" style="background:var(--cat-2xx)"></span>Pop</button>
+      <button class="genre-tab" data-filter="3xx"><span class="dot" style="background:var(--cat-3xx)"></span>Psych</button>
+      <button class="genre-tab" data-filter="4xx"><span class="dot" style="background:var(--cat-4xx)"></span>Punk</button>
+      <button class="genre-tab" data-filter="5xx"><span class="dot" style="background:var(--cat-5xx)"></span>Metal</button>
+    </div>
+  </div>
+</header>
+
+<div class="main-content">
+  <div class="crate-section">
+    <div class="crate-label">Record Crate</div>
+    <div class="crate-count" id="crateCount">61 records</div>
+    <div class="crate-container">
+      <button class="scroll-arrow left" id="scrollLeft">&#9664;</button>
+      <div class="crate-inner">
+        <div class="crate-box"></div>
+        <div class="records-row" id="recordsRow"></div>
+      </div>
+      <button class="scroll-arrow right" id="scrollRight">&#9654;</button>
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">&#9835;</div>
+        <div>No records match your search</div>
+        <div style="font-size:13px;opacity:0.6">Try a different genre or search term</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="now-playing-section" id="nowPlayingSection">
+    <div class="now-playing-label">
+      <div class="eq-bars">
+        <div class="eq-bar"></div>
+        <div class="eq-bar"></div>
+        <div class="eq-bar"></div>
+        <div class="eq-bar"></div>
+        <div class="eq-bar"></div>
+      </div>
+      Now Playing
+    </div>
+
+    <div class="no-selection" id="noSelection">
+      <div class="big-vinyl"></div>
+      <p>Select a record from the crate to view its album details</p>
+    </div>
+
+    <div id="albumDetails" style="display:none;">
+      <div class="album-cover-container">
+        <div class="album-cover" id="albumCover" data-cat="2xx">
+          <div class="cover-content">
+            <div class="cover-genre-label" id="coverGenre">Success / Pop</div>
+            <div class="cover-center">
+              <div class="cover-code" id="coverCode">200</div>
+              <div class="cover-symbol" id="coverSymbol">Ok</div>
+              <div class="cover-title" id="coverTitle">OK</div>
+            </div>
+            <div class="cover-bottom">
+              <div class="cover-rfc" id="coverRfc">RFC 9110</div>
+              <div class="cover-http-label">HTTP RECORDS</div>
+            </div>
+          </div>
+        </div>
+        <div class="vinyl-peek"></div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-top:4px;">
+        <span class="category-badge" id="catBadge" data-cat="2xx">
+          <span id="genreIcon">&#9835;</span>
+          <span id="catLabel">Success</span>
+        </span>
+      </div>
+
+      <div class="track-listing">
+        <div class="track-listing-header">Description</div>
+        <div class="track-item">
+          <span class="track-number">01</span>
+          <span class="track-name" id="trackDesc">The request has succeeded.</span>
+        </div>
+      </div>
+
+      <div class="details-grid">
+        <div class="detail-item">
+          <div class="detail-label">Status Code</div>
+          <div class="detail-value" id="detailCode">200</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Symbol</div>
+          <div class="detail-value" id="detailSymbol">Ok</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Category</div>
+          <div class="detail-value" id="detailCat">2xx</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Specification</div>
+          <div class="detail-value" id="detailRfc">RFC 9110</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="keyboard-hint">
+  <span><span class="key-badge">&#8592;</span><span class="key-badge">&#8594;</span> Browse</span>
+  <span><span class="key-badge">Enter</span> Select</span>
+  <span><span class="key-badge">Esc</span> Deselect</span>
+</div>
+
+<script>
+const STATUS_CODES = [
+    { code: 100, name: "Continue", symbol: "Cn", cat: "1xx", desc: "The server has received the request headers and the client should proceed to send the request body.", rfc: "RFC 9110" },
+    { code: 101, name: "Switching Protocols", symbol: "Sw", cat: "1xx", desc: "The server is switching protocols as requested by the client via the Upgrade header.", rfc: "RFC 9110" },
+    { code: 103, name: "Early Hints", symbol: "Eh", cat: "1xx", desc: "Used to return some response headers before the final HTTP message.", rfc: "RFC 8297" },
+    { code: 200, name: "OK", symbol: "Ok", cat: "2xx", desc: "The request has succeeded.", rfc: "RFC 9110" },
+    { code: 201, name: "Created", symbol: "Cr", cat: "2xx", desc: "The request has been fulfilled and a new resource has been created.", rfc: "RFC 9110" },
+    { code: 202, name: "Accepted", symbol: "Ac", cat: "2xx", desc: "The request has been accepted for processing, but processing has not been completed.", rfc: "RFC 9110" },
+    { code: 203, name: "Non-Authoritative", symbol: "Na", cat: "2xx", desc: "The returned metadata is not exactly the same as available from the origin server.", rfc: "RFC 9110" },
+    { code: 204, name: "No Content", symbol: "Nc", cat: "2xx", desc: "The server has successfully fulfilled the request and there is no additional content.", rfc: "RFC 9110" },
+    { code: 205, name: "Reset Content", symbol: "Rc", cat: "2xx", desc: "The server has fulfilled the request and the user agent should reset the document view.", rfc: "RFC 9110" },
+    { code: 206, name: "Partial Content", symbol: "Pc", cat: "2xx", desc: "The server is delivering only part of the resource due to a Range header.", rfc: "RFC 9110" },
+    { code: 207, name: "Multi-Status", symbol: "Ms", cat: "2xx", desc: "A WebDAV response conveying information about multiple resources.", rfc: "RFC 4918" },
+    { code: 208, name: "Already Reported", symbol: "Ar", cat: "2xx", desc: "Used inside a WebDAV response to avoid enumerating internal members repeatedly.", rfc: "RFC 5842" },
+    { code: 226, name: "IM Used", symbol: "Im", cat: "2xx", desc: "The server has fulfilled a GET request with instance-manipulations applied.", rfc: "RFC 3229" },
+    { code: 300, name: "Multiple Choices", symbol: "Mc", cat: "3xx", desc: "The request has more than one possible response.", rfc: "RFC 9110" },
+    { code: 301, name: "Moved Permanently", symbol: "Mp", cat: "3xx", desc: "The URL of the requested resource has been changed permanently.", rfc: "RFC 9110" },
+    { code: 302, name: "Found", symbol: "Fd", cat: "3xx", desc: "The URI of the requested resource has been changed temporarily.", rfc: "RFC 9110" },
+    { code: 303, name: "See Other", symbol: "So", cat: "3xx", desc: "The server is redirecting to a different resource using GET.", rfc: "RFC 9110" },
+    { code: 304, name: "Not Modified", symbol: "Nm", cat: "3xx", desc: "The resource has not been modified since the version specified.", rfc: "RFC 9110" },
+    { code: 305, name: "Use Proxy", symbol: "Up", cat: "3xx", desc: "The requested resource must be accessed through a proxy. Deprecated.", rfc: "Deprecated" },
+    { code: 307, name: "Temporary Redirect", symbol: "Tr", cat: "3xx", desc: "The server is redirecting to another URI with same method.", rfc: "RFC 9110" },
+    { code: 308, name: "Permanent Redirect", symbol: "Pr", cat: "3xx", desc: "The resource has permanently moved, same method required.", rfc: "RFC 9110" },
+    { code: 400, name: "Bad Request", symbol: "Br", cat: "4xx", desc: "The server cannot process the request due to a client error.", rfc: "RFC 9110" },
+    { code: 401, name: "Unauthorized", symbol: "Un", cat: "4xx", desc: "The request requires authentication.", rfc: "RFC 9110" },
+    { code: 402, name: "Payment Required", symbol: "Py", cat: "4xx", desc: "Reserved for future use. Some APIs use it for billing limits.", rfc: "RFC 9110" },
+    { code: 403, name: "Forbidden", symbol: "Fb", cat: "4xx", desc: "The client does not have access rights.", rfc: "RFC 9110" },
+    { code: 404, name: "Not Found", symbol: "Nf", cat: "4xx", desc: "The server cannot find the requested resource.", rfc: "RFC 9110" },
+    { code: 405, name: "Method Not Allowed", symbol: "Ma", cat: "4xx", desc: "The request method is not supported for that resource.", rfc: "RFC 9110" },
+    { code: 406, name: "Not Acceptable", symbol: "Nx", cat: "4xx", desc: "The server can't produce a matching response.", rfc: "RFC 9110" },
+    { code: 407, name: "Proxy Auth Required", symbol: "Pa", cat: "4xx", desc: "Authentication needs to be done by a proxy.", rfc: "RFC 9110" },
+    { code: 408, name: "Request Timeout", symbol: "Rt", cat: "4xx", desc: "The server would like to shut down this unused connection.", rfc: "RFC 9110" },
+    { code: 409, name: "Conflict", symbol: "Cf", cat: "4xx", desc: "The request conflicts with the current state of the server.", rfc: "RFC 9110" },
+    { code: 410, name: "Gone", symbol: "Gn", cat: "4xx", desc: "The content has been permanently deleted.", rfc: "RFC 9110" },
+    { code: 411, name: "Length Required", symbol: "Lr", cat: "4xx", desc: "Content-Length header is not defined.", rfc: "RFC 9110" },
+    { code: 412, name: "Precondition Failed", symbol: "Pf", cat: "4xx", desc: "Preconditions in request headers are not met.", rfc: "RFC 9110" },
+    { code: 413, name: "Content Too Large", symbol: "Tl", cat: "4xx", desc: "Request entity is larger than server limits.", rfc: "RFC 9110" },
+    { code: 414, name: "URI Too Long", symbol: "Ul", cat: "4xx", desc: "The URI is longer than the server will interpret.", rfc: "RFC 9110" },
+    { code: 415, name: "Unsupported Media", symbol: "Um", cat: "4xx", desc: "The media format is not supported.", rfc: "RFC 9110" },
+    { code: 416, name: "Range Not Satisfiable", symbol: "Rn", cat: "4xx", desc: "The range specified can't be fulfilled.", rfc: "RFC 9110" },
+    { code: 417, name: "Expectation Failed", symbol: "Ef", cat: "4xx", desc: "The Expect header expectation can't be met.", rfc: "RFC 9110" },
+    { code: 418, name: "I'm a Teapot", symbol: "Tp", cat: "4xx", desc: "An April Fools' joke from 1998 that became beloved.", rfc: "RFC 2324" },
+    { code: 421, name: "Misdirected", symbol: "Mr", cat: "4xx", desc: "The request was directed at a wrong server.", rfc: "RFC 9110" },
+    { code: 422, name: "Unprocessable", symbol: "Uc", cat: "4xx", desc: "Well-formed but semantically erroneous.", rfc: "RFC 9110" },
+    { code: 423, name: "Locked", symbol: "Lk", cat: "4xx", desc: "The resource is locked (WebDAV).", rfc: "RFC 4918" },
+    { code: 424, name: "Failed Dependency", symbol: "Dp", cat: "4xx", desc: "Failed due to failure of a previous request.", rfc: "RFC 4918" },
+    { code: 425, name: "Too Early", symbol: "Te", cat: "4xx", desc: "Server won't risk processing a replay.", rfc: "RFC 8470" },
+    { code: 426, name: "Upgrade Required", symbol: "Ur", cat: "4xx", desc: "Server refuses current protocol.", rfc: "RFC 9110" },
+    { code: 428, name: "Precondition Req'd", symbol: "Pq", cat: "4xx", desc: "The server requires conditional requests.", rfc: "RFC 6585" },
+    { code: 429, name: "Too Many Requests", symbol: "Tm", cat: "4xx", desc: "Rate limited.", rfc: "RFC 6585" },
+    { code: 431, name: "Headers Too Large", symbol: "Hl", cat: "4xx", desc: "Header fields are too large.", rfc: "RFC 6585" },
+    { code: 451, name: "Legal Reasons", symbol: "Lg", cat: "4xx", desc: "Unavailable for legal reasons.", rfc: "RFC 7725" },
+    { code: 500, name: "Internal Error", symbol: "Is", cat: "5xx", desc: "Unhandled server exception.", rfc: "RFC 9110" },
+    { code: 501, name: "Not Implemented", symbol: "Ni", cat: "5xx", desc: "The request method is not supported.", rfc: "RFC 9110" },
+    { code: 502, name: "Bad Gateway", symbol: "Bg", cat: "5xx", desc: "Invalid response from upstream server.", rfc: "RFC 9110" },
+    { code: 503, name: "Service Unavailable", symbol: "Su", cat: "5xx", desc: "Server not ready - maintenance or overloaded.", rfc: "RFC 9110" },
+    { code: 504, name: "Gateway Timeout", symbol: "Gt", cat: "5xx", desc: "Gateway didn't get a response in time.", rfc: "RFC 9110" },
+    { code: 505, name: "HTTP Ver. Unsupported", symbol: "Hv", cat: "5xx", desc: "HTTP version not supported.", rfc: "RFC 9110" },
+    { code: 506, name: "Variant Negotiates", symbol: "Vn", cat: "5xx", desc: "Internal configuration error.", rfc: "RFC 2295" },
+    { code: 507, name: "Insufficient Storage", symbol: "St", cat: "5xx", desc: "Server can't store the representation.", rfc: "RFC 4918" },
+    { code: 508, name: "Loop Detected", symbol: "Ld", cat: "5xx", desc: "Infinite loop detected (WebDAV).", rfc: "RFC 5842" },
+    { code: 510, name: "Not Extended", symbol: "Ne", cat: "5xx", desc: "Further extensions required.", rfc: "RFC 2774" },
+    { code: 511, name: "Network Auth Req'd", symbol: "Nr", cat: "5xx", desc: "Client needs to authenticate for network access.", rfc: "RFC 6585" },
+];
+
+const CAT_COLORS = { '1xx': '#58a6ff', '2xx': '#3fb950', '3xx': '#d29922', '4xx': '#ff7b72', '5xx': '#bc8cff' };
+const CAT_LABELS = { '1xx': 'Informational', '2xx': 'Success', '3xx': 'Redirection', '4xx': 'Client Error', '5xx': 'Server Error' };
+const CAT_GENRES = { '1xx': 'Jazz', '2xx': 'Pop / Funk', '3xx': 'Psychedelic', '4xx': 'Punk / Grunge', '5xx': 'Heavy Metal' };
+const GENRE_ICONS = { '1xx': '\u266B', '2xx': '\u266A', '3xx': '\u2609', '4xx': '\u26A1', '5xx': '\u2620' };
+
+let selectedCode = null;
+let focusedIndex = -1;
+let filteredCodes = STATUS_CODES.slice();
+let currentFilter = 'all';
+
+const recordsRow = document.getElementById('recordsRow');
+const searchInput = document.getElementById('searchInput');
+const crateCount = document.getElementById('crateCount');
+const emptyState = document.getElementById('emptyState');
+const noSelection = document.getElementById('noSelection');
+const albumDetails = document.getElementById('albumDetails');
+
+function createSleeveElement(sc, i) {
+  const sleeve = document.createElement('div');
+  sleeve.className = 'record-sleeve';
+  if (selectedCode && selectedCode.code === sc.code) {
+    sleeve.className += ' selected';
+  }
+  sleeve.dataset.cat = sc.cat;
+  sleeve.dataset.index = String(i);
+
+  const spine = document.createElement('div');
+  spine.className = 'sleeve-spine';
+
+  const codeEl = document.createElement('span');
+  codeEl.className = 'spine-code';
+  codeEl.textContent = String(sc.code);
+
+  const lineEl = document.createElement('span');
+  lineEl.className = 'spine-line';
+
+  const nameEl = document.createElement('span');
+  nameEl.className = 'spine-name';
+  nameEl.textContent = sc.name;
+
+  spine.appendChild(codeEl);
+  spine.appendChild(lineEl);
+  spine.appendChild(nameEl);
+  sleeve.appendChild(spine);
+
+  sleeve.addEventListener('click', function() { selectRecord(sc, i); });
+  return sleeve;
+}
+
+function renderRecords() {
+  while (recordsRow.firstChild) {
+    recordsRow.removeChild(recordsRow.firstChild);
+  }
+
+  if (filteredCodes.length === 0) {
+    emptyState.classList.add('visible');
+    document.querySelector('.crate-inner').style.display = 'none';
+    crateCount.textContent = '0 records';
+    return;
+  }
+
+  emptyState.classList.remove('visible');
+  document.querySelector('.crate-inner').style.display = 'flex';
+
+  filteredCodes.forEach(function(sc, i) {
+    recordsRow.appendChild(createSleeveElement(sc, i));
+  });
+
+  crateCount.textContent = filteredCodes.length + ' record' + (filteredCodes.length !== 1 ? 's' : '');
+}
+
+function selectRecord(sc, index) {
+  if (selectedCode && selectedCode.code === sc.code) {
+    selectedCode = null;
+    focusedIndex = -1;
+    noSelection.style.display = 'flex';
+    albumDetails.style.display = 'none';
+    var allSleeves = document.querySelectorAll('.record-sleeve');
+    for (var j = 0; j < allSleeves.length; j++) {
+      allSleeves[j].classList.remove('selected');
+    }
+    return;
+  }
+
+  selectedCode = sc;
+  focusedIndex = index;
+
+  var allSleeves = document.querySelectorAll('.record-sleeve');
+  for (var j = 0; j < allSleeves.length; j++) {
+    allSleeves[j].classList.remove('selected');
+  }
+  if (allSleeves[index]) {
+    allSleeves[index].classList.add('selected');
+    allSleeves[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
+
+  noSelection.style.display = 'none';
+  albumDetails.style.display = 'block';
+
+  document.getElementById('albumCover').dataset.cat = sc.cat;
+  document.getElementById('coverGenre').textContent = CAT_LABELS[sc.cat] + ' / ' + CAT_GENRES[sc.cat];
+  document.getElementById('coverCode').textContent = String(sc.code);
+  document.getElementById('coverSymbol').textContent = sc.symbol;
+  document.getElementById('coverTitle').textContent = sc.name;
+  document.getElementById('coverRfc').textContent = sc.rfc;
+
+  document.getElementById('catBadge').dataset.cat = sc.cat;
+  document.getElementById('genreIcon').textContent = GENRE_ICONS[sc.cat];
+  document.getElementById('catLabel').textContent = CAT_LABELS[sc.cat] + ' \u00B7 ' + CAT_GENRES[sc.cat];
+
+  document.getElementById('trackDesc').textContent = sc.desc;
+
+  document.getElementById('detailCode').textContent = String(sc.code);
+  document.getElementById('detailSymbol').textContent = sc.symbol;
+  document.getElementById('detailCat').textContent = sc.cat + ' - ' + CAT_LABELS[sc.cat];
+  document.getElementById('detailRfc').textContent = sc.rfc;
+}
+
+function applyFilters() {
+  var query = searchInput.value.toLowerCase().trim();
+
+  filteredCodes = STATUS_CODES.filter(function(sc) {
+    var matchesGenre = currentFilter === 'all' || sc.cat === currentFilter;
+    var matchesSearch = !query ||
+      String(sc.code).indexOf(query) !== -1 ||
+      sc.name.toLowerCase().indexOf(query) !== -1 ||
+      sc.symbol.toLowerCase().indexOf(query) !== -1 ||
+      sc.desc.toLowerCase().indexOf(query) !== -1 ||
+      sc.rfc.toLowerCase().indexOf(query) !== -1;
+    return matchesGenre && matchesSearch;
+  });
+
+  renderRecords();
+}
+
+var genreTabs = document.querySelectorAll('.genre-tab');
+for (var t = 0; t < genreTabs.length; t++) {
+  genreTabs[t].addEventListener('click', function(e) {
+    for (var tt = 0; tt < genreTabs.length; tt++) {
+      genreTabs[tt].classList.remove('active');
+    }
+    e.currentTarget.classList.add('active');
+    currentFilter = e.currentTarget.dataset.filter;
+    applyFilters();
+  });
+}
+
+searchInput.addEventListener('input', applyFilters);
+
+document.getElementById('scrollLeft').addEventListener('click', function() {
+  recordsRow.scrollBy({ left: -300, behavior: 'smooth' });
+});
+
+document.getElementById('scrollRight').addEventListener('click', function() {
+  recordsRow.scrollBy({ left: 300, behavior: 'smooth' });
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.target === searchInput) return;
+
+  if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    if (focusedIndex > 0) {
+      focusedIndex--;
+      selectRecord(filteredCodes[focusedIndex], focusedIndex);
+    } else if (focusedIndex === -1 && filteredCodes.length > 0) {
+      focusedIndex = 0;
+      selectRecord(filteredCodes[0], 0);
+    }
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    if (focusedIndex < filteredCodes.length - 1) {
+      focusedIndex++;
+      selectRecord(filteredCodes[focusedIndex], focusedIndex);
+    } else if (focusedIndex === -1 && filteredCodes.length > 0) {
+      focusedIndex = 0;
+      selectRecord(filteredCodes[0], 0);
+    }
+  } else if (e.key === 'Escape') {
+    selectedCode = null;
+    focusedIndex = -1;
+    noSelection.style.display = 'flex';
+    albumDetails.style.display = 'none';
+    var allSleeves = document.querySelectorAll('.record-sleeve');
+    for (var j = 0; j < allSleeves.length; j++) {
+      allSleeves[j].classList.remove('selected');
+    }
+  }
+});
+
+renderRecords();
+
+var ok200 = -1;
+for (var i = 0; i < STATUS_CODES.length; i++) {
+  if (STATUS_CODES[i].code === 200) { ok200 = i; break; }
+}
+if (ok200 >= 0) {
+  setTimeout(function() { selectRecord(STATUS_CODES[ok200], ok200); }, 300);
+}
+</script>
+</body>
+</html>

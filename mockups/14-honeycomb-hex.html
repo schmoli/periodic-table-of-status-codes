@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1024, height=768">
+<title>HTTP Status Codes - Honeycomb</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 1024px;
+    height: 768px;
+    max-height: 768px;
+    overflow: hidden;
+    background: #0d1117;
+    font-family: 'Inter', sans-serif;
+    color: #e6edf3;
+  }
+
+  #app {
+    width: 1024px;
+    height: 768px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .title {
+    position: absolute;
+    top: 6px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 300;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: #8b949e;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .honeycomb {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1024px;
+    height: 768px;
+  }
+
+  .hex-wrap {
+    position: absolute;
+    cursor: pointer;
+    transition: transform 0.2s ease, filter 0.2s ease;
+    z-index: 1;
+  }
+  .hex-wrap:hover {
+    transform: scale(1.22);
+    z-index: 10;
+    filter: brightness(1.35) drop-shadow(0 0 8px var(--glow));
+  }
+
+  .hex {
+    width: 100%;
+    height: 100%;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  /* Dark outline behind each hex for definition */
+  .hex-outline {
+    position: absolute;
+    inset: -1px;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    background: rgba(0,0,0,0.4);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .hex-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 1;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  }
+
+  .hex-name {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 6.5px;
+    line-height: 1.15;
+    text-align: center;
+    color: rgba(255,255,255,0.8);
+    margin-top: 1px;
+    max-width: 88%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cat-label {
+    position: absolute;
+    font-family: 'Inter', sans-serif;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0.55;
+  }
+
+  .legend {
+    position: absolute;
+    bottom: 5px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    z-index: 10;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 9px;
+    color: #8b949e;
+    letter-spacing: 0.5px;
+  }
+  .legend-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+
+  .overlay-bg {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 100;
+    backdrop-filter: blur(6px);
+  }
+  .overlay-bg.active { display: flex; align-items: center; justify-content: center; }
+
+  .overlay-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 14px;
+    padding: 28px 34px;
+    max-width: 340px;
+    width: 90%;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .overlay-close {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    background: none;
+    border: none;
+    color: #8b949e;
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .overlay-close:hover { color: #e6edf3; }
+  .overlay-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 38px;
+    font-weight: 700;
+  }
+  .overlay-name {
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 2px;
+    color: #e6edf3;
+  }
+  .overlay-cat {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 8px;
+    opacity: 0.7;
+  }
+  .overlay-desc {
+    font-size: 13px;
+    color: #8b949e;
+    margin-top: 12px;
+    line-height: 1.6;
+  }
+  .overlay-rfc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #58a6ff;
+    margin-top: 10px;
+    opacity: 0.8;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="title">HTTP Status Codes</div>
+  <div class="honeycomb" id="honeycomb"></div>
+  <div class="legend" id="legend"></div>
+</div>
+
+<div class="overlay-bg" id="overlay" onclick="closeOverlay(event)">
+  <div class="overlay-card" id="overlayCard">
+    <button class="overlay-close" onclick="closeOverlay()">&times;</button>
+    <div class="overlay-code" id="ovCode"></div>
+    <div class="overlay-name" id="ovName"></div>
+    <div class="overlay-cat" id="ovCat"></div>
+    <div class="overlay-desc" id="ovDesc"></div>
+    <div class="overlay-rfc" id="ovRfc"></div>
+  </div>
+</div>
+
+<script>
+const STATUS_CODES = [
+    { code: 100, name: "Continue", symbol: "Cn", cat: "1xx", desc: "Server received headers, proceed to send body.", rfc: "RFC 9110" },
+    { code: 101, name: "Switching Protocols", symbol: "Sw", cat: "1xx", desc: "Server switching protocols via Upgrade header.", rfc: "RFC 9110" },
+    { code: 103, name: "Early Hints", symbol: "Eh", cat: "1xx", desc: "Early response headers before final message.", rfc: "RFC 8297" },
+    { code: 200, name: "OK", symbol: "Ok", cat: "2xx", desc: "Request succeeded.", rfc: "RFC 9110" },
+    { code: 201, name: "Created", symbol: "Cr", cat: "2xx", desc: "New resource created.", rfc: "RFC 9110" },
+    { code: 202, name: "Accepted", symbol: "Ac", cat: "2xx", desc: "Accepted, processing not complete.", rfc: "RFC 9110" },
+    { code: 203, name: "Non-Authoritative", symbol: "Na", cat: "2xx", desc: "Metadata from transforming proxy.", rfc: "RFC 9110" },
+    { code: 204, name: "No Content", symbol: "Nc", cat: "2xx", desc: "No additional content.", rfc: "RFC 9110" },
+    { code: 205, name: "Reset Content", symbol: "Rc", cat: "2xx", desc: "Reset the document view.", rfc: "RFC 9110" },
+    { code: 206, name: "Partial Content", symbol: "Pc", cat: "2xx", desc: "Partial resource delivery.", rfc: "RFC 9110" },
+    { code: 207, name: "Multi-Status", symbol: "Ms", cat: "2xx", desc: "WebDAV multiple resources.", rfc: "RFC 4918" },
+    { code: 208, name: "Already Reported", symbol: "Ar", cat: "2xx", desc: "WebDAV binding enumerated.", rfc: "RFC 5842" },
+    { code: 226, name: "IM Used", symbol: "Im", cat: "2xx", desc: "Instance-manipulations applied.", rfc: "RFC 3229" },
+    { code: 300, name: "Multiple Choices", symbol: "Mc", cat: "3xx", desc: "Multiple possible responses.", rfc: "RFC 9110" },
+    { code: 301, name: "Moved Permanently", symbol: "Mp", cat: "3xx", desc: "URL changed permanently.", rfc: "RFC 9110" },
+    { code: 302, name: "Found", symbol: "Fd", cat: "3xx", desc: "URI changed temporarily.", rfc: "RFC 9110" },
+    { code: 303, name: "See Other", symbol: "So", cat: "3xx", desc: "Redirect via GET.", rfc: "RFC 9110" },
+    { code: 304, name: "Not Modified", symbol: "Nm", cat: "3xx", desc: "Use cached version.", rfc: "RFC 9110" },
+    { code: 305, name: "Use Proxy", symbol: "Up", cat: "3xx", desc: "Deprecated.", rfc: "Deprecated" },
+    { code: 307, name: "Temporary Redirect", symbol: "Tr", cat: "3xx", desc: "Same method redirect.", rfc: "RFC 9110" },
+    { code: 308, name: "Permanent Redirect", symbol: "Pr", cat: "3xx", desc: "Permanent, same method.", rfc: "RFC 9110" },
+    { code: 400, name: "Bad Request", symbol: "Br", cat: "4xx", desc: "Client error.", rfc: "RFC 9110" },
+    { code: 401, name: "Unauthorized", symbol: "Un", cat: "4xx", desc: "Authentication required.", rfc: "RFC 9110" },
+    { code: 402, name: "Payment Required", symbol: "Py", cat: "4xx", desc: "Reserved.", rfc: "RFC 9110" },
+    { code: 403, name: "Forbidden", symbol: "Fb", cat: "4xx", desc: "No access rights.", rfc: "RFC 9110" },
+    { code: 404, name: "Not Found", symbol: "Nf", cat: "4xx", desc: "Resource not found.", rfc: "RFC 9110" },
+    { code: 405, name: "Method Not Allowed", symbol: "Ma", cat: "4xx", desc: "Method not supported.", rfc: "RFC 9110" },
+    { code: 406, name: "Not Acceptable", symbol: "Nx", cat: "4xx", desc: "Can't match Accept headers.", rfc: "RFC 9110" },
+    { code: 407, name: "Proxy Auth Required", symbol: "Pa", cat: "4xx", desc: "Proxy auth needed.", rfc: "RFC 9110" },
+    { code: 408, name: "Request Timeout", symbol: "Rt", cat: "4xx", desc: "Connection timed out.", rfc: "RFC 9110" },
+    { code: 409, name: "Conflict", symbol: "Cf", cat: "4xx", desc: "Conflicts with server state.", rfc: "RFC 9110" },
+    { code: 410, name: "Gone", symbol: "Gn", cat: "4xx", desc: "Permanently deleted.", rfc: "RFC 9110" },
+    { code: 411, name: "Length Required", symbol: "Lr", cat: "4xx", desc: "Content-Length required.", rfc: "RFC 9110" },
+    { code: 412, name: "Precondition Failed", symbol: "Pf", cat: "4xx", desc: "Preconditions not met.", rfc: "RFC 9110" },
+    { code: 413, name: "Content Too Large", symbol: "Tl", cat: "4xx", desc: "Entity too large.", rfc: "RFC 9110" },
+    { code: 414, name: "URI Too Long", symbol: "Ul", cat: "4xx", desc: "URI too long.", rfc: "RFC 9110" },
+    { code: 415, name: "Unsupported Media", symbol: "Um", cat: "4xx", desc: "Media not supported.", rfc: "RFC 9110" },
+    { code: 416, name: "Range Not Satisfiable", symbol: "Rn", cat: "4xx", desc: "Range can't be fulfilled.", rfc: "RFC 9110" },
+    { code: 417, name: "Expectation Failed", symbol: "Ef", cat: "4xx", desc: "Expect can't be met.", rfc: "RFC 9110" },
+    { code: 418, name: "I'm a Teapot", symbol: "Tp", cat: "4xx", desc: "April Fools' Easter egg.", rfc: "RFC 2324" },
+    { code: 421, name: "Misdirected", symbol: "Mr", cat: "4xx", desc: "Wrong server.", rfc: "RFC 9110" },
+    { code: 422, name: "Unprocessable", symbol: "Uc", cat: "4xx", desc: "Semantically erroneous.", rfc: "RFC 9110" },
+    { code: 423, name: "Locked", symbol: "Lk", cat: "4xx", desc: "Resource locked.", rfc: "RFC 4918" },
+    { code: 424, name: "Failed Dependency", symbol: "Dp", cat: "4xx", desc: "Previous request failed.", rfc: "RFC 4918" },
+    { code: 425, name: "Too Early", symbol: "Te", cat: "4xx", desc: "Won't risk replay.", rfc: "RFC 8470" },
+    { code: 426, name: "Upgrade Required", symbol: "Ur", cat: "4xx", desc: "Protocol upgrade needed.", rfc: "RFC 9110" },
+    { code: 428, name: "Precondition Req'd", symbol: "Pq", cat: "4xx", desc: "Conditional requests required.", rfc: "RFC 6585" },
+    { code: 429, name: "Too Many Requests", symbol: "Tm", cat: "4xx", desc: "Rate limited.", rfc: "RFC 6585" },
+    { code: 431, name: "Headers Too Large", symbol: "Hl", cat: "4xx", desc: "Headers too large.", rfc: "RFC 6585" },
+    { code: 451, name: "Legal Reasons", symbol: "Lg", cat: "4xx", desc: "Legal restrictions.", rfc: "RFC 7725" },
+    { code: 500, name: "Internal Error", symbol: "Is", cat: "5xx", desc: "Unhandled exception.", rfc: "RFC 9110" },
+    { code: 501, name: "Not Implemented", symbol: "Ni", cat: "5xx", desc: "Method not supported.", rfc: "RFC 9110" },
+    { code: 502, name: "Bad Gateway", symbol: "Bg", cat: "5xx", desc: "Invalid upstream response.", rfc: "RFC 9110" },
+    { code: 503, name: "Service Unavailable", symbol: "Su", cat: "5xx", desc: "Server not ready.", rfc: "RFC 9110" },
+    { code: 504, name: "Gateway Timeout", symbol: "Gt", cat: "5xx", desc: "Gateway timed out.", rfc: "RFC 9110" },
+    { code: 505, name: "HTTP Ver. Unsupported", symbol: "Hv", cat: "5xx", desc: "HTTP version unsupported.", rfc: "RFC 9110" },
+    { code: 506, name: "Variant Negotiates", symbol: "Vn", cat: "5xx", desc: "Config error.", rfc: "RFC 2295" },
+    { code: 507, name: "Insufficient Storage", symbol: "St", cat: "5xx", desc: "Can't store.", rfc: "RFC 4918" },
+    { code: 508, name: "Loop Detected", symbol: "Ld", cat: "5xx", desc: "Infinite loop.", rfc: "RFC 5842" },
+    { code: 510, name: "Not Extended", symbol: "Ne", cat: "5xx", desc: "Extensions required.", rfc: "RFC 2774" },
+    { code: 511, name: "Network Auth Req'd", symbol: "Nr", cat: "5xx", desc: "Network auth needed.", rfc: "RFC 6585" },
+];
+const CAT_COLORS = { '1xx': '#58a6ff', '2xx': '#3fb950', '3xx': '#d29922', '4xx': '#ff7b72', '5xx': '#bc8cff' };
+const CAT_LABELS = { '1xx': 'Informational', '2xx': 'Success', '3xx': 'Redirection', '4xx': 'Client Error', '5xx': 'Server Error' };
+
+// --- Hex geometry ---
+const HEX_W = 62;
+const HEX_H = Math.round(HEX_W * 1.1547);  // ~72
+const GAP = 3;
+const COL_STEP = HEX_W + GAP;   // 65
+const ROW_STEP = Math.round(HEX_H * 0.75) + GAP; // ~57
+
+// Helper: given a grid (col, row) and origin, return pixel coords
+function gpos(col, row, ox, oy) {
+  const offsetX = (row % 2 === 1) ? (COL_STEP / 2) : 0;
+  return { x: ox + col * COL_STEP + offsetX, y: oy + row * ROW_STEP };
+}
+
+// Master honeycomb grid. All hexes snap to the same lattice for perfect alignment.
+// Origin chosen to center the overall composition.
+// Grid: up to 15 cols (0-14), up to 12 rows (0-11)
+// Max x: 12 + 14*65 + 32.5 + 62 = ~1016  (fits 1024)
+// Max y: 48 + 11*57 + 72 = ~747           (fits 768 minus legend)
+
+const GRID_OX = 48;
+const GRID_OY = 100;
+
+// 1xx (3 codes) - top-left triangle
+const layout_1xx = [
+  [0, 0], [1, 0],
+  [0, 1],
+];
+
+// 2xx (10 codes) - left side, rows 2-4
+const layout_2xx = [
+  [0, 2], [1, 2], [2, 2], [3, 2],
+  [0, 3], [1, 3], [2, 3], [3, 3],
+  [0, 4], [1, 4],
+];
+
+// 3xx (8 codes) - top area, rows 0-1, cols 4-7
+const layout_3xx = [
+  [4, 0], [5, 0], [6, 0], [7, 0],
+  [4, 1], [5, 1], [6, 1], [7, 1],
+];
+
+// 4xx (29 codes) - large cluster forming a tapered shape
+// Row 2: 9 wide (cols 5-13)
+// Row 3: 8 wide (cols 5-12)
+// Row 4: 7 wide (cols 5-11)
+// Row 5: 5 wide (cols 5-9)
+const layout_4xx = [
+  [5, 2],  [6, 2],  [7, 2],  [8, 2],  [9, 2], [10, 2], [11, 2], [12, 2], [13, 2],
+  [5, 3],  [6, 3],  [7, 3],  [8, 3],  [9, 3], [10, 3], [11, 3], [12, 3],
+  [5, 4],  [6, 4],  [7, 4],  [8, 4],  [9, 4], [10, 4], [11, 4],
+  [5, 5],  [6, 5],  [7, 5],  [8, 5],  [9, 5],
+];
+
+// 5xx (11 codes) - bottom-left, rows 5-7
+const layout_5xx = [
+  [0, 5], [1, 5], [2, 5], [3, 5],
+  [0, 6], [1, 6], [2, 6], [3, 6],
+  [0, 7], [1, 7], [2, 7],
+];
+
+const catOrder = ['1xx', '2xx', '3xx', '4xx', '5xx'];
+const layouts = {
+  '1xx': layout_1xx,
+  '2xx': layout_2xx,
+  '3xx': layout_3xx,
+  '4xx': layout_4xx,
+  '5xx': layout_5xx,
+};
+
+// Group codes
+const groups = {};
+catOrder.forEach(c => groups[c] = []);
+STATUS_CODES.forEach(sc => groups[sc.cat].push(sc));
+
+const honeycomb = document.getElementById('honeycomb');
+
+// Place hexes
+catOrder.forEach(cat => {
+  const items = groups[cat];
+  const posArr = layouts[cat];
+  const color = CAT_COLORS[cat];
+
+  items.forEach((sc, i) => {
+    const [gc, gr] = posArr[i];
+    const { x, y } = gpos(gc, gr, GRID_OX, GRID_OY);
+
+    const wrap = document.createElement('div');
+    wrap.className = 'hex-wrap';
+    wrap.style.cssText = `left:${x}px;top:${y}px;width:${HEX_W}px;height:${HEX_H}px;--glow:${color};`;
+
+    const hex = document.createElement('div');
+    hex.className = 'hex';
+    hex.style.background = `linear-gradient(150deg, ${color}cc, ${color}44)`;
+    hex.style.boxShadow = `inset 0 2px 6px ${color}22, inset 0 -2px 6px rgba(0,0,0,0.3)`;
+
+    const codeEl = document.createElement('div');
+    codeEl.className = 'hex-code';
+    codeEl.textContent = sc.code;
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'hex-name';
+    nameEl.textContent = sc.name;
+
+    hex.appendChild(codeEl);
+    hex.appendChild(nameEl);
+
+    const outline = document.createElement('div');
+    outline.className = 'hex-outline';
+
+    wrap.appendChild(outline);
+    wrap.appendChild(hex);
+    honeycomb.appendChild(wrap);
+
+    wrap.addEventListener('click', () => showOverlay(sc));
+  });
+});
+
+// Category floating labels - positioned just above each cluster
+const catLabelPos = {
+  '1xx': { x: GRID_OX + 2, y: GRID_OY - 12 },
+  '2xx': { x: GRID_OX + 2, y: GRID_OY + 2 * ROW_STEP - 12 },
+  '3xx': { x: GRID_OX + 4 * COL_STEP + 2, y: GRID_OY - 12 },
+  '4xx': { x: GRID_OX + 5 * COL_STEP + 2, y: GRID_OY + 2 * ROW_STEP - 12 },
+  '5xx': { x: GRID_OX + 2, y: GRID_OY + 5 * ROW_STEP - 12 },
+};
+
+catOrder.forEach(cat => {
+  const lp = catLabelPos[cat];
+  const label = document.createElement('div');
+  label.className = 'cat-label';
+  label.style.left = lp.x + 'px';
+  label.style.top = lp.y + 'px';
+  label.style.color = CAT_COLORS[cat];
+  label.textContent = CAT_LABELS[cat];
+  honeycomb.appendChild(label);
+});
+
+// Legend
+const legend = document.getElementById('legend');
+catOrder.forEach(cat => {
+  const item = document.createElement('div');
+  item.className = 'legend-item';
+  const dot = document.createElement('span');
+  dot.className = 'legend-dot';
+  dot.style.background = CAT_COLORS[cat];
+  const text = document.createElement('span');
+  text.textContent = `${cat} ${CAT_LABELS[cat]}`;
+  item.appendChild(dot);
+  item.appendChild(text);
+  legend.appendChild(item);
+});
+
+// Overlay
+function showOverlay(sc) {
+  document.getElementById('ovCode').textContent = sc.code;
+  document.getElementById('ovCode').style.color = CAT_COLORS[sc.cat];
+  document.getElementById('ovName').textContent = sc.name;
+  document.getElementById('ovCat').textContent = `${sc.cat} \u2014 ${CAT_LABELS[sc.cat]}`;
+  document.getElementById('ovCat').style.color = CAT_COLORS[sc.cat];
+  document.getElementById('ovDesc').textContent = sc.desc;
+  document.getElementById('ovRfc').textContent = sc.rfc;
+  document.getElementById('overlay').classList.add('active');
+}
+function closeOverlay(e) {
+  if (e && e.target !== document.getElementById('overlay')) return;
+  document.getElementById('overlay').classList.remove('active');
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('overlay').classList.remove('active');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTTP: The Gathering - Status Code Trading Cards</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --clr-1xx: #58a6ff;
+    --clr-2xx: #3fb950;
+    --clr-3xx: #d29922;
+    --clr-4xx: #ff7b72;
+    --clr-5xx: #bc8cff;
+    --leather-bg: #1a1410;
+    --leather-light: #2a2018;
+    --leather-stitch: #3d2e1e;
+    --card-bg: #0d1117;
+    --card-inner: #161b22;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --gold: #c9a84c;
+    --gold-bright: #f0d060;
+}
+
+html { font-size: 16px; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--leather-bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* ===== LEATHER TEXTURE BACKGROUND ===== */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 3px,
+            rgba(60, 45, 30, 0.08) 3px,
+            rgba(60, 45, 30, 0.08) 4px
+        ),
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 3px,
+            rgba(60, 45, 30, 0.06) 3px,
+            rgba(60, 45, 30, 0.06) 4px
+        ),
+        radial-gradient(ellipse at 30% 20%, rgba(50, 35, 20, 0.4) 0%, transparent 60%),
+        radial-gradient(ellipse at 70% 80%, rgba(50, 35, 20, 0.3) 0%, transparent 60%),
+        linear-gradient(135deg, #1a1410 0%, #221a12 25%, #1a1410 50%, #1e1610 75%, #1a1410 100%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ===== BINDER STITCHING BORDERS ===== */
+.binder-page {
+    position: relative;
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 30px 40px 40px;
+    z-index: 1;
+}
+
+.binder-page::before {
+    content: '';
+    position: absolute;
+    top: 20px; left: 20px; right: 20px; bottom: 20px;
+    border: 2px dashed var(--leather-stitch);
+    border-radius: 12px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ===== HEADER ===== */
+.header {
+    text-align: center;
+    padding: 40px 20px 10px;
+    position: relative;
+    z-index: 1;
+}
+
+.header-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-bright) 30%, var(--gold) 50%, #e8c84a 70%, var(--gold) 100%);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: goldShimmer 4s ease-in-out infinite;
+    text-shadow: none;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+}
+
+@keyframes goldShimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.header-subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(0.75rem, 1.5vw, 1rem);
+    color: var(--text-secondary);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+}
+
+/* ===== FILTER BAR ===== */
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 20px;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 10;
+}
+
+.filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+
+.filter-group + .filter-group {
+    margin-left: 16px;
+    padding-left: 16px;
+    border-left: 1px solid var(--leather-stitch);
+}
+
+@media (max-width: 700px) {
+    .filter-group + .filter-group {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+    }
+}
+
+.filter-btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border: 1px solid var(--leather-stitch);
+    border-radius: 6px;
+    background: var(--leather-light);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.filter-btn:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+}
+
+.filter-btn.active {
+    background: rgba(255,255,255,0.1);
+    color: var(--text-primary);
+    border-color: var(--gold);
+    box-shadow: 0 0 8px rgba(201, 168, 76, 0.3);
+}
+
+.filter-btn[data-cat="1xx"].active { border-color: var(--clr-1xx); box-shadow: 0 0 8px rgba(88,166,255,0.3); }
+.filter-btn[data-cat="2xx"].active { border-color: var(--clr-2xx); box-shadow: 0 0 8px rgba(63,185,80,0.3); }
+.filter-btn[data-cat="3xx"].active { border-color: var(--clr-3xx); box-shadow: 0 0 8px rgba(210,153,34,0.3); }
+.filter-btn[data-cat="4xx"].active { border-color: var(--clr-4xx); box-shadow: 0 0 8px rgba(255,123,114,0.3); }
+.filter-btn[data-cat="5xx"].active { border-color: var(--clr-5xx); box-shadow: 0 0 8px rgba(188,140,255,0.3); }
+
+/* ===== PAGE COUNTER ===== */
+.page-info {
+    text-align: center;
+    padding: 10px 0 20px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    letter-spacing: 2px;
+    position: relative;
+    z-index: 1;
+}
+
+.page-info span {
+    color: var(--gold);
+}
+
+/* ===== CARD GRID (BINDER LAYOUT) ===== */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    padding: 10px;
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 1024px) {
+    .card-grid { grid-template-columns: repeat(3, 1fr); gap: 20px; }
+}
+
+@media (max-width: 700px) {
+    .card-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .binder-page { padding: 20px 16px 30px; }
+    .binder-page::before { top: 10px; left: 10px; right: 10px; bottom: 10px; }
+}
+
+/* ===== CARD SLEEVE ===== */
+.card-sleeve {
+    perspective: 800px;
+    cursor: pointer;
+}
+
+.card-sleeve.hidden {
+    display: none;
+}
+
+/* ===== TRADING CARD ===== */
+.trading-card {
+    position: relative;
+    aspect-ratio: 2.5 / 3.5;
+    border-radius: 12px;
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+    transform-style: preserve-3d;
+    will-change: transform;
+}
+
+.trading-card:hover {
+    transform: translateY(-10px) rotateX(5deg) rotateY(-3deg) scale(1.04);
+    z-index: 5;
+}
+
+/* ===== RARITY BORDERS ===== */
+/* Common: solid border */
+.trading-card.rarity-common {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+.trading-card.rarity-common .card-border {
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    border: 2.5px solid var(--cat-color);
+    pointer-events: none;
+    z-index: 2;
+}
+
+.trading-card.rarity-common:hover {
+    box-shadow: 0 12px 30px rgba(0,0,0,0.6), 0 0 15px color-mix(in srgb, var(--cat-color) 30%, transparent);
+}
+
+/* Uncommon: subtle shimmer */
+.trading-card.rarity-uncommon {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+.trading-card.rarity-uncommon .card-border {
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    border: 2.5px solid var(--cat-color);
+    pointer-events: none;
+    z-index: 2;
+}
+.trading-card.rarity-uncommon .card-border::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, transparent 20%, rgba(255,255,255,0.15) 40%, transparent 60%);
+    background-size: 200% 200%;
+    animation: shimmer 3s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes shimmer {
+    0%, 100% { background-position: 200% 200%; }
+    50% { background-position: 0% 0%; }
+}
+
+.trading-card.rarity-uncommon:hover {
+    box-shadow: 0 12px 30px rgba(0,0,0,0.6), 0 0 20px color-mix(in srgb, var(--cat-color) 40%, transparent);
+}
+
+/* Rare: holographic gradient border */
+.trading-card.rarity-rare {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+.trading-card.rarity-rare .card-border {
+    position: absolute;
+    inset: -3px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--cat-color), #fff, var(--cat-color), rgba(255,255,255,0.8), var(--cat-color));
+    background-size: 300% 300%;
+    animation: holoGradient 4s ease-in-out infinite;
+    z-index: -1;
+    pointer-events: none;
+}
+
+@keyframes holoGradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.trading-card.rarity-rare:hover {
+    box-shadow: 0 12px 35px rgba(0,0,0,0.6), 0 0 25px color-mix(in srgb, var(--cat-color) 50%, transparent);
+}
+
+/* Mythic Rare: animated rainbow border */
+.trading-card.rarity-mythic {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+.trading-card.rarity-mythic .card-border {
+    position: absolute;
+    inset: -3px;
+    border-radius: 14px;
+    background: linear-gradient(135deg,
+        #ff0000, #ff8800, #ffff00, #00ff00, #0088ff, #8800ff, #ff00ff, #ff0000
+    );
+    background-size: 400% 400%;
+    animation: rainbowBorder 3s linear infinite;
+    z-index: -1;
+    pointer-events: none;
+}
+
+@keyframes rainbowBorder {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 400% 50%; }
+}
+
+.trading-card.rarity-mythic:hover {
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 30px rgba(200, 100, 255, 0.5), 0 0 60px rgba(200, 100, 255, 0.2);
+}
+
+/* ===== CARD INNER ===== */
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    background: linear-gradient(160deg, #161b22 0%, #0d1117 100%);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
+}
+
+/* Card header area */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px 4px;
+}
+
+.card-name {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(0.55rem, 1.2vw, 0.78rem);
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.15;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.card-code {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(0.7rem, 1.4vw, 0.95rem);
+    font-weight: 900;
+    color: var(--cat-color);
+    margin-left: 6px;
+    flex-shrink: 0;
+    text-shadow: 0 0 8px color-mix(in srgb, var(--cat-color) 40%, transparent);
+}
+
+/* Illustration area */
+.card-art {
+    position: relative;
+    margin: 4px 8px;
+    aspect-ratio: 5 / 3;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: var(--card-bg);
+}
+
+.card-art-bg {
+    position: absolute;
+    inset: 0;
+    opacity: 0.15;
+}
+
+.card-art-bg svg {
+    width: 100%;
+    height: 100%;
+}
+
+.card-art-symbol {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 900;
+    color: var(--cat-color);
+    opacity: 0.7;
+    text-shadow: 0 0 20px color-mix(in srgb, var(--cat-color) 50%, transparent);
+}
+
+/* Card type bar */
+.card-type-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 10px;
+    font-size: 0.55rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.card-type-label {
+    color: var(--cat-color);
+}
+
+.card-rarity-label {
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.rarity-gem {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+}
+.rarity-gem.common { background: #888; }
+.rarity-gem.uncommon { background: linear-gradient(135deg, #c0c0c0, #e0e0e0); }
+.rarity-gem.rare { background: linear-gradient(135deg, var(--cat-color), #fff); }
+.rarity-gem.mythic { background: linear-gradient(135deg, #ff6600, #ffcc00, #ff00ff); }
+
+/* Card description / flavor text */
+.card-desc {
+    flex: 1;
+    padding: 5px 10px 4px;
+    font-size: clamp(0.45rem, 0.9vw, 0.62rem);
+    line-height: 1.45;
+    color: var(--text-secondary);
+    font-style: italic;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+/* Card footer */
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 10px 7px;
+    font-size: 0.48rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+}
+
+.card-rfc {
+    font-weight: 600;
+    opacity: 0.7;
+}
+
+.card-set-number {
+    opacity: 0.5;
+}
+
+/* ===== HOLOGRAPHIC OVERLAY ON CARD ART ===== */
+.card-art::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        125deg,
+        transparent 0%,
+        rgba(255,255,255,0.03) 30%,
+        rgba(255,255,255,0.06) 50%,
+        rgba(255,255,255,0.03) 70%,
+        transparent 100%
+    );
+    pointer-events: none;
+}
+
+.trading-card.rarity-rare .card-art::after,
+.trading-card.rarity-mythic .card-art::after {
+    background: linear-gradient(
+        125deg,
+        transparent 0%,
+        rgba(255,255,255,0.05) 25%,
+        rgba(255,255,255,0.12) 50%,
+        rgba(255,255,255,0.05) 75%,
+        transparent 100%
+    );
+    animation: holoSweep 3s ease-in-out infinite;
+}
+
+@keyframes holoSweep {
+    0%, 100% { opacity: 0.5; transform: translateX(-20%); }
+    50% { opacity: 1; transform: translateX(20%); }
+}
+
+/* ===== CARD ZOOM MODAL ===== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.visible {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.modal-card-wrapper {
+    width: min(380px, 85vw);
+    transform: scale(0.8) rotateY(15deg);
+    transition: transform 0.4s ease;
+    perspective: 1000px;
+}
+
+.modal-overlay.visible .modal-card-wrapper {
+    transform: scale(1) rotateY(0deg);
+}
+
+.modal-card {
+    position: relative;
+    aspect-ratio: 2.5 / 3.5;
+    border-radius: 16px;
+    transform-style: preserve-3d;
+}
+
+.modal-card .card-inner {
+    border-radius: 16px;
+}
+
+.modal-card .card-header {
+    padding: 16px 18px 8px;
+}
+
+.modal-card .card-name {
+    font-size: 1.15rem;
+    -webkit-line-clamp: 2;
+}
+
+.modal-card .card-code {
+    font-size: 1.5rem;
+}
+
+.modal-card .card-art {
+    margin: 8px 14px;
+    aspect-ratio: 5 / 3;
+}
+
+.modal-card .card-art-symbol {
+    font-size: 4.5rem;
+}
+
+.modal-card .card-type-bar {
+    padding: 6px 18px;
+    font-size: 0.7rem;
+}
+
+.modal-card .card-desc {
+    padding: 8px 18px 6px;
+    font-size: 0.82rem;
+    -webkit-line-clamp: 5;
+}
+
+.modal-card .card-footer {
+    padding: 8px 18px 14px;
+    font-size: 0.65rem;
+}
+
+.modal-card .rarity-gem {
+    width: 10px;
+    height: 10px;
+}
+
+.modal-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1010;
+    transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+    background: rgba(255,255,255,0.1);
+    transform: scale(1.1);
+}
+
+/* ===== STATS BAR ===== */
+.stats-bar {
+    text-align: center;
+    padding: 24px 0 32px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    position: relative;
+    z-index: 1;
+    letter-spacing: 1px;
+}
+
+.stats-bar span {
+    color: var(--gold);
+    font-weight: 700;
+}
+
+/* ===== FOOTER ===== */
+.page-footer {
+    text-align: center;
+    padding: 16px 0 30px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    position: relative;
+    z-index: 1;
+    letter-spacing: 2px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--leather-bg); }
+::-webkit-scrollbar-thumb { background: var(--leather-stitch); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #4d3e2e; }
+</style>
+</head>
+<body>
+
+<div class="binder-page">
+    <header class="header">
+        <h1 class="header-title">HTTP: The Gathering</h1>
+        <p class="header-subtitle">Collectible Status Code Card Series</p>
+    </header>
+
+    <nav class="filter-bar">
+        <div class="filter-group" id="catFilters">
+            <button class="filter-btn active" data-cat="all">All Codes</button>
+            <button class="filter-btn" data-cat="1xx">1xx Info</button>
+            <button class="filter-btn" data-cat="2xx">2xx Success</button>
+            <button class="filter-btn" data-cat="3xx">3xx Redirect</button>
+            <button class="filter-btn" data-cat="4xx">4xx Client</button>
+            <button class="filter-btn" data-cat="5xx">5xx Server</button>
+        </div>
+        <div class="filter-group" id="rarityFilters">
+            <button class="filter-btn active" data-rarity="all">All Rarities</button>
+            <button class="filter-btn" data-rarity="common">Common</button>
+            <button class="filter-btn" data-rarity="uncommon">Uncommon</button>
+            <button class="filter-btn" data-rarity="rare">Rare</button>
+            <button class="filter-btn" data-rarity="mythic">Mythic</button>
+        </div>
+    </nav>
+
+    <p class="page-info">Page <span>1</span> of <span>1</span> &mdash; <span id="visibleCount">61</span> cards displayed</p>
+
+    <div class="card-grid" id="cardGrid"></div>
+
+    <div class="stats-bar">
+        Collection: <span>61</span> cards across <span>5</span> categories
+    </div>
+
+    <div class="page-footer">
+        &copy; 2026 HTTP: The Gathering &mdash; All Status Codes Reserved
+    </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+    <button class="modal-close" id="modalClose">&times;</button>
+    <div class="modal-card-wrapper">
+        <div class="modal-card" id="modalCard"></div>
+    </div>
+</div>
+
+<script>
+// ===== DATA =====
+const STATUS_CODES = [
+    { code: 100, name: "Continue", symbol: "Cn", cat: "1xx", desc: "The server has received the request headers and the client should proceed to send the request body.", rfc: "RFC 9110" },
+    { code: 101, name: "Switching Protocols", symbol: "Sw", cat: "1xx", desc: "The server is switching protocols as requested by the client via the Upgrade header.", rfc: "RFC 9110" },
+    { code: 103, name: "Early Hints", symbol: "Eh", cat: "1xx", desc: "Used to return some response headers before the final HTTP message.", rfc: "RFC 8297" },
+    { code: 200, name: "OK", symbol: "Ok", cat: "2xx", desc: "The request has succeeded.", rfc: "RFC 9110" },
+    { code: 201, name: "Created", symbol: "Cr", cat: "2xx", desc: "The request has been fulfilled and a new resource has been created.", rfc: "RFC 9110" },
+    { code: 202, name: "Accepted", symbol: "Ac", cat: "2xx", desc: "The request has been accepted for processing, but processing has not been completed.", rfc: "RFC 9110" },
+    { code: 203, name: "Non-Authoritative", symbol: "Na", cat: "2xx", desc: "The returned metadata is not exactly the same as available from the origin server.", rfc: "RFC 9110" },
+    { code: 204, name: "No Content", symbol: "Nc", cat: "2xx", desc: "The server has successfully fulfilled the request and there is no additional content.", rfc: "RFC 9110" },
+    { code: 205, name: "Reset Content", symbol: "Rc", cat: "2xx", desc: "The server has fulfilled the request and the user agent should reset the document view.", rfc: "RFC 9110" },
+    { code: 206, name: "Partial Content", symbol: "Pc", cat: "2xx", desc: "The server is delivering only part of the resource due to a Range header.", rfc: "RFC 9110" },
+    { code: 207, name: "Multi-Status", symbol: "Ms", cat: "2xx", desc: "A WebDAV response conveying information about multiple resources.", rfc: "RFC 4918" },
+    { code: 208, name: "Already Reported", symbol: "Ar", cat: "2xx", desc: "Used inside a WebDAV response to avoid enumerating internal members repeatedly.", rfc: "RFC 5842" },
+    { code: 226, name: "IM Used", symbol: "Im", cat: "2xx", desc: "The server has fulfilled a GET request with instance-manipulations applied.", rfc: "RFC 3229" },
+    { code: 300, name: "Multiple Choices", symbol: "Mc", cat: "3xx", desc: "The request has more than one possible response.", rfc: "RFC 9110" },
+    { code: 301, name: "Moved Permanently", symbol: "Mp", cat: "3xx", desc: "The URL of the requested resource has been changed permanently.", rfc: "RFC 9110" },
+    { code: 302, name: "Found", symbol: "Fd", cat: "3xx", desc: "The URI of the requested resource has been changed temporarily.", rfc: "RFC 9110" },
+    { code: 303, name: "See Other", symbol: "So", cat: "3xx", desc: "The server is redirecting to a different resource using GET.", rfc: "RFC 9110" },
+    { code: 304, name: "Not Modified", symbol: "Nm", cat: "3xx", desc: "The resource has not been modified since the version specified.", rfc: "RFC 9110" },
+    { code: 305, name: "Use Proxy", symbol: "Up", cat: "3xx", desc: "Deprecated.", rfc: "Deprecated" },
+    { code: 307, name: "Temporary Redirect", symbol: "Tr", cat: "3xx", desc: "The server is redirecting to another URI with same method.", rfc: "RFC 9110" },
+    { code: 308, name: "Permanent Redirect", symbol: "Pr", cat: "3xx", desc: "The resource has permanently moved, same method required.", rfc: "RFC 9110" },
+    { code: 400, name: "Bad Request", symbol: "Br", cat: "4xx", desc: "The server cannot process the request due to a client error.", rfc: "RFC 9110" },
+    { code: 401, name: "Unauthorized", symbol: "Un", cat: "4xx", desc: "The request requires authentication.", rfc: "RFC 9110" },
+    { code: 402, name: "Payment Required", symbol: "Py", cat: "4xx", desc: "Reserved for future use.", rfc: "RFC 9110" },
+    { code: 403, name: "Forbidden", symbol: "Fb", cat: "4xx", desc: "The client does not have access rights.", rfc: "RFC 9110" },
+    { code: 404, name: "Not Found", symbol: "Nf", cat: "4xx", desc: "The server cannot find the requested resource.", rfc: "RFC 9110" },
+    { code: 405, name: "Method Not Allowed", symbol: "Ma", cat: "4xx", desc: "The request method is not supported.", rfc: "RFC 9110" },
+    { code: 406, name: "Not Acceptable", symbol: "Nx", cat: "4xx", desc: "The server can't produce a matching response.", rfc: "RFC 9110" },
+    { code: 407, name: "Proxy Auth Required", symbol: "Pa", cat: "4xx", desc: "Authentication needs to be done by a proxy.", rfc: "RFC 9110" },
+    { code: 408, name: "Request Timeout", symbol: "Rt", cat: "4xx", desc: "The server would like to shut down this unused connection.", rfc: "RFC 9110" },
+    { code: 409, name: "Conflict", symbol: "Cf", cat: "4xx", desc: "The request conflicts with server state.", rfc: "RFC 9110" },
+    { code: 410, name: "Gone", symbol: "Gn", cat: "4xx", desc: "The content has been permanently deleted.", rfc: "RFC 9110" },
+    { code: 411, name: "Length Required", symbol: "Lr", cat: "4xx", desc: "Content-Length header is not defined.", rfc: "RFC 9110" },
+    { code: 412, name: "Precondition Failed", symbol: "Pf", cat: "4xx", desc: "Preconditions not met.", rfc: "RFC 9110" },
+    { code: 413, name: "Content Too Large", symbol: "Tl", cat: "4xx", desc: "Request entity too large.", rfc: "RFC 9110" },
+    { code: 414, name: "URI Too Long", symbol: "Ul", cat: "4xx", desc: "URI too long.", rfc: "RFC 9110" },
+    { code: 415, name: "Unsupported Media", symbol: "Um", cat: "4xx", desc: "Media format not supported.", rfc: "RFC 9110" },
+    { code: 416, name: "Range Not Satisfiable", symbol: "Rn", cat: "4xx", desc: "Range can't be fulfilled.", rfc: "RFC 9110" },
+    { code: 417, name: "Expectation Failed", symbol: "Ef", cat: "4xx", desc: "Expect header can't be met.", rfc: "RFC 9110" },
+    { code: 418, name: "I'm a Teapot", symbol: "Tp", cat: "4xx", desc: "An April Fools' joke that became beloved.", rfc: "RFC 2324" },
+    { code: 421, name: "Misdirected", symbol: "Mr", cat: "4xx", desc: "Request directed at wrong server.", rfc: "RFC 9110" },
+    { code: 422, name: "Unprocessable", symbol: "Uc", cat: "4xx", desc: "Well-formed but semantically erroneous.", rfc: "RFC 9110" },
+    { code: 423, name: "Locked", symbol: "Lk", cat: "4xx", desc: "Resource is locked.", rfc: "RFC 4918" },
+    { code: 424, name: "Failed Dependency", symbol: "Dp", cat: "4xx", desc: "Failed due to previous request.", rfc: "RFC 4918" },
+    { code: 425, name: "Too Early", symbol: "Te", cat: "4xx", desc: "Won't risk replay.", rfc: "RFC 8470" },
+    { code: 426, name: "Upgrade Required", symbol: "Ur", cat: "4xx", desc: "Refuses current protocol.", rfc: "RFC 9110" },
+    { code: 428, name: "Precondition Req'd", symbol: "Pq", cat: "4xx", desc: "Requires conditional requests.", rfc: "RFC 6585" },
+    { code: 429, name: "Too Many Requests", symbol: "Tm", cat: "4xx", desc: "Rate limited.", rfc: "RFC 6585" },
+    { code: 431, name: "Headers Too Large", symbol: "Hl", cat: "4xx", desc: "Header fields too large.", rfc: "RFC 6585" },
+    { code: 451, name: "Legal Reasons", symbol: "Lg", cat: "4xx", desc: "Unavailable for legal reasons.", rfc: "RFC 7725" },
+    { code: 500, name: "Internal Error", symbol: "Is", cat: "5xx", desc: "Unhandled server exception.", rfc: "RFC 9110" },
+    { code: 501, name: "Not Implemented", symbol: "Ni", cat: "5xx", desc: "Method not supported.", rfc: "RFC 9110" },
+    { code: 502, name: "Bad Gateway", symbol: "Bg", cat: "5xx", desc: "Invalid upstream response.", rfc: "RFC 9110" },
+    { code: 503, name: "Service Unavailable", symbol: "Su", cat: "5xx", desc: "Server not ready.", rfc: "RFC 9110" },
+    { code: 504, name: "Gateway Timeout", symbol: "Gt", cat: "5xx", desc: "Gateway timed out.", rfc: "RFC 9110" },
+    { code: 505, name: "HTTP Ver. Unsupported", symbol: "Hv", cat: "5xx", desc: "HTTP version not supported.", rfc: "RFC 9110" },
+    { code: 506, name: "Variant Negotiates", symbol: "Vn", cat: "5xx", desc: "Internal config error.", rfc: "RFC 2295" },
+    { code: 507, name: "Insufficient Storage", symbol: "St", cat: "5xx", desc: "Can't store the representation.", rfc: "RFC 4918" },
+    { code: 508, name: "Loop Detected", symbol: "Ld", cat: "5xx", desc: "Infinite loop detected.", rfc: "RFC 5842" },
+    { code: 510, name: "Not Extended", symbol: "Ne", cat: "5xx", desc: "Further extensions required.", rfc: "RFC 2774" },
+    { code: 511, name: "Network Auth Req'd", symbol: "Nr", cat: "5xx", desc: "Client needs network authentication.", rfc: "RFC 6585" },
+];
+
+const CAT_COLORS = { '1xx': '#58a6ff', '2xx': '#3fb950', '3xx': '#d29922', '4xx': '#ff7b72', '5xx': '#bc8cff' };
+const CAT_LABELS = { '1xx': 'Informational', '2xx': 'Success', '3xx': 'Redirection', '4xx': 'Client Error', '5xx': 'Server Error' };
+
+// Rarity assignments
+const RARITY_MAP = {
+    // Common
+    200: 'common', 301: 'common', 404: 'common', 400: 'common', 500: 'common',
+    302: 'common', 304: 'common', 401: 'common', 403: 'common', 502: 'common',
+    503: 'common', 504: 'common',
+    // Uncommon
+    100: 'uncommon', 101: 'uncommon', 201: 'uncommon', 202: 'uncommon',
+    204: 'uncommon', 303: 'uncommon', 307: 'uncommon', 308: 'uncommon',
+    405: 'uncommon', 408: 'uncommon', 409: 'uncommon', 410: 'uncommon',
+    413: 'uncommon', 415: 'uncommon', 422: 'uncommon', 429: 'uncommon',
+    501: 'uncommon',
+    // Rare
+    103: 'rare', 203: 'rare', 206: 'rare', 207: 'rare', 300: 'rare',
+    305: 'rare', 402: 'rare', 406: 'rare', 407: 'rare', 411: 'rare',
+    412: 'rare', 414: 'rare', 416: 'rare', 417: 'rare', 418: 'rare',
+    421: 'rare', 423: 'rare', 424: 'rare', 425: 'rare', 426: 'rare',
+    428: 'rare', 431: 'rare', 505: 'rare', 506: 'rare', 507: 'rare',
+    510: 'rare', 511: 'rare',
+    // Mythic Rare
+    205: 'mythic', 208: 'mythic', 226: 'mythic', 451: 'mythic', 508: 'mythic',
+};
+
+const RARITY_LABELS = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', mythic: 'Mythic Rare' };
+
+// ===== GENERATE ART SVG PATTERNS =====
+function generateArtSVG(code, cat, color) {
+    const seed = code * 7 + 13;
+    const parts = [];
+    const w = 300, h = 180;
+
+    // Background gradient
+    parts.push('<defs>');
+    parts.push('<radialGradient id="bg' + code + '" cx="50%" cy="50%" r="70%">');
+    parts.push('<stop offset="0%" stop-color="' + color + '" stop-opacity="0.25"/>');
+    parts.push('<stop offset="100%" stop-color="' + color + '" stop-opacity="0.02"/>');
+    parts.push('</radialGradient></defs>');
+    parts.push('<rect width="' + w + '" height="' + h + '" fill="url(#bg' + code + ')"/>');
+
+    // Category-specific pattern
+    var numShapes = 5 + (seed % 4);
+    for (var i = 0; i < numShapes; i++) {
+        var x = ((seed * (i + 1) * 37) % w);
+        var y = ((seed * (i + 1) * 23) % h);
+        var size = 10 + ((seed * (i + 1)) % 30);
+        var opacity = 0.05 + ((seed * i) % 15) / 100;
+
+        if (cat === '1xx') {
+            parts.push('<circle cx="' + x + '" cy="' + y + '" r="' + size + '" fill="none" stroke="' + color + '" stroke-opacity="' + opacity + '" stroke-width="1.5"/>');
+        } else if (cat === '2xx') {
+            parts.push('<rect x="' + x + '" y="' + y + '" width="' + size + '" height="' + size + '" fill="' + color + '" fill-opacity="' + opacity + '" transform="rotate(45 ' + (x + size/2) + ' ' + (y + size/2) + ')"/>');
+        } else if (cat === '3xx') {
+            parts.push('<polygon points="' + x + ',' + y + ' ' + (x+size) + ',' + (y+size/2) + ' ' + x + ',' + (y+size) + '" fill="' + color + '" fill-opacity="' + opacity + '"/>');
+        } else if (cat === '4xx') {
+            parts.push('<line x1="' + x + '" y1="' + y + '" x2="' + (x+size) + '" y2="' + (y+size) + '" stroke="' + color + '" stroke-opacity="' + opacity + '" stroke-width="2"/>');
+            parts.push('<line x1="' + (x+size) + '" y1="' + y + '" x2="' + x + '" y2="' + (y+size) + '" stroke="' + color + '" stroke-opacity="' + opacity + '" stroke-width="2"/>');
+        } else {
+            var mid = size / 2;
+            parts.push('<polyline points="' + x + ',' + y + ' ' + (x+mid) + ',' + (y+mid) + ' ' + x + ',' + (y+mid) + ' ' + (x+mid) + ',' + (y+size) + '" fill="none" stroke="' + color + '" stroke-opacity="' + opacity + '" stroke-width="2"/>');
+        }
+    }
+
+    // Central orb
+    parts.push('<circle cx="' + (w/2) + '" cy="' + (h/2) + '" r="25" fill="' + color + '" fill-opacity="0.08"/>');
+    parts.push('<circle cx="' + (w/2) + '" cy="' + (h/2) + '" r="18" fill="' + color + '" fill-opacity="0.06"/>');
+    parts.push('<circle cx="' + (w/2) + '" cy="' + (h/2) + '" r="10" fill="' + color + '" fill-opacity="0.12"/>');
+
+    return '<svg viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">' + parts.join('') + '</svg>';
+}
+
+// ===== BUILD CARDS =====
+var grid = document.getElementById('cardGrid');
+
+function getRarity(code) {
+    return RARITY_MAP[code] || 'common';
+}
+
+function buildCardDOM(sc, index, isModal) {
+    var color = CAT_COLORS[sc.cat];
+    var rarity = getRarity(sc.code);
+    var rarityLabel = RARITY_LABELS[rarity];
+    var catLabel = CAT_LABELS[sc.cat];
+
+    // Card border
+    var borderDiv = document.createElement('div');
+    borderDiv.className = 'card-border';
+
+    // Card inner
+    var innerDiv = document.createElement('div');
+    innerDiv.className = 'card-inner';
+
+    // Header
+    var headerDiv = document.createElement('div');
+    headerDiv.className = 'card-header';
+    var nameSpan = document.createElement('span');
+    nameSpan.className = 'card-name';
+    nameSpan.textContent = sc.name;
+    var codeSpan = document.createElement('span');
+    codeSpan.className = 'card-code';
+    codeSpan.textContent = sc.code;
+    headerDiv.appendChild(nameSpan);
+    headerDiv.appendChild(codeSpan);
+
+    // Art area
+    var artDiv = document.createElement('div');
+    artDiv.className = 'card-art';
+    var artBg = document.createElement('div');
+    artBg.className = 'card-art-bg';
+    // We need to insert the SVG - this is trusted content generated by our own code
+    var svgMarkup = generateArtSVG(sc.code, sc.cat, color);
+    var parser = new DOMParser();
+    var svgDoc = parser.parseFromString(svgMarkup, 'image/svg+xml');
+    var svgElement = svgDoc.documentElement;
+    artBg.appendChild(svgElement);
+
+    var artSymbol = document.createElement('div');
+    artSymbol.className = 'card-art-symbol';
+    artSymbol.textContent = sc.symbol;
+    artDiv.appendChild(artBg);
+    artDiv.appendChild(artSymbol);
+
+    // Type bar
+    var typeBar = document.createElement('div');
+    typeBar.className = 'card-type-bar';
+    var typeLabel = document.createElement('span');
+    typeLabel.className = 'card-type-label';
+    typeLabel.textContent = catLabel;
+    var rarityLabelSpan = document.createElement('span');
+    rarityLabelSpan.className = 'card-rarity-label';
+    var gem = document.createElement('span');
+    gem.className = 'rarity-gem ' + rarity;
+    rarityLabelSpan.appendChild(gem);
+    rarityLabelSpan.appendChild(document.createTextNode(' ' + rarityLabel));
+    typeBar.appendChild(typeLabel);
+    typeBar.appendChild(rarityLabelSpan);
+
+    // Description
+    var descDiv = document.createElement('div');
+    descDiv.className = 'card-desc';
+    descDiv.textContent = '"' + sc.desc + '"';
+
+    // Footer
+    var footerDiv = document.createElement('div');
+    footerDiv.className = 'card-footer';
+    var rfcSpan = document.createElement('span');
+    rfcSpan.className = 'card-rfc';
+    rfcSpan.textContent = sc.rfc;
+    var setSpan = document.createElement('span');
+    setSpan.className = 'card-set-number';
+    setSpan.textContent = (index + 1) + ' / ' + STATUS_CODES.length;
+    footerDiv.appendChild(rfcSpan);
+    footerDiv.appendChild(setSpan);
+
+    // Assemble inner
+    innerDiv.appendChild(headerDiv);
+    innerDiv.appendChild(artDiv);
+    innerDiv.appendChild(typeBar);
+    innerDiv.appendChild(descDiv);
+    innerDiv.appendChild(footerDiv);
+
+    return { borderDiv: borderDiv, innerDiv: innerDiv };
+}
+
+STATUS_CODES.forEach(function(sc, i) {
+    var sleeve = document.createElement('div');
+    sleeve.className = 'card-sleeve';
+    sleeve.dataset.cat = sc.cat;
+    sleeve.dataset.rarity = getRarity(sc.code);
+    sleeve.dataset.index = i;
+
+    var card = document.createElement('div');
+    var color = CAT_COLORS[sc.cat];
+    var rarity = getRarity(sc.code);
+    card.className = 'trading-card rarity-' + rarity;
+    card.style.setProperty('--cat-color', color);
+
+    var parts = buildCardDOM(sc, i, false);
+    card.appendChild(parts.borderDiv);
+    card.appendChild(parts.innerDiv);
+
+    sleeve.appendChild(card);
+    grid.appendChild(sleeve);
+
+    // Click to zoom
+    sleeve.addEventListener('click', function() { openModal(sc, i); });
+});
+
+// ===== MODAL =====
+var modal = document.getElementById('modal');
+var modalCard = document.getElementById('modalCard');
+var modalClose = document.getElementById('modalClose');
+
+function openModal(sc, index) {
+    var color = CAT_COLORS[sc.cat];
+    var rarity = getRarity(sc.code);
+    modalCard.className = 'modal-card trading-card rarity-' + rarity;
+    modalCard.style.setProperty('--cat-color', color);
+
+    // Clear existing content
+    while (modalCard.firstChild) {
+        modalCard.removeChild(modalCard.firstChild);
+    }
+
+    var parts = buildCardDOM(sc, index, true);
+    modalCard.appendChild(parts.borderDiv);
+    modalCard.appendChild(parts.innerDiv);
+
+    modal.classList.add('visible');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    modal.classList.remove('visible');
+    document.body.style.overflow = '';
+}
+
+modalClose.addEventListener('click', closeModal);
+modal.addEventListener('click', function(e) {
+    if (e.target === modal) closeModal();
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+});
+
+// ===== FILTERING =====
+var activeCat = 'all';
+var activeRarity = 'all';
+
+document.getElementById('catFilters').addEventListener('click', function(e) {
+    if (!e.target.classList.contains('filter-btn')) return;
+    var btns = document.querySelectorAll('#catFilters .filter-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+    e.target.classList.add('active');
+    activeCat = e.target.dataset.cat;
+    filterCards();
+});
+
+document.getElementById('rarityFilters').addEventListener('click', function(e) {
+    if (!e.target.classList.contains('filter-btn')) return;
+    var btns = document.querySelectorAll('#rarityFilters .filter-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+    e.target.classList.add('active');
+    activeRarity = e.target.dataset.rarity;
+    filterCards();
+});
+
+function filterCards() {
+    var visible = 0;
+    var sleeves = document.querySelectorAll('.card-sleeve');
+    for (var i = 0; i < sleeves.length; i++) {
+        var sleeve = sleeves[i];
+        var catMatch = activeCat === 'all' || sleeve.dataset.cat === activeCat;
+        var rarityMatch = activeRarity === 'all' || sleeve.dataset.rarity === activeRarity;
+        if (catMatch && rarityMatch) {
+            sleeve.classList.remove('hidden');
+            visible++;
+        } else {
+            sleeve.classList.add('hidden');
+        }
+    }
+    document.getElementById('visibleCount').textContent = visible;
+}
+
+// ===== 3D TILT ON HOVER =====
+var allCards = document.querySelectorAll('.card-sleeve .trading-card');
+for (var c = 0; c < allCards.length; c++) {
+    (function(card) {
+        card.addEventListener('mousemove', function(e) {
+            var rect = card.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            var centerX = rect.width / 2;
+            var centerY = rect.height / 2;
+            var rotateX = ((y - centerY) / centerY) * -8;
+            var rotateY = ((x - centerX) / centerX) * 8;
+            card.style.transform = 'translateY(-10px) rotateX(' + rotateX + 'deg) rotateY(' + rotateY + 'deg) scale(1.04)';
+        });
+
+        card.addEventListener('mouseleave', function() {
+            card.style.transform = '';
+        });
+    })(allCards[c]);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1024">
+<title>HTTP Status Codes - Compact Matrix</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 1024px;
+    height: 768px;
+    max-height: 768px;
+    overflow: hidden;
+    background: #0d1117;
+    color: #c9d1d9;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    width: 1024px;
+    height: 768px;
+    overflow: hidden;
+  }
+
+  /* ── Top Bar ── */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    border-bottom: 1px solid #21262d;
+    flex-shrink: 0;
+    height: 48px;
+  }
+
+  .top-bar h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 600;
+    color: #e6edf3;
+    letter-spacing: -0.3px;
+  }
+
+  .top-bar h1 span {
+    color: #58a6ff;
+  }
+
+  .search-box {
+    position: relative;
+  }
+
+  .search-box input {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    color: #c9d1d9;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    padding: 6px 10px 6px 28px;
+    width: 200px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-box input:focus {
+    border-color: #58a6ff;
+  }
+
+  .search-box input::placeholder {
+    color: #484f58;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #484f58;
+    font-size: 12px;
+    pointer-events: none;
+  }
+
+  /* ── Main Layout ── */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  /* ── Grid Panel ── */
+  .grid-panel {
+    width: 65%;
+    padding: 12px 10px 10px 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .cat-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+  }
+
+  .cat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    width: 36px;
+    min-width: 36px;
+    padding-top: 5px;
+    text-align: right;
+    padding-right: 8px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .cat-tiles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+
+  .tile {
+    width: 46px;
+    height: 44px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: all 0.15s ease;
+    position: relative;
+    user-select: none;
+  }
+
+  .tile .tile-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .tile .tile-symbol {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    font-weight: 400;
+    opacity: 0.6;
+    line-height: 1;
+    margin-top: 2px;
+  }
+
+  .tile:hover {
+    transform: scale(1.08);
+    z-index: 2;
+  }
+
+  .tile.active {
+    transform: scale(1.08);
+    z-index: 2;
+  }
+
+  .tile.active .tile-code,
+  .tile.active .tile-symbol {
+    color: #fff !important;
+    opacity: 1 !important;
+  }
+
+  .tile.dimmed {
+    opacity: 0.2;
+  }
+
+  /* ── Detail Panel ── */
+  .detail-panel {
+    width: 35%;
+    border-left: 1px solid #21262d;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .detail-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .detail-empty .empty-icon {
+    font-size: 48px;
+    opacity: 0.15;
+  }
+
+  .detail-empty p {
+    color: #484f58;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .detail-empty .hint {
+    font-size: 11px;
+    color: #30363d;
+  }
+
+  .detail-content {
+    display: none;
+    flex-direction: column;
+    gap: 16px;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .detail-content.visible {
+    display: flex;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .detail-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .detail-code-box {
+    width: 88px;
+    height: 88px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .detail-code-box .big-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 32px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+  }
+
+  .detail-code-box .big-symbol {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.7);
+    margin-top: 4px;
+  }
+
+  .detail-title-area {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 4px;
+    min-width: 0;
+  }
+
+  .detail-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e6edf3;
+    line-height: 1.2;
+    word-wrap: break-word;
+  }
+
+  .detail-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: fit-content;
+  }
+
+  .detail-badge .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .detail-divider {
+    height: 1px;
+    background: #21262d;
+  }
+
+  .detail-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .detail-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #484f58;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .detail-desc {
+    font-size: 14px;
+    color: #c9d1d9;
+    line-height: 1.5;
+  }
+
+  .detail-rfc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #8b949e;
+    padding: 8px 12px;
+    background: #161b22;
+    border-radius: 6px;
+    border: 1px solid #21262d;
+  }
+
+  /* ── Category Legend (bottom of detail panel) ── */
+  .detail-legend {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid #21262d;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .legend-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: #484f58;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: background 0.15s;
+  }
+
+  .legend-row:hover {
+    background: #161b22;
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .legend-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    width: 24px;
+  }
+
+  .legend-label {
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <h1><span>HTTP</span> Status Codes</h1>
+    <div class="search-box">
+      <svg class="search-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="searchInput" placeholder="Search codes or names..." />
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <!-- Grid Panel -->
+    <div class="grid-panel" id="gridPanel"></div>
+
+    <!-- Detail Panel -->
+    <div class="detail-panel">
+      <div class="detail-empty" id="detailEmpty">
+        <div class="empty-icon">{ }</div>
+        <p>Select a status code</p>
+        <span class="hint">Click any tile to view details</span>
+      </div>
+      <div class="detail-content" id="detailContent">
+        <div class="detail-header">
+          <div class="detail-code-box" id="detailCodeBox">
+            <div class="big-code" id="detailCode"></div>
+            <div class="big-symbol" id="detailSymbol"></div>
+          </div>
+          <div class="detail-title-area">
+            <div class="detail-name" id="detailName"></div>
+            <div class="detail-badge" id="detailBadge">
+              <span class="dot" id="detailDot"></span>
+              <span id="detailCatLabel"></span>
+            </div>
+          </div>
+        </div>
+        <div class="detail-divider"></div>
+        <div class="detail-section">
+          <div class="detail-section-label">Description</div>
+          <div class="detail-desc" id="detailDesc"></div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-label">Specification</div>
+          <div class="detail-rfc" id="detailRfc"></div>
+        </div>
+      </div>
+      <div class="detail-legend" id="detailLegend"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STATUS_CODES = [
+    { code: 100, name: "Continue", symbol: "Cn", cat: "1xx", desc: "Server received headers, proceed to send body.", rfc: "RFC 9110" },
+    { code: 101, name: "Switching Protocols", symbol: "Sw", cat: "1xx", desc: "Server switching protocols via Upgrade header.", rfc: "RFC 9110" },
+    { code: 103, name: "Early Hints", symbol: "Eh", cat: "1xx", desc: "Early response headers before final message.", rfc: "RFC 8297" },
+    { code: 200, name: "OK", symbol: "Ok", cat: "2xx", desc: "Request succeeded.", rfc: "RFC 9110" },
+    { code: 201, name: "Created", symbol: "Cr", cat: "2xx", desc: "New resource created.", rfc: "RFC 9110" },
+    { code: 202, name: "Accepted", symbol: "Ac", cat: "2xx", desc: "Accepted, processing not complete.", rfc: "RFC 9110" },
+    { code: 203, name: "Non-Authoritative", symbol: "Na", cat: "2xx", desc: "Metadata from transforming proxy.", rfc: "RFC 9110" },
+    { code: 204, name: "No Content", symbol: "Nc", cat: "2xx", desc: "No additional content.", rfc: "RFC 9110" },
+    { code: 205, name: "Reset Content", symbol: "Rc", cat: "2xx", desc: "Reset the document view.", rfc: "RFC 9110" },
+    { code: 206, name: "Partial Content", symbol: "Pc", cat: "2xx", desc: "Partial resource delivery.", rfc: "RFC 9110" },
+    { code: 207, name: "Multi-Status", symbol: "Ms", cat: "2xx", desc: "WebDAV multiple resources.", rfc: "RFC 4918" },
+    { code: 208, name: "Already Reported", symbol: "Ar", cat: "2xx", desc: "WebDAV binding enumerated.", rfc: "RFC 5842" },
+    { code: 226, name: "IM Used", symbol: "Im", cat: "2xx", desc: "Instance-manipulations applied.", rfc: "RFC 3229" },
+    { code: 300, name: "Multiple Choices", symbol: "Mc", cat: "3xx", desc: "Multiple possible responses.", rfc: "RFC 9110" },
+    { code: 301, name: "Moved Permanently", symbol: "Mp", cat: "3xx", desc: "URL changed permanently.", rfc: "RFC 9110" },
+    { code: 302, name: "Found", symbol: "Fd", cat: "3xx", desc: "URI changed temporarily.", rfc: "RFC 9110" },
+    { code: 303, name: "See Other", symbol: "So", cat: "3xx", desc: "Redirect via GET.", rfc: "RFC 9110" },
+    { code: 304, name: "Not Modified", symbol: "Nm", cat: "3xx", desc: "Use cached version.", rfc: "RFC 9110" },
+    { code: 305, name: "Use Proxy", symbol: "Up", cat: "3xx", desc: "Deprecated.", rfc: "Deprecated" },
+    { code: 307, name: "Temporary Redirect", symbol: "Tr", cat: "3xx", desc: "Same method redirect.", rfc: "RFC 9110" },
+    { code: 308, name: "Permanent Redirect", symbol: "Pr", cat: "3xx", desc: "Permanent, same method.", rfc: "RFC 9110" },
+    { code: 400, name: "Bad Request", symbol: "Br", cat: "4xx", desc: "Client error.", rfc: "RFC 9110" },
+    { code: 401, name: "Unauthorized", symbol: "Un", cat: "4xx", desc: "Authentication required.", rfc: "RFC 9110" },
+    { code: 402, name: "Payment Required", symbol: "Py", cat: "4xx", desc: "Reserved.", rfc: "RFC 9110" },
+    { code: 403, name: "Forbidden", symbol: "Fb", cat: "4xx", desc: "No access rights.", rfc: "RFC 9110" },
+    { code: 404, name: "Not Found", symbol: "Nf", cat: "4xx", desc: "Resource not found.", rfc: "RFC 9110" },
+    { code: 405, name: "Method Not Allowed", symbol: "Ma", cat: "4xx", desc: "Method not supported.", rfc: "RFC 9110" },
+    { code: 406, name: "Not Acceptable", symbol: "Nx", cat: "4xx", desc: "Can't match Accept headers.", rfc: "RFC 9110" },
+    { code: 407, name: "Proxy Auth Required", symbol: "Pa", cat: "4xx", desc: "Proxy auth needed.", rfc: "RFC 9110" },
+    { code: 408, name: "Request Timeout", symbol: "Rt", cat: "4xx", desc: "Connection timed out.", rfc: "RFC 9110" },
+    { code: 409, name: "Conflict", symbol: "Cf", cat: "4xx", desc: "Conflicts with server state.", rfc: "RFC 9110" },
+    { code: 410, name: "Gone", symbol: "Gn", cat: "4xx", desc: "Permanently deleted.", rfc: "RFC 9110" },
+    { code: 411, name: "Length Required", symbol: "Lr", cat: "4xx", desc: "Content-Length required.", rfc: "RFC 9110" },
+    { code: 412, name: "Precondition Failed", symbol: "Pf", cat: "4xx", desc: "Preconditions not met.", rfc: "RFC 9110" },
+    { code: 413, name: "Content Too Large", symbol: "Tl", cat: "4xx", desc: "Entity too large.", rfc: "RFC 9110" },
+    { code: 414, name: "URI Too Long", symbol: "Ul", cat: "4xx", desc: "URI too long.", rfc: "RFC 9110" },
+    { code: 415, name: "Unsupported Media", symbol: "Um", cat: "4xx", desc: "Media not supported.", rfc: "RFC 9110" },
+    { code: 416, name: "Range Not Satisfiable", symbol: "Rn", cat: "4xx", desc: "Range can't be fulfilled.", rfc: "RFC 9110" },
+    { code: 417, name: "Expectation Failed", symbol: "Ef", cat: "4xx", desc: "Expect can't be met.", rfc: "RFC 9110" },
+    { code: 418, name: "I'm a Teapot", symbol: "Tp", cat: "4xx", desc: "April Fools' Easter egg.", rfc: "RFC 2324" },
+    { code: 421, name: "Misdirected", symbol: "Mr", cat: "4xx", desc: "Wrong server.", rfc: "RFC 9110" },
+    { code: 422, name: "Unprocessable", symbol: "Uc", cat: "4xx", desc: "Semantically erroneous.", rfc: "RFC 9110" },
+    { code: 423, name: "Locked", symbol: "Lk", cat: "4xx", desc: "Resource locked.", rfc: "RFC 4918" },
+    { code: 424, name: "Failed Dependency", symbol: "Dp", cat: "4xx", desc: "Previous request failed.", rfc: "RFC 4918" },
+    { code: 425, name: "Too Early", symbol: "Te", cat: "4xx", desc: "Won't risk replay.", rfc: "RFC 8470" },
+    { code: 426, name: "Upgrade Required", symbol: "Ur", cat: "4xx", desc: "Protocol upgrade needed.", rfc: "RFC 9110" },
+    { code: 428, name: "Precondition Req'd", symbol: "Pq", cat: "4xx", desc: "Conditional requests required.", rfc: "RFC 6585" },
+    { code: 429, name: "Too Many Requests", symbol: "Tm", cat: "4xx", desc: "Rate limited.", rfc: "RFC 6585" },
+    { code: 431, name: "Headers Too Large", symbol: "Hl", cat: "4xx", desc: "Headers too large.", rfc: "RFC 6585" },
+    { code: 451, name: "Legal Reasons", symbol: "Lg", cat: "4xx", desc: "Legal restrictions.", rfc: "RFC 7725" },
+    { code: 500, name: "Internal Error", symbol: "Is", cat: "5xx", desc: "Unhandled exception.", rfc: "RFC 9110" },
+    { code: 501, name: "Not Implemented", symbol: "Ni", cat: "5xx", desc: "Method not supported.", rfc: "RFC 9110" },
+    { code: 502, name: "Bad Gateway", symbol: "Bg", cat: "5xx", desc: "Invalid upstream response.", rfc: "RFC 9110" },
+    { code: 503, name: "Service Unavailable", symbol: "Su", cat: "5xx", desc: "Server not ready.", rfc: "RFC 9110" },
+    { code: 504, name: "Gateway Timeout", symbol: "Gt", cat: "5xx", desc: "Gateway timed out.", rfc: "RFC 9110" },
+    { code: 505, name: "HTTP Ver. Unsupported", symbol: "Hv", cat: "5xx", desc: "HTTP version unsupported.", rfc: "RFC 9110" },
+    { code: 506, name: "Variant Negotiates", symbol: "Vn", cat: "5xx", desc: "Config error.", rfc: "RFC 2295" },
+    { code: 507, name: "Insufficient Storage", symbol: "St", cat: "5xx", desc: "Can't store.", rfc: "RFC 4918" },
+    { code: 508, name: "Loop Detected", symbol: "Ld", cat: "5xx", desc: "Infinite loop.", rfc: "RFC 5842" },
+    { code: 510, name: "Not Extended", symbol: "Ne", cat: "5xx", desc: "Extensions required.", rfc: "RFC 2774" },
+    { code: 511, name: "Network Auth Req'd", symbol: "Nr", cat: "5xx", desc: "Network auth needed.", rfc: "RFC 6585" },
+];
+const CAT_COLORS = { '1xx': '#58a6ff', '2xx': '#3fb950', '3xx': '#d29922', '4xx': '#ff7b72', '5xx': '#bc8cff' };
+const CAT_LABELS = { '1xx': 'Informational', '2xx': 'Success', '3xx': 'Redirection', '4xx': 'Client Error', '5xx': 'Server Error' };
+
+const categories = ['1xx', '2xx', '3xx', '4xx', '5xx'];
+let selectedCode = null;
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return { r, g, b };
+}
+
+function buildGrid() {
+  const grid = document.getElementById('gridPanel');
+  // Clear children safely
+  while (grid.firstChild) grid.removeChild(grid.firstChild);
+
+  categories.forEach(cat => {
+    const codes = STATUS_CODES.filter(s => s.cat === cat);
+    const color = CAT_COLORS[cat];
+    const rgb = hexToRgb(color);
+
+    const row = document.createElement('div');
+    row.className = 'cat-row';
+
+    const label = document.createElement('div');
+    label.className = 'cat-label';
+    label.style.color = color;
+    label.textContent = cat;
+    row.appendChild(label);
+
+    const tilesWrap = document.createElement('div');
+    tilesWrap.className = 'cat-tiles';
+
+    codes.forEach(sc => {
+      const tile = document.createElement('div');
+      tile.className = 'tile';
+      tile.dataset.code = sc.code;
+      tile.style.background = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.1)';
+      tile.style.borderColor = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.3)';
+
+      const codeEl = document.createElement('div');
+      codeEl.className = 'tile-code';
+      codeEl.style.color = color;
+      codeEl.textContent = sc.code;
+
+      const symEl = document.createElement('div');
+      symEl.className = 'tile-symbol';
+      symEl.style.color = color;
+      symEl.textContent = sc.symbol;
+
+      tile.appendChild(codeEl);
+      tile.appendChild(symEl);
+
+      tile.addEventListener('click', function() { selectCode(sc); });
+      tilesWrap.appendChild(tile);
+    });
+
+    row.appendChild(tilesWrap);
+    grid.appendChild(row);
+  });
+}
+
+function selectCode(sc) {
+  // Remove previous active
+  document.querySelectorAll('.tile.active').forEach(function(t) { t.classList.remove('active'); });
+
+  // Set active
+  const color = CAT_COLORS[sc.cat];
+  const rgb = hexToRgb(color);
+  const tile = document.querySelector('.tile[data-code="' + sc.code + '"]');
+  if (tile) {
+    tile.classList.add('active');
+    tile.style.background = color;
+    tile.style.borderColor = color;
+    tile.style.boxShadow = '0 0 12px rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.4)';
+  }
+
+  // Reset other tiles
+  document.querySelectorAll('.tile').forEach(function(t) {
+    if (t.dataset.code !== String(sc.code)) {
+      const c = STATUS_CODES.find(function(s) { return s.code === parseInt(t.dataset.code); });
+      if (c) {
+        const col = CAT_COLORS[c.cat];
+        const rgbC = hexToRgb(col);
+        t.style.background = 'rgba(' + rgbC.r + ',' + rgbC.g + ',' + rgbC.b + ',0.1)';
+        t.style.borderColor = 'rgba(' + rgbC.r + ',' + rgbC.g + ',' + rgbC.b + ',0.3)';
+        t.style.boxShadow = 'none';
+      }
+    }
+  });
+
+  // Update detail
+  document.getElementById('detailEmpty').style.display = 'none';
+  var content = document.getElementById('detailContent');
+  content.classList.add('visible');
+
+  // Re-trigger animation
+  content.style.animation = 'none';
+  content.offsetHeight;
+  content.style.animation = '';
+
+  document.getElementById('detailCode').textContent = sc.code;
+  document.getElementById('detailSymbol').textContent = sc.symbol;
+  document.getElementById('detailName').textContent = sc.name;
+  document.getElementById('detailDesc').textContent = sc.desc;
+  document.getElementById('detailRfc').textContent = sc.rfc;
+
+  var box = document.getElementById('detailCodeBox');
+  box.style.background = color;
+  box.style.boxShadow = '0 4px 20px rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.3)';
+
+  var badge = document.getElementById('detailBadge');
+  badge.style.background = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.15)';
+  badge.style.color = color;
+
+  document.getElementById('detailDot').style.background = color;
+  document.getElementById('detailCatLabel').textContent = sc.cat + ' ' + CAT_LABELS[sc.cat];
+
+  selectedCode = sc.code;
+}
+
+function buildLegend() {
+  var legend = document.getElementById('detailLegend');
+  while (legend.firstChild) legend.removeChild(legend.firstChild);
+
+  categories.forEach(function(cat) {
+    var row = document.createElement('div');
+    row.className = 'legend-row';
+
+    var dot = document.createElement('div');
+    dot.className = 'legend-dot';
+    dot.style.background = CAT_COLORS[cat];
+
+    var code = document.createElement('span');
+    code.className = 'legend-code';
+    code.style.color = CAT_COLORS[cat];
+    code.textContent = cat;
+
+    var label = document.createElement('span');
+    label.className = 'legend-label';
+    label.textContent = CAT_LABELS[cat];
+
+    var count = document.createElement('span');
+    count.style.marginLeft = 'auto';
+    count.style.color = '#30363d';
+    count.style.fontSize = '9px';
+    count.style.fontFamily = "'JetBrains Mono', monospace";
+    count.textContent = STATUS_CODES.filter(function(s) { return s.cat === cat; }).length;
+
+    row.appendChild(dot);
+    row.appendChild(code);
+    row.appendChild(label);
+    row.appendChild(count);
+
+    row.addEventListener('click', function() {
+      var first = STATUS_CODES.find(function(s) { return s.cat === cat; });
+      if (first) selectCode(first);
+    });
+
+    legend.appendChild(row);
+  });
+}
+
+// Search
+document.getElementById('searchInput').addEventListener('input', function() {
+  var q = this.value.toLowerCase().trim();
+  var tiles = document.querySelectorAll('.tile');
+
+  if (!q) {
+    tiles.forEach(function(t) { t.classList.remove('dimmed'); });
+    return;
+  }
+
+  tiles.forEach(function(t) {
+    var sc = STATUS_CODES.find(function(s) { return s.code === parseInt(t.dataset.code); });
+    if (!sc) return;
+    var match = String(sc.code).indexOf(q) !== -1 ||
+                sc.name.toLowerCase().indexOf(q) !== -1 ||
+                sc.symbol.toLowerCase().indexOf(q) !== -1 ||
+                sc.desc.toLowerCase().indexOf(q) !== -1;
+    if (match) {
+      t.classList.remove('dimmed');
+    } else {
+      t.classList.add('dimmed');
+    }
+  });
+});
+
+// Keyboard nav
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.getElementById('searchInput').value = '';
+    document.querySelectorAll('.tile').forEach(function(t) { t.classList.remove('dimmed'); });
+    document.getElementById('searchInput').blur();
+  }
+});
+
+// Init
+buildGrid();
+buildLegend();
+
+// Auto-select 200 OK for a nice default view
+selectCode(STATUS_CODES.find(function(s) { return s.code === 200; }));
+</script>
+</body>
+</html>

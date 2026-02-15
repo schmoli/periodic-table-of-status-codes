@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTTP Status Codes — Sunburst</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+}
+
+h1.title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 26px;
+    font-weight: 600;
+    color: #e6edf3;
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 4px;
+    letter-spacing: -0.5px;
+}
+
+h1.title span.dash {
+    color: #484f58;
+    margin: 0 6px;
+}
+
+h1.title span.accent {
+    background: linear-gradient(135deg, #58a6ff, #bc8cff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    font-size: 13px;
+    color: #484f58;
+    text-align: center;
+    margin-bottom: 8px;
+    font-family: 'Inter', sans-serif;
+}
+
+.chart-container {
+    position: relative;
+    width: 750px;
+    height: 750px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+svg#sunburst {
+    width: 750px;
+    height: 750px;
+}
+
+.center-detail {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    text-align: center;
+    transition: opacity 0.25s ease;
+}
+
+.center-detail .detail-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1;
+    transition: color 0.25s ease;
+}
+
+.center-detail .detail-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: #e6edf3;
+    margin-top: 6px;
+    max-width: 160px;
+    line-height: 1.2;
+}
+
+.center-detail .detail-desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: #8b949e;
+    margin-top: 5px;
+    max-width: 155px;
+    line-height: 1.3;
+}
+
+.center-detail .detail-rfc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: #484f58;
+    margin-top: 5px;
+}
+
+.center-detail.idle .detail-code {
+    font-size: 18px;
+    color: #484f58;
+}
+.center-detail.idle .detail-name {
+    font-size: 11px;
+    color: #30363d;
+}
+
+.legend {
+    display: flex;
+    gap: 28px;
+    margin-top: 6px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.legend-item:hover {
+    opacity: 0.85;
+}
+
+.legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+}
+
+.legend-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #8b949e;
+}
+
+.legend-label span {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: #484f58;
+    margin-left: 4px;
+}
+
+.arc-segment {
+    cursor: pointer;
+    transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.arc-segment:hover {
+    filter: brightness(1.3);
+}
+
+.inner-sector {
+    cursor: pointer;
+    transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.inner-sector:hover {
+    filter: brightness(1.2);
+}
+
+.dimmed {
+    opacity: 0.15 !important;
+}
+
+.highlighted {
+    opacity: 1 !important;
+    filter: brightness(1.3) drop-shadow(0 0 8px rgba(255,255,255,0.15));
+}
+
+.arc-label {
+    font-family: 'JetBrains Mono', monospace;
+    fill: #e6edf3;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.sector-label {
+    font-family: 'JetBrains Mono', monospace;
+    fill: #0d1117;
+    pointer-events: none;
+    font-weight: 700;
+}
+
+.grid-line {
+    stroke: #21262d;
+    stroke-width: 0.5;
+    fill: none;
+}
+
+.radial-grid {
+    stroke: #161b22;
+    stroke-width: 0.5;
+}
+
+.outer-cat-label {
+    font-family: 'Inter', sans-serif;
+    fill: #8b949e;
+    font-size: 13px;
+    font-weight: 500;
+    pointer-events: none;
+}
+</style>
+</head>
+<body>
+
+<h1 class="title">HTTP Status Codes<span class="dash">&mdash;</span><span class="accent">Sunburst</span></h1>
+<p class="subtitle">Hover over segments to explore status codes by category</p>
+
+<div class="chart-container">
+    <svg id="sunburst" viewBox="0 0 800 800"></svg>
+    <div class="center-detail idle" id="centerDetail">
+        <div class="detail-code" id="detailCode">HTTP</div>
+        <div class="detail-name" id="detailName">Hover a segment</div>
+        <div class="detail-desc" id="detailDesc"></div>
+        <div class="detail-rfc" id="detailRfc"></div>
+    </div>
+</div>
+
+<div class="legend" id="legend"></div>
+
+<script>
+const STATUS_CODES = [
+    { code: 100, name: "Continue", symbol: "Cn", cat: "1xx", desc: "The server has received the request headers and the client should proceed to send the request body.", rfc: "RFC 9110" },
+    { code: 101, name: "Switching Protocols", symbol: "Sw", cat: "1xx", desc: "The server is switching protocols as requested by the client via the Upgrade header.", rfc: "RFC 9110" },
+    { code: 103, name: "Early Hints", symbol: "Eh", cat: "1xx", desc: "Used to return some response headers before the final HTTP message.", rfc: "RFC 8297" },
+    { code: 200, name: "OK", symbol: "Ok", cat: "2xx", desc: "The request has succeeded.", rfc: "RFC 9110" },
+    { code: 201, name: "Created", symbol: "Cr", cat: "2xx", desc: "The request has been fulfilled and a new resource has been created.", rfc: "RFC 9110" },
+    { code: 202, name: "Accepted", symbol: "Ac", cat: "2xx", desc: "The request has been accepted for processing, but processing has not been completed.", rfc: "RFC 9110" },
+    { code: 203, name: "Non-Authoritative", symbol: "Na", cat: "2xx", desc: "The returned metadata is not exactly the same as available from the origin server.", rfc: "RFC 9110" },
+    { code: 204, name: "No Content", symbol: "Nc", cat: "2xx", desc: "The server has successfully fulfilled the request and there is no additional content.", rfc: "RFC 9110" },
+    { code: 205, name: "Reset Content", symbol: "Rc", cat: "2xx", desc: "The server has fulfilled the request and the user agent should reset the document view.", rfc: "RFC 9110" },
+    { code: 206, name: "Partial Content", symbol: "Pc", cat: "2xx", desc: "The server is delivering only part of the resource due to a Range header.", rfc: "RFC 9110" },
+    { code: 207, name: "Multi-Status", symbol: "Ms", cat: "2xx", desc: "A WebDAV response conveying information about multiple resources.", rfc: "RFC 4918" },
+    { code: 208, name: "Already Reported", symbol: "Ar", cat: "2xx", desc: "Used inside a WebDAV response to avoid enumerating internal members repeatedly.", rfc: "RFC 5842" },
+    { code: 226, name: "IM Used", symbol: "Im", cat: "2xx", desc: "The server has fulfilled a GET request with instance-manipulations applied.", rfc: "RFC 3229" },
+    { code: 300, name: "Multiple Choices", symbol: "Mc", cat: "3xx", desc: "The request has more than one possible response.", rfc: "RFC 9110" },
+    { code: 301, name: "Moved Permanently", symbol: "Mp", cat: "3xx", desc: "The URL of the requested resource has been changed permanently.", rfc: "RFC 9110" },
+    { code: 302, name: "Found", symbol: "Fd", cat: "3xx", desc: "The URI of the requested resource has been changed temporarily.", rfc: "RFC 9110" },
+    { code: 303, name: "See Other", symbol: "So", cat: "3xx", desc: "The server is redirecting to a different resource using GET.", rfc: "RFC 9110" },
+    { code: 304, name: "Not Modified", symbol: "Nm", cat: "3xx", desc: "The resource has not been modified since the version specified.", rfc: "RFC 9110" },
+    { code: 305, name: "Use Proxy", symbol: "Up", cat: "3xx", desc: "Deprecated.", rfc: "Deprecated" },
+    { code: 307, name: "Temporary Redirect", symbol: "Tr", cat: "3xx", desc: "Redirecting with same method.", rfc: "RFC 9110" },
+    { code: 308, name: "Permanent Redirect", symbol: "Pr", cat: "3xx", desc: "Permanently moved, same method.", rfc: "RFC 9110" },
+    { code: 400, name: "Bad Request", symbol: "Br", cat: "4xx", desc: "Client error.", rfc: "RFC 9110" },
+    { code: 401, name: "Unauthorized", symbol: "Un", cat: "4xx", desc: "Authentication required.", rfc: "RFC 9110" },
+    { code: 402, name: "Payment Required", symbol: "Py", cat: "4xx", desc: "Reserved for future use.", rfc: "RFC 9110" },
+    { code: 403, name: "Forbidden", symbol: "Fb", cat: "4xx", desc: "No access rights.", rfc: "RFC 9110" },
+    { code: 404, name: "Not Found", symbol: "Nf", cat: "4xx", desc: "Resource not found.", rfc: "RFC 9110" },
+    { code: 405, name: "Method Not Allowed", symbol: "Ma", cat: "4xx", desc: "Method not supported.", rfc: "RFC 9110" },
+    { code: 406, name: "Not Acceptable", symbol: "Nx", cat: "4xx", desc: "Can't produce matching response.", rfc: "RFC 9110" },
+    { code: 407, name: "Proxy Auth Required", symbol: "Pa", cat: "4xx", desc: "Proxy auth needed.", rfc: "RFC 9110" },
+    { code: 408, name: "Request Timeout", symbol: "Rt", cat: "4xx", desc: "Connection timed out.", rfc: "RFC 9110" },
+    { code: 409, name: "Conflict", symbol: "Cf", cat: "4xx", desc: "Conflicts with server state.", rfc: "RFC 9110" },
+    { code: 410, name: "Gone", symbol: "Gn", cat: "4xx", desc: "Permanently deleted.", rfc: "RFC 9110" },
+    { code: 411, name: "Length Required", symbol: "Lr", cat: "4xx", desc: "Content-Length required.", rfc: "RFC 9110" },
+    { code: 412, name: "Precondition Failed", symbol: "Pf", cat: "4xx", desc: "Preconditions not met.", rfc: "RFC 9110" },
+    { code: 413, name: "Content Too Large", symbol: "Tl", cat: "4xx", desc: "Entity too large.", rfc: "RFC 9110" },
+    { code: 414, name: "URI Too Long", symbol: "Ul", cat: "4xx", desc: "URI too long.", rfc: "RFC 9110" },
+    { code: 415, name: "Unsupported Media", symbol: "Um", cat: "4xx", desc: "Media not supported.", rfc: "RFC 9110" },
+    { code: 416, name: "Range Not Satisfiable", symbol: "Rn", cat: "4xx", desc: "Range can't be fulfilled.", rfc: "RFC 9110" },
+    { code: 417, name: "Expectation Failed", symbol: "Ef", cat: "4xx", desc: "Expect can't be met.", rfc: "RFC 9110" },
+    { code: 418, name: "I'm a Teapot", symbol: "Tp", cat: "4xx", desc: "April Fools' Easter egg.", rfc: "RFC 2324" },
+    { code: 421, name: "Misdirected", symbol: "Mr", cat: "4xx", desc: "Wrong server.", rfc: "RFC 9110" },
+    { code: 422, name: "Unprocessable", symbol: "Uc", cat: "4xx", desc: "Semantically erroneous.", rfc: "RFC 9110" },
+    { code: 423, name: "Locked", symbol: "Lk", cat: "4xx", desc: "Resource locked.", rfc: "RFC 4918" },
+    { code: 424, name: "Failed Dependency", symbol: "Dp", cat: "4xx", desc: "Previous request failed.", rfc: "RFC 4918" },
+    { code: 425, name: "Too Early", symbol: "Te", cat: "4xx", desc: "Won't risk replay.", rfc: "RFC 8470" },
+    { code: 426, name: "Upgrade Required", symbol: "Ur", cat: "4xx", desc: "Protocol upgrade needed.", rfc: "RFC 9110" },
+    { code: 428, name: "Precondition Req'd", symbol: "Pq", cat: "4xx", desc: "Conditional requests required.", rfc: "RFC 6585" },
+    { code: 429, name: "Too Many Requests", symbol: "Tm", cat: "4xx", desc: "Rate limited.", rfc: "RFC 6585" },
+    { code: 431, name: "Headers Too Large", symbol: "Hl", cat: "4xx", desc: "Headers too large.", rfc: "RFC 6585" },
+    { code: 451, name: "Legal Reasons", symbol: "Lg", cat: "4xx", desc: "Legal restrictions.", rfc: "RFC 7725" },
+    { code: 500, name: "Internal Error", symbol: "Is", cat: "5xx", desc: "Unhandled exception.", rfc: "RFC 9110" },
+    { code: 501, name: "Not Implemented", symbol: "Ni", cat: "5xx", desc: "Method not supported.", rfc: "RFC 9110" },
+    { code: 502, name: "Bad Gateway", symbol: "Bg", cat: "5xx", desc: "Invalid upstream response.", rfc: "RFC 9110" },
+    { code: 503, name: "Service Unavailable", symbol: "Su", cat: "5xx", desc: "Server not ready.", rfc: "RFC 9110" },
+    { code: 504, name: "Gateway Timeout", symbol: "Gt", cat: "5xx", desc: "Gateway timed out.", rfc: "RFC 9110" },
+    { code: 505, name: "HTTP Ver. Unsupported", symbol: "Hv", cat: "5xx", desc: "HTTP version unsupported.", rfc: "RFC 9110" },
+    { code: 506, name: "Variant Negotiates", symbol: "Vn", cat: "5xx", desc: "Config error.", rfc: "RFC 2295" },
+    { code: 507, name: "Insufficient Storage", symbol: "St", cat: "5xx", desc: "Can't store.", rfc: "RFC 4918" },
+    { code: 508, name: "Loop Detected", symbol: "Ld", cat: "5xx", desc: "Infinite loop.", rfc: "RFC 5842" },
+    { code: 510, name: "Not Extended", symbol: "Ne", cat: "5xx", desc: "Extensions required.", rfc: "RFC 2774" },
+    { code: 511, name: "Network Auth Req'd", symbol: "Nr", cat: "5xx", desc: "Network auth needed.", rfc: "RFC 6585" },
+];
+
+const CAT_COLORS = { '1xx': '#58a6ff', '2xx': '#3fb950', '3xx': '#d29922', '4xx': '#ff7b72', '5xx': '#bc8cff' };
+const CAT_LABELS = { '1xx': 'Informational', '2xx': 'Success', '3xx': 'Redirection', '4xx': 'Client Error', '5xx': 'Server Error' };
+
+const CX = 400, CY = 400;
+const INNER_R1 = 100, INNER_R2 = 155;
+const OUTER_R1 = 162, OUTER_R2 = 310;
+const GAP_ANGLE = 0.012;
+const CODE_GAP = 0.004;
+
+const categories = ['1xx', '2xx', '3xx', '4xx', '5xx'];
+const catCodes = {};
+categories.forEach(function(cat) {
+    catCodes[cat] = STATUS_CODES.filter(function(s) { return s.cat === cat; });
+});
+
+const totalCodes = STATUS_CODES.length;
+const totalAngle = 2 * Math.PI - (categories.length * GAP_ANGLE * 2);
+
+const sectorAngles = {};
+categories.forEach(function(cat) {
+    sectorAngles[cat] = (catCodes[cat].length / totalCodes) * totalAngle;
+});
+
+function arcPath(cx, cy, r1, r2, startAngle, endAngle) {
+    var x1i = cx + r1 * Math.cos(startAngle);
+    var y1i = cy + r1 * Math.sin(startAngle);
+    var x1o = cx + r2 * Math.cos(startAngle);
+    var y1o = cy + r2 * Math.sin(startAngle);
+    var x2i = cx + r1 * Math.cos(endAngle);
+    var y2i = cy + r1 * Math.sin(endAngle);
+    var x2o = cx + r2 * Math.cos(endAngle);
+    var y2o = cy + r2 * Math.sin(endAngle);
+    var largeArc = (endAngle - startAngle) > Math.PI ? 1 : 0;
+    return [
+        'M ' + x1o + ' ' + y1o,
+        'A ' + r2 + ' ' + r2 + ' 0 ' + largeArc + ' 1 ' + x2o + ' ' + y2o,
+        'L ' + x2i + ' ' + y2i,
+        'A ' + r1 + ' ' + r1 + ' 0 ' + largeArc + ' 0 ' + x1i + ' ' + y1i,
+        'Z'
+    ].join(' ');
+}
+
+function adjustColor(hex, factor) {
+    var r = parseInt(hex.slice(1, 3), 16);
+    var g = parseInt(hex.slice(3, 5), 16);
+    var b = parseInt(hex.slice(5, 7), 16);
+    var nr = Math.min(255, Math.max(0, Math.round(r + (255 - r) * factor)));
+    var ng = Math.min(255, Math.max(0, Math.round(g + (255 - g) * factor)));
+    var nb = Math.min(255, Math.max(0, Math.round(b + (255 - b) * factor)));
+    return 'rgb(' + nr + ',' + ng + ',' + nb + ')';
+}
+
+function darkenColor(hex, factor) {
+    var r = parseInt(hex.slice(1, 3), 16);
+    var g = parseInt(hex.slice(3, 5), 16);
+    var b = parseInt(hex.slice(5, 7), 16);
+    var nr = Math.round(r * (1 - factor));
+    var ng = Math.round(g * (1 - factor));
+    var nb = Math.round(b * (1 - factor));
+    return 'rgb(' + nr + ',' + ng + ',' + nb + ')';
+}
+
+function polarToCart(cx, cy, r, angle) {
+    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+}
+
+var svg = document.getElementById('sunburst');
+var NS = 'http://www.w3.org/2000/svg';
+
+function createSVGElement(tag, attrs) {
+    var el = document.createElementNS(NS, tag);
+    for (var k in attrs) {
+        if (attrs.hasOwnProperty(k)) {
+            el.setAttribute(k, attrs[k]);
+        }
+    }
+    return el;
+}
+
+// Defs for glow filter
+var defs = createSVGElement('defs', {});
+var filter = createSVGElement('filter', { id: 'glow', x: '-20%', y: '-20%', width: '140%', height: '140%' });
+var feGauss = createSVGElement('feGaussianBlur', { stdDeviation: '3', result: 'coloredBlur' });
+var feMerge = createSVGElement('feMerge', {});
+feMerge.appendChild(createSVGElement('feMergeNode', { in: 'coloredBlur' }));
+feMerge.appendChild(createSVGElement('feMergeNode', { in: 'SourceGraphic' }));
+filter.appendChild(feGauss);
+filter.appendChild(feMerge);
+defs.appendChild(filter);
+svg.appendChild(defs);
+
+// Grid circles
+[INNER_R1, INNER_R2, OUTER_R1, OUTER_R2].forEach(function(r) {
+    svg.appendChild(createSVGElement('circle', {
+        cx: CX, cy: CY, r: r,
+        class: 'grid-line',
+        fill: 'none'
+    }));
+});
+
+var outerArcs = [];
+var innerArcs = [];
+
+var currentAngle = -Math.PI / 2;
+
+categories.forEach(function(cat, catIndex) {
+    var sectorStart = currentAngle + GAP_ANGLE;
+    var sectorEnd = sectorStart + sectorAngles[cat];
+    var codes = catCodes[cat];
+    var baseColor = CAT_COLORS[cat];
+
+    // Radial divider
+    var divStart = polarToCart(CX, CY, INNER_R1 - 5, sectorStart);
+    var divEnd = polarToCart(CX, CY, OUTER_R2 + 5, sectorStart);
+    svg.appendChild(createSVGElement('line', {
+        x1: divStart.x, y1: divStart.y,
+        x2: divEnd.x, y2: divEnd.y,
+        class: 'radial-grid'
+    }));
+
+    // Inner sector
+    var innerPath = createSVGElement('path', {
+        d: arcPath(CX, CY, INNER_R1, INNER_R2, sectorStart, sectorEnd),
+        fill: baseColor,
+        opacity: '0.85',
+        class: 'inner-sector',
+        'data-cat': cat
+    });
+    innerArcs.push({ el: innerPath, cat: cat });
+    svg.appendChild(innerPath);
+
+    // Inner label
+    var midAngle = (sectorStart + sectorEnd) / 2;
+    var labelR = (INNER_R1 + INNER_R2) / 2;
+    var labelPos = polarToCart(CX, CY, labelR, midAngle);
+    var sectorLabel = createSVGElement('text', {
+        x: labelPos.x, y: labelPos.y,
+        'text-anchor': 'middle',
+        'dominant-baseline': 'central',
+        'font-size': '16',
+        'font-weight': '700',
+        class: 'sector-label'
+    });
+    sectorLabel.textContent = cat;
+    svg.appendChild(sectorLabel);
+
+    // Outer category label
+    var outerLabelR = OUTER_R2 + 25;
+    var outerLabelPos = polarToCart(CX, CY, outerLabelR, midAngle);
+    var textRotation = midAngle * 180 / Math.PI + 90;
+    if (textRotation > 90 && textRotation < 270) {
+        textRotation -= 180;
+    }
+    var outerLabel = createSVGElement('text', {
+        x: outerLabelPos.x, y: outerLabelPos.y,
+        'text-anchor': 'middle',
+        'dominant-baseline': 'central',
+        'font-size': '12',
+        class: 'outer-cat-label',
+        transform: 'rotate(' + textRotation + ', ' + outerLabelPos.x + ', ' + outerLabelPos.y + ')'
+    });
+    outerLabel.textContent = CAT_LABELS[cat];
+    svg.appendChild(outerLabel);
+
+    // Outer arcs
+    var codeAngleSize = (sectorAngles[cat] - (codes.length - 1) * CODE_GAP) / codes.length;
+
+    codes.forEach(function(sc, i) {
+        var codeStart = sectorStart + i * (codeAngleSize + CODE_GAP);
+        var codeEnd = codeStart + codeAngleSize;
+
+        var t = codes.length > 1 ? i / (codes.length - 1) : 0.5;
+        var lightnessShift = -0.15 + t * 0.3;
+        var fillColor = lightnessShift >= 0
+            ? adjustColor(baseColor, lightnessShift)
+            : darkenColor(baseColor, -lightnessShift);
+
+        var codePath = createSVGElement('path', {
+            d: arcPath(CX, CY, OUTER_R1, OUTER_R2, codeStart, codeEnd),
+            fill: fillColor,
+            opacity: '0.8',
+            class: 'arc-segment',
+            'data-code': sc.code,
+            'data-cat': cat
+        });
+
+        outerArcs.push({ el: codePath, code: sc.code, cat: cat, data: sc });
+        svg.appendChild(codePath);
+
+        // Code label
+        var codeMidAngle = (codeStart + codeEnd) / 2;
+        var codeLabelR = (OUTER_R1 + OUTER_R2) / 2;
+        var codeLabelPos = polarToCart(CX, CY, codeLabelR, codeMidAngle);
+        var codeLabelRotation = codeMidAngle * 180 / Math.PI + 90;
+        if (codeLabelRotation > 90 && codeLabelRotation < 270) {
+            codeLabelRotation -= 180;
+        }
+        var arcWidth = codeAngleSize * codeLabelR;
+        var fontSize = Math.min(12, Math.max(8, arcWidth * 0.3));
+
+        var codeLabel = createSVGElement('text', {
+            x: codeLabelPos.x, y: codeLabelPos.y,
+            'text-anchor': 'middle',
+            'dominant-baseline': 'central',
+            'font-size': fontSize,
+            'font-weight': '600',
+            class: 'arc-label',
+            transform: 'rotate(' + codeLabelRotation + ', ' + codeLabelPos.x + ', ' + codeLabelPos.y + ')'
+        });
+        codeLabel.textContent = sc.code;
+        svg.appendChild(codeLabel);
+    });
+
+    currentAngle = sectorEnd + GAP_ANGLE;
+});
+
+// Final radial divider
+var finalDiv = polarToCart(CX, CY, INNER_R1 - 5, currentAngle);
+var finalDivEnd = polarToCart(CX, CY, OUTER_R2 + 5, currentAngle);
+svg.appendChild(createSVGElement('line', {
+    x1: finalDiv.x, y1: finalDiv.y,
+    x2: finalDivEnd.x, y2: finalDivEnd.y,
+    class: 'radial-grid'
+}));
+
+// Center circle
+svg.appendChild(createSVGElement('circle', {
+    cx: CX, cy: CY, r: INNER_R1 - 2,
+    fill: '#0d1117',
+    stroke: '#21262d',
+    'stroke-width': '1'
+}));
+
+// Interaction
+var centerDetail = document.getElementById('centerDetail');
+var detailCode = document.getElementById('detailCode');
+var detailName = document.getElementById('detailName');
+var detailDesc = document.getElementById('detailDesc');
+var detailRfc = document.getElementById('detailRfc');
+
+function showDetail(sc) {
+    centerDetail.classList.remove('idle');
+    detailCode.textContent = sc.code;
+    detailCode.style.color = CAT_COLORS[sc.cat];
+    detailName.textContent = sc.name;
+    detailDesc.textContent = sc.desc;
+    detailRfc.textContent = sc.rfc;
+}
+
+function showCategoryDetail(cat) {
+    centerDetail.classList.remove('idle');
+    detailCode.textContent = cat;
+    detailCode.style.color = CAT_COLORS[cat];
+    detailName.textContent = CAT_LABELS[cat];
+    detailDesc.textContent = catCodes[cat].length + ' status codes';
+    detailRfc.textContent = '';
+}
+
+function resetDetail() {
+    centerDetail.classList.add('idle');
+    detailCode.textContent = 'HTTP';
+    detailCode.style.color = '#484f58';
+    detailName.textContent = 'Hover a segment';
+    detailDesc.textContent = '';
+    detailRfc.textContent = '';
+}
+
+function highlightCode(code) {
+    outerArcs.forEach(function(a) {
+        if (a.code === code) {
+            a.el.classList.add('highlighted');
+            a.el.classList.remove('dimmed');
+        } else {
+            a.el.classList.add('dimmed');
+            a.el.classList.remove('highlighted');
+        }
+    });
+    innerArcs.forEach(function(a) {
+        a.el.classList.add('dimmed');
+        a.el.classList.remove('highlighted');
+    });
+}
+
+function highlightCategory(cat) {
+    outerArcs.forEach(function(a) {
+        if (a.cat === cat) {
+            a.el.classList.add('highlighted');
+            a.el.classList.remove('dimmed');
+        } else {
+            a.el.classList.add('dimmed');
+            a.el.classList.remove('highlighted');
+        }
+    });
+    innerArcs.forEach(function(a) {
+        if (a.cat === cat) {
+            a.el.classList.add('highlighted');
+            a.el.classList.remove('dimmed');
+        } else {
+            a.el.classList.add('dimmed');
+            a.el.classList.remove('highlighted');
+        }
+    });
+}
+
+function resetHighlight() {
+    outerArcs.forEach(function(a) {
+        a.el.classList.remove('dimmed', 'highlighted');
+    });
+    innerArcs.forEach(function(a) {
+        a.el.classList.remove('dimmed', 'highlighted');
+    });
+}
+
+outerArcs.forEach(function(arc) {
+    arc.el.addEventListener('mouseenter', function() {
+        highlightCode(arc.code);
+        showDetail(arc.data);
+    });
+    arc.el.addEventListener('mouseleave', function() {
+        resetHighlight();
+        resetDetail();
+    });
+});
+
+innerArcs.forEach(function(arc) {
+    arc.el.addEventListener('mouseenter', function() {
+        highlightCategory(arc.cat);
+        showCategoryDetail(arc.cat);
+    });
+    arc.el.addEventListener('mouseleave', function() {
+        resetHighlight();
+        resetDetail();
+    });
+});
+
+// Build legend using DOM methods
+var legend = document.getElementById('legend');
+categories.forEach(function(cat) {
+    var item = document.createElement('div');
+    item.className = 'legend-item';
+
+    var swatch = document.createElement('div');
+    swatch.className = 'legend-swatch';
+    swatch.style.background = CAT_COLORS[cat];
+    item.appendChild(swatch);
+
+    var label = document.createElement('div');
+    label.className = 'legend-label';
+    label.appendChild(document.createTextNode(cat + ' '));
+    var labelSpan = document.createElement('span');
+    labelSpan.textContent = CAT_LABELS[cat];
+    label.appendChild(labelSpan);
+    item.appendChild(label);
+
+    item.addEventListener('mouseenter', function() {
+        highlightCategory(cat);
+        showCategoryDetail(cat);
+    });
+    item.addEventListener('mouseleave', function() {
+        resetHighlight();
+        resetDetail();
+    });
+    legend.appendChild(item);
+});
+</script>
+
+</body>
+</html>

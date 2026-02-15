@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- 16 creative mockup designs exploring alternative presentations for HTTP status codes
+  - Desktop: subway metro map, airport departure board, vinyl record crate, constellation star map, bookshelf library, vending machine, city skyline, treemap, radial sunburst
+  - Mobile: swipe cards (Tinder-style), Instagram stories
+  - Tablet/responsive: trading card collection, dense cheat sheet, honeycomb hex grid, iPad portrait accordion, compact color matrix
+- Each mockup is a self-contained HTML file with a screenshot in `/mockups/`
+
 ### Changed
 
 - Moved version badge from top bar to fixed bottom-right footer
